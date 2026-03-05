@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 });
 
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const dataDir = process.env.DATA_DIR || process.cwd();
+    const uploadsDir = path.join(dataDir, 'uploads');
     const buffer = await file.arrayBuffer();
     const filePath = await savePdfFile(buffer, uploadsDir);
 
