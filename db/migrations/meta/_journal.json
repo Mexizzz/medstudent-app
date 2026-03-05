@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1772210594563,
+      "tag": "0000_workable_shiva",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772297000000,
+      "tag": "0001_lessons",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772400000000,
+      "tag": "0002_sr_and_goals",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1772500000000,
+      "tag": "0003_user_xp",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1772600000000,
+      "tag": "0004_exam_profiles",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/db';
+import { contentSources, questions } from '@/db/schema';
+import { sql, eq } from 'drizzle-orm';
+
+export async function GET() {
+  const sources = await db
+    .select({
+      id: contentSources.id,
+      type: contentSources.type,
+      title: contentSources.title,
+      subject: contentSources.subject,
+      topic: contentSources.topic,
+      wordCount: contentSources.wordCount,
+      pageCount: contentSources.pageCount,
+      youtubeId: contentSources.youtubeId,
+      youtubeUrl: contentSources.youtubeUrl,
+      status: contentSources.status,
+      createdAt: contentSources.createdAt,
+    })
+    .from(contentSources)
+    .orderBy(sql`${contentSources.createdAt} desc`);
+
+  // Get question counts per source
+  const counts = await db
+    .select({
+      sourceId: questions.sourceId,
+      type: questions.type,
+      count: sql<number>`count(*)`,
+    })
+    .from(questions)
+    .groupBy(questions.sourceId, questions.type);
+
+  // Attach counts to sources
+  const sourcesWithCounts = sources.map(s => ({
+    ...s,
+    questionCounts: counts
+      .filter(c => c.sourceId === s.id)
+      .map(c => ({ type: c.type, count: c.count })),
+  }));
+
+  return NextResponse.json(sourcesWithCounts);
+}

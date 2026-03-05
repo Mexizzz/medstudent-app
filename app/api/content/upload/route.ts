@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from 'next/server';
+export const maxDuration = 60;
+import { db } from '@/db';
+import { contentSources } from '@/db/schema';
+import { savePdfFile, extractPdfText } from '@/lib/content/pdf-extractor';
+import { nanoid } from 'nanoid';
+import path from 'path';
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get('file') as File | null;
+    const title = formData.get('title') as string;
+    const subject = formData.get('subject') as string;
+    const topic = formData.get('topic') as string;
+    const type = (formData.get('type') as string) || 'pdf'; // 'pdf' | 'mcq_pdf'
+
+    if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    if (!title) return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const buffer = await file.arrayBuffer();
+    const filePath = await savePdfFile(buffer, uploadsDir);
+
+    const { text, wordCount, pageCount } = await extractPdfText(filePath);
+
+    const id = nanoid();
+    const now = new Date();
+
+    await db.insert(contentSources).values({
+      id,
+      type,
+      title,
+      subject: subject || null,
+      topic: topic || null,
+      filePath,
+      rawText: text,
+      wordCount,
+      pageCount,
+      status: 'ready',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return NextResponse.json({ id, title, wordCount, pageCount });
+  } catch (err) {
+    console.error('Upload error:', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}

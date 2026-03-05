@@ -1,0 +1,43 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/db';
+import { questions } from '@/db/schema';
+import { generateFillBlanks } from '@/lib/ai/generators';
+
+export const maxDuration = 120;
+import { nanoid } from 'nanoid';
+
+export async function POST(req: NextRequest) {
+  try {
+    const { sourceId, count = 15 } = await req.json();
+    if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
+
+    const source = await db.query.contentSources.findFirst({
+      where: (s, { eq }) => eq(s.id, sourceId),
+    });
+    if (!source?.rawText) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+
+    const generated = await generateFillBlanks(
+      source.rawText, count, source.subject ?? 'Medicine', source.topic ?? 'General'
+    );
+
+    const now = new Date();
+    const rows = generated.map(q => ({
+      id: nanoid(),
+      sourceId,
+      type: 'fill_blank' as const,
+      subject: source.subject,
+      topic: q.topic || source.topic,
+      blankText: q.blankText,
+      blankAnswer: q.blankAnswer,
+      alternativeAnswers: q.alternativeAnswers ? JSON.stringify(q.alternativeAnswers) : null,
+      explanation: q.explanation,
+      createdAt: now,
+    }));
+
+    if (rows.length > 0) await db.insert(questions).values(rows);
+    return NextResponse.json({ generated: rows.length });
+  } catch (err) {
+    console.error('Fill-blank generate error:', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}
