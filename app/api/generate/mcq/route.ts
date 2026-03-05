@@ -6,9 +6,12 @@ import { generateMCQs, parseMcqPdf } from '@/lib/ai/generators';
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const { sourceId, count = 10, difficulty = 'medium' } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
 
@@ -45,8 +48,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ generated: rows.length });
-  } catch (err) {
-    console.error('MCQ generate error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('MCQ generate error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { studySessions, questions } from '@/db/schema';
-import { inArray, sql, and, isNotNull } from 'drizzle-orm';
+import { inArray, sql, and, isNotNull, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const body = await req.json();
     const { sourceIds, activityTypes, topics: topicFilter, count = 20, planId, questionIds: directIds } = body;
 
@@ -58,6 +61,7 @@ export async function POST(req: NextRequest) {
 
     await db.insert(studySessions).values({
       id: sessionId,
+      userId,
       planId: planId ?? null,
       status: 'active',
       activityTypes: JSON.stringify(activityTypes ?? []),
@@ -68,18 +72,29 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ sessionId, questions: pool, total: pool.length });
-  } catch (err) {
-    console.error('Session create error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Session create error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
 export async function GET() {
-  const sessions = await db
-    .select()
-    .from(studySessions)
-    .orderBy(sql`${studySessions.startedAt} desc`)
-    .limit(50);
+  try {
+    const { userId } = await requireAuth();
 
-  return NextResponse.json(sessions);
+    const sessions = await db
+      .select()
+      .from(studySessions)
+      .where(eq(studySessions.userId, userId))
+      .orderBy(sql`${studySessions.startedAt} desc`)
+      .limit(50);
+
+    return NextResponse.json(sessions);
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    throw error;
+  }
 }

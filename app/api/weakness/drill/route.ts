@@ -3,9 +3,12 @@ import { db } from '@/db';
 import { questions, studySessions } from '@/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const { subject, topic } = await req.json();
     if (!subject || !topic) {
       return NextResponse.json({ error: 'subject and topic required' }, { status: 400 });
@@ -28,6 +31,7 @@ export async function POST(req: NextRequest) {
 
     await db.insert(studySessions).values({
       id: sessionId,
+      userId,
       status: 'active',
       mode: 'practice',
       activityTypes: JSON.stringify([]),
@@ -38,8 +42,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ sessionId, total: pool.length });
-  } catch (err) {
-    console.error('Weakness drill error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Weakness drill error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

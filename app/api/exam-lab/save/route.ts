@@ -4,9 +4,12 @@ import { contentSources, questions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import type { GeneratedLabQuestion } from '@/lib/exam-lab';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const { title, subject, generatedQuestions, existingSourceId } = await req.json() as {
       title: string;
       subject?: string;
@@ -82,8 +85,10 @@ export async function POST(req: NextRequest) {
     await db.insert(questions).values(rows);
 
     return NextResponse.json({ sourceId, count: rows.length });
-  } catch (err) {
-    console.error('Exam save error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Exam save error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

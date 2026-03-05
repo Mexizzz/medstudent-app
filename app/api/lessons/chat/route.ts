@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { groq } from '@/lib/ai/client';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 const CHAT_MODEL = 'llama-3.3-70b-versatile';
 const FALLBACK_MODEL = 'llama-3.1-8b-instant';
@@ -8,6 +9,8 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const { messages, currentLesson } = await req.json();
 
     const lessonContext = currentLesson
@@ -96,10 +99,12 @@ Always be medically accurate.`;
         'Cache-Control': 'no-cache',
       },
     });
-  } catch (err) {
-    console.error('Lesson chat error:', err);
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Lesson chat error:', error);
     return new Response(
-      JSON.stringify({ error: String(err) }),
+      JSON.stringify({ error: String(error) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

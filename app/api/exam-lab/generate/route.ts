@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { examProfiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
 import {
   GENERATE_SYSTEM, STRUCTURED_SYSTEM, TABLE_SYSTEM,
@@ -11,11 +11,12 @@ import {
 import { extractPdfText, savePdfFile } from '@/lib/content/pdf-extractor';
 import path from 'path';
 import fs from 'fs/promises';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export const maxDuration = 120;
 
-// Each MCQ (question + 4 options + explanation) ≈ 200-300 tokens.
-// Keep each batch ≤ 20 so we stay well within 8192 max_tokens.
+// Each MCQ (question + 4 options + explanation) ~ 200-300 tokens.
+// Keep each batch <= 20 so we stay well within 8192 max_tokens.
 const BATCH_SIZE = 20;
 
 async function callGroqGenerateBatch(
@@ -84,6 +85,8 @@ async function callGroqGenerate(
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const formData = await req.formData();
     const profileId = formData.get('profileId') as string | null;
     const count = parseInt((formData.get('count') as string | null) ?? '20', 10);
@@ -93,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 });
 
-    const [profileRow] = await db.select().from(examProfiles).where(eq(examProfiles.id, profileId));
+    const [profileRow] = await db.select().from(examProfiles).where(and(eq(examProfiles.id, profileId), eq(examProfiles.userId, userId)));
     if (!profileRow) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
     const styleAnalysis = JSON.parse(profileRow.styleAnalysis) as ExamStyleAnalysis;
@@ -122,8 +125,10 @@ export async function POST(req: NextRequest) {
     const questions = await callGroqGenerate(styleAnalysis, truncated, count, subject, mode);
 
     return NextResponse.json({ questions });
-  } catch (err) {
-    console.error('Exam generate error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Exam generate error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

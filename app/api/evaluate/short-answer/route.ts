@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { evaluateShortAnswer } from '@/lib/ai/generators';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const { questionId, userAnswer } = await req.json();
 
     if (!questionId || !userAnswer) {
@@ -29,8 +32,10 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(result);
-  } catch (err) {
-    console.error('Evaluate error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Evaluate error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

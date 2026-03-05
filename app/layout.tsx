@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -26,12 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased" suppressHydrationWarning>
         <TooltipProvider>
-          <Sidebar />
-          <div className="pl-56">
-            <main className="min-h-screen">
-              {children}
-            </main>
-          </div>
+          {children}
           <Toaster position="top-right" richColors />
         </TooltipProvider>
       </body>

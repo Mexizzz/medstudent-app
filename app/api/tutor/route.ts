@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { topicPerformance, sessionResponses, questions, contentSources } from '@/db/schema';
 import { groq } from '@/lib/ai/client';
 import { sql, eq, inArray } from 'drizzle-orm';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 // Use a fast model with a higher daily token limit for interactive chat
 const TUTOR_MODEL = 'llama-3.1-8b-instant';
@@ -11,6 +12,8 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const { messages } = await req.json();
 
     // ── Gather student context from DB ────────────────────────────────────────
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
     const weakTopics = await db
       .select()
       .from(topicPerformance)
-      .where(sql`${topicPerformance.totalAttempts} >= 1`)
+      .where(sql`${topicPerformance.userId} = ${userId} AND ${topicPerformance.totalAttempts} >= 1`)
       .orderBy(sql`${topicPerformance.avgScore} asc`)
       .limit(6);
 
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
       })
       .from(sessionResponses)
       .innerJoin(questions, eq(sessionResponses.questionId, questions.id))
-      .where(eq(sessionResponses.isCorrect, false))
+      .where(sql`${sessionResponses.userId} = ${userId} AND ${sessionResponses.isCorrect} = 0`)
       .groupBy(sessionResponses.questionId)
       .orderBy(sql`wc desc`)
       .limit(8);
@@ -152,10 +155,12 @@ STYLE RULES:
         'Cache-Control': 'no-cache',
       },
     });
-  } catch (err) {
-    console.error('Tutor error:', err);
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Tutor error:', error);
     return new Response(
-      JSON.stringify({ error: String(err) }),
+      JSON.stringify({ error: String(error) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

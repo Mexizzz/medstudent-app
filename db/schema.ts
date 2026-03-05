@@ -1,5 +1,15 @@
 import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
+// ── Users ──────────────────────────────────────────────
+export const users = sqliteTable('users', {
+  id:           text('id').primaryKey(),
+  email:        text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  name:         text('name'),
+  createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ── Shared tables (no userId) ──────────────────────────
 export const contentSources = sqliteTable('content_sources', {
   id:          text('id').primaryKey(),
   type:        text('type').notNull(), // 'pdf' | 'youtube' | 'mcq_pdf'
@@ -25,33 +35,26 @@ export const questions = sqliteTable('questions', {
   type:          text('type').notNull(), // 'mcq' | 'flashcard' | 'fill_blank' | 'short_answer' | 'clinical_case'
   subject:       text('subject'),
   topic:         text('topic'),
-  difficulty:    text('difficulty').default('medium'), // 'easy' | 'medium' | 'hard'
+  difficulty:    text('difficulty').default('medium'),
 
-  // MCQ + short_answer + clinical_case
   question:      text('question'),
-
-  // MCQ
   optionA:       text('option_a'),
   optionB:       text('option_b'),
   optionC:       text('option_c'),
   optionD:       text('option_d'),
   correctAnswer: text('correct_answer'),
 
-  // Flashcard
   front:         text('front'),
   back:          text('back'),
-  cardType:      text('card_type'), // 'definition' | 'mechanism' | 'clinical' | 'treatment' | 'mnemonic'
+  cardType:      text('card_type'),
 
-  // Fill-in-the-blank
   blankText:         text('blank_text'),
   blankAnswer:       text('blank_answer'),
-  alternativeAnswers:text('alternative_answers'), // JSON array string
+  alternativeAnswers:text('alternative_answers'),
 
-  // Short answer
   modelAnswer: text('model_answer'),
-  keyPoints:   text('key_points'), // JSON array string
+  keyPoints:   text('key_points'),
 
-  // Clinical case
   caseScenario:         text('case_scenario'),
   examinationFindings:  text('examination_findings'),
   investigations:       text('investigations'),
@@ -64,17 +67,19 @@ export const questions = sqliteTable('questions', {
   createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Per-user tables ────────────────────────────────────
 export const studySessions = sqliteTable('study_sessions', {
   id:              text('id').primaryKey(),
+  userId:          text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   planId:          text('plan_id'),
-  status:          text('status').default('active'), // 'active' | 'completed' | 'abandoned'
-  mode:            text('mode').default('practice'),  // 'practice' | 'exam'
+  status:          text('status').default('active'),
+  mode:            text('mode').default('practice'),
   examType:        text('exam_type'),
   timeLimitMins:   integer('time_limit_mins'),
-  flaggedQuestions:text('flagged_questions'),          // JSON array of questionIds
-  activityTypes:   text('activity_types'), // JSON array
-  sourceIds:       text('source_ids'),     // JSON array
-  questionIds:     text('question_ids'),   // JSON array (ordered)
+  flaggedQuestions:text('flagged_questions'),
+  activityTypes:   text('activity_types'),
+  sourceIds:       text('source_ids'),
+  questionIds:     text('question_ids'),
   totalQuestions:  integer('total_questions').default(0),
   correctCount:    integer('correct_count').default(0),
   score:           real('score'),
@@ -85,6 +90,7 @@ export const studySessions = sqliteTable('study_sessions', {
 
 export const sessionResponses = sqliteTable('session_responses', {
   id:            text('id').primaryKey(),
+  userId:        text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   sessionId:     text('session_id').references(() => studySessions.id, { onDelete: 'cascade' }),
   questionId:    text('question_id').references(() => questions.id),
   userAnswer:    text('user_answer'),
@@ -97,10 +103,11 @@ export const sessionResponses = sqliteTable('session_responses', {
 
 export const studyPlanItems = sqliteTable('study_plan_items', {
   id:            text('id').primaryKey(),
-  planDate:      text('plan_date').notNull(), // 'YYYY-MM-DD'
+  userId:        text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  planDate:      text('plan_date').notNull(),
   title:         text('title').notNull(),
-  sourceIds:     text('source_ids').notNull(),     // JSON array
-  activityTypes: text('activity_types').notNull(), // JSON array
+  sourceIds:     text('source_ids').notNull(),
+  activityTypes: text('activity_types').notNull(),
   questionCount: integer('question_count').default(20),
   isCompleted:   integer('is_completed', { mode: 'boolean' }).default(false),
   completedAt:   integer('completed_at', { mode: 'timestamp' }),
@@ -109,16 +116,18 @@ export const studyPlanItems = sqliteTable('study_plan_items', {
 
 export const streakRecords = sqliteTable('streak_records', {
   id:            text('id').primaryKey(),
+  userId:        text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   studyDate:     text('study_date').notNull(),
   sessionsCount: integer('sessions_count').default(0),
   totalMinutes:  integer('total_minutes').default(0),
   createdAt:     integer('created_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
-  dateUnique: uniqueIndex('streak_date_unique').on(table.studyDate),
+  dateUserUnique: uniqueIndex('streak_date_user_unique').on(table.userId, table.studyDate),
 }));
 
 export const topicPerformance = sqliteTable('topic_performance', {
   id:              text('id').primaryKey(),
+  userId:          text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   subject:         text('subject').notNull(),
   topic:           text('topic').notNull(),
   totalAttempts:   integer('total_attempts').default(0),
@@ -127,21 +136,26 @@ export const topicPerformance = sqliteTable('topic_performance', {
   lastStudiedAt:   integer('last_studied_at', { mode: 'timestamp' }),
   updatedAt:       integer('updated_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
-  subjectTopicUnique: uniqueIndex('subject_topic_unique').on(table.subject, table.topic),
+  userSubjectTopicUnique: uniqueIndex('user_subject_topic_unique').on(table.userId, table.subject, table.topic),
 }));
 
 export const srCards = sqliteTable('sr_cards', {
-  questionId:     text('question_id').primaryKey(),
+  id:             text('id').primaryKey(),
+  userId:         text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  questionId:     text('question_id').notNull(),
   easeFactor:     real('ease_factor').notNull().default(2.5),
   interval:       integer('interval').notNull().default(1),
   repetitions:    integer('repetitions').notNull().default(0),
   nextReviewDate: text('next_review_date').notNull(),
   lastReviewDate: text('last_review_date'),
   createdAt:      integer('created_at', { mode: 'timestamp' }).notNull(),
-});
+}, (table) => ({
+  userQuestionUnique: uniqueIndex('sr_user_question_unique').on(table.userId, table.questionId),
+}));
 
 export const studyGoals = sqliteTable('study_goals', {
   id:                text('id').primaryKey(),
+  userId:            text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   examType:          text('exam_type'),
   targetExamDate:    text('target_exam_date'),
   weeklyHoursTarget: integer('weekly_hours_target').default(10),
@@ -151,26 +165,29 @@ export const studyGoals = sqliteTable('study_goals', {
 });
 
 export const userXp = sqliteTable('user_xp', {
-  id:        integer('id').primaryKey(),  // always 1 (singleton)
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
   totalXp:   integer('total_xp').notNull().default(0),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const examProfiles = sqliteTable('exam_profiles', {
   id:             text('id').primaryKey(),
+  userId:         text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name:           text('name').notNull(),
-  styleAnalysis:  text('style_analysis').notNull(), // JSON: ExamStyleAnalysis
-  rawTextSnippet: text('raw_text_snippet'),           // first 500 chars of the original exam
+  styleAnalysis:  text('style_analysis').notNull(),
+  rawTextSnippet: text('raw_text_snippet'),
   questionCount:  integer('question_count').default(0),
   createdAt:      integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const lessons = sqliteTable('lessons', {
   id:               text('id').primaryKey(),
+  userId:           text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title:            text('title').notNull(),
   topic:            text('topic').notNull(),
   overview:         text('overview').notNull(),
-  sections:         text('sections').notNull(),         // JSON: LessonSection[]
+  sections:         text('sections').notNull(),
   summary:          text('summary').notNull(),
   clinicalRelevance:text('clinical_relevance').notNull(),
   createdAt:        integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -178,23 +195,25 @@ export const lessons = sqliteTable('lessons', {
 
 export const summaries = sqliteTable('summaries', {
   id:          text('id').primaryKey(),
+  userId:      text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title:       text('title').notNull().default('Untitled Summary'),
   subject:     text('subject'),
   topic:       text('topic'),
-  canvasData:  text('canvas_data'),   // base64 PNG of the drawing
-  textContent: text('text_content'),  // typed/keyboard text
-  aiScore:     integer('ai_score'),   // 0-100
-  aiFeedback:  text('ai_feedback'),   // JSON with detailed breakdown
+  canvasData:  text('canvas_data'),
+  textContent: text('text_content'),
+  aiScore:     integer('ai_score'),
+  aiFeedback:  text('ai_feedback'),
   createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt:   integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Type exports ───────────────────────────────────────
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Summary = typeof summaries.$inferSelect;
 export type NewSummary = typeof summaries.$inferInsert;
-
 export type Lesson = typeof lessons.$inferSelect;
 export type NewLesson = typeof lessons.$inferInsert;
-
 export type ContentSource = typeof contentSources.$inferSelect;
 export type NewContentSource = typeof contentSources.$inferInsert;
 export type Question = typeof questions.$inferSelect;

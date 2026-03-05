@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { summaries } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export const maxDuration = 120;
 
@@ -12,49 +13,52 @@ const VISION_MODELS = [
 ];
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { topic, textContent, canvasData } = await req.json();
+  try {
+    const { userId } = await requireAuth();
 
-  // ── Step 1: Transcribe handwriting from canvas ─────────────────────────────
-  let transcription = textContent?.trim() || '';
+    const { id } = await params;
+    const { topic, textContent, canvasData } = await req.json();
 
-  if (canvasData) {
-    for (const visionModel of VISION_MODELS) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const visionMessages: any[] = [
-          {
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: canvasData } },
-              { type: 'text', text: 'Transcribe all handwritten text visible in this image. Return only the transcribed text exactly as written, nothing else.' },
-            ],
-          },
-        ];
+    // ── Step 1: Transcribe handwriting from canvas ─────────────────────────────
+    let transcription = textContent?.trim() || '';
 
-        const visionRes = await groq.chat.completions.create({
-          model: visionModel,
-          temperature: 0,
-          max_tokens: 2048,
-          messages: visionMessages,
-        });
+    if (canvasData) {
+      for (const visionModel of VISION_MODELS) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const visionMessages: any[] = [
+            {
+              role: 'user',
+              content: [
+                { type: 'image_url', image_url: { url: canvasData } },
+                { type: 'text', text: 'Transcribe all handwritten text visible in this image. Return only the transcribed text exactly as written, nothing else.' },
+              ],
+            },
+          ];
 
-        const visionText = visionRes.choices[0]?.message?.content?.trim() ?? '';
-        if (visionText) { transcription = visionText; break; }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`Vision model ${visionModel} failed:`, msg);
-        // try next vision model
+          const visionRes = await groq.chat.completions.create({
+            model: visionModel,
+            temperature: 0,
+            max_tokens: 2048,
+            messages: visionMessages,
+          });
+
+          const visionText = visionRes.choices[0]?.message?.content?.trim() ?? '';
+          if (visionText) { transcription = visionText; break; }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`Vision model ${visionModel} failed:`, msg);
+          // try next vision model
+        }
       }
     }
-  }
 
-  if (!transcription) {
-    return NextResponse.json({ error: 'Could not read any content from the canvas. Make sure you have saved the summary first, then try evaluating.' }, { status: 400 });
-  }
+    if (!transcription) {
+      return NextResponse.json({ error: 'Could not read any content from the canvas. Make sure you have saved the summary first, then try evaluating.' }, { status: 400 });
+    }
 
-  // ── Step 2: Evaluate the transcribed content ───────────────────────────────
-  const systemPrompt = `You are a strict medical/biology examiner grading a student's written summary as if it were a real exam answer.
+    // ── Step 2: Evaluate the transcribed content ───────────────────────────────
+    const systemPrompt = `You are a strict medical/biology examiner grading a student's written summary as if it were a real exam answer.
 
 GRADING RULES — apply these rigorously:
 - COVERAGE: Award marks ONLY for key facts that are explicitly stated. Each missing key point deducts marks. A correct but incomplete answer cannot score above 50% for coverage.
@@ -65,7 +69,7 @@ GRADING RULES — apply these rigorously:
 - List EVERY important missing key point explicitly in the improvements array.
 Return ONLY valid JSON — no extra text.`;
 
-  const userPrompt = `Topic/Lesson: ${topic?.trim() || 'Medical topic'}
+    const userPrompt = `Topic/Lesson: ${topic?.trim() || 'Medical topic'}
 
 Student's written summary:
 ${transcription}
@@ -94,39 +98,44 @@ Return this exact JSON:
   }
 }
 
-grade must be exactly one of: "Excellent" (score≥85), "Good" (65-84), "Needs Work" (40-64), "Insufficient" (<40)
+grade must be exactly one of: "Excellent" (score>=85), "Good" (65-84), "Needs Work" (40-64), "Insufficient" (<40)
 All score fields must be integers 0-100.
 idealAnswer must be SHORT (1-3 sentences), exam-style, containing only the essential mark-scoring points — not an essay.
 writingTips.steps must contain 3–5 steps tailored specifically to this topic (not generic). Each step has a "label" (the thing to include) and "example" (a one-line example for THIS topic).
 writingTips.memoryTrick is the first-letter acronym of the step labels, e.g. "W–W–M–F".`;
 
-  for (const model of [MODEL, FALLBACK_MODEL]) {
-    try {
-      const res = await groq.chat.completions.create({
-        model,
-        temperature: 0.1,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt },
-        ],
-      });
+    for (const model of [MODEL, FALLBACK_MODEL]) {
+      try {
+        const res = await groq.chat.completions.create({
+          model,
+          temperature: 0.1,
+          max_tokens: 1500,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user',   content: userPrompt },
+          ],
+        });
 
-      const data = JSON.parse(res.choices[0]?.message?.content ?? '{}');
-      data.transcription = transcription;
+        const data = JSON.parse(res.choices[0]?.message?.content ?? '{}');
+        data.transcription = transcription;
 
-      await db.update(summaries)
-        .set({ aiScore: data.score, aiFeedback: JSON.stringify(data), updatedAt: new Date() })
-        .where(eq(summaries.id, id));
+        await db.update(summaries)
+          .set({ aiScore: data.score, aiFeedback: JSON.stringify(data), updatedAt: new Date() })
+          .where(and(eq(summaries.id, id), eq(summaries.userId, userId)));
 
-      return NextResponse.json(data);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('429') || msg.includes('rate limit')) continue;
-      throw e;
+        return NextResponse.json(data);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('429') || msg.includes('rate limit')) continue;
+        throw e;
+      }
     }
-  }
 
-  return NextResponse.json({ error: 'AI unavailable, try again shortly.' }, { status: 503 });
+    return NextResponse.json({ error: 'AI unavailable, try again shortly.' }, { status: 503 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    throw error;
+  }
 }

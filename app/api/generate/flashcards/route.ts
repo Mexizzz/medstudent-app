@@ -3,11 +3,14 @@ import { db } from '@/db';
 import { questions } from '@/db/schema';
 import { generateFlashcards } from '@/lib/ai/generators';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const { sourceId, count = 20 } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
 
@@ -35,8 +38,10 @@ export async function POST(req: NextRequest) {
 
     if (rows.length > 0) await db.insert(questions).values(rows);
     return NextResponse.json({ generated: rows.length });
-  } catch (err) {
-    console.error('Flashcard generate error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Flashcard generate error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

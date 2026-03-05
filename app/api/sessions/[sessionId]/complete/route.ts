@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { studySessions, sessionResponses, topicPerformance, srCards, userXp } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { markTodayStudied } from '@/lib/streak';
 import { calculateSM2, todayStr } from '@/lib/sr';
 import { calcSessionXp, getXpProgress } from '@/lib/xp';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 interface ResponseInput {
   questionId: string;
@@ -23,11 +24,13 @@ export async function POST(
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { userId } = await requireAuth();
+
     const { sessionId } = await params;
     const { responses, durationSeconds }: { responses: ResponseInput[]; durationSeconds: number } = await req.json();
 
     const session = await db.query.studySessions.findFirst({
-      where: (s, { eq }) => eq(s.id, sessionId),
+      where: (s, { eq, and }) => and(eq(s.id, sessionId), eq(s.userId, userId)),
     });
     if (!session) return NextResponse.json({ error: 'Session not found' }, { status: 404 });
 
@@ -37,6 +40,7 @@ export async function POST(
     const responseRows = responses.map(r => ({
       id: nanoid(),
       sessionId,
+      userId,
       questionId: r.questionId,
       userAnswer: r.userAnswer,
       isCorrect: r.isCorrect,
@@ -64,7 +68,7 @@ export async function POST(
         durationSeconds: durationSeconds ?? 0,
         completedAt: now,
       })
-      .where(eq(studySessions.id, sessionId));
+      .where(and(eq(studySessions.id, sessionId), eq(studySessions.userId, userId)));
 
     // Update topic_performance
     const topicMap = new Map<string, { subject: string; topic: string; correct: number; total: number }>();
@@ -80,7 +84,7 @@ export async function POST(
 
     for (const [, tp] of topicMap) {
       const existing = await db.query.topicPerformance.findFirst({
-        where: (t, { and, eq }) => and(eq(t.subject, tp.subject), eq(t.topic, tp.topic)),
+        where: (t, { and, eq }) => and(eq(t.userId, userId), eq(t.subject, tp.subject), eq(t.topic, tp.topic)),
       });
 
       if (existing) {
@@ -98,6 +102,7 @@ export async function POST(
       } else {
         await db.insert(topicPerformance).values({
           id: nanoid(),
+          userId,
           subject: tp.subject,
           topic: tp.topic,
           totalAttempts: tp.total,
@@ -114,7 +119,7 @@ export async function POST(
     for (const r of responses) {
       if (!r.questionId) continue;
       const quality = r.isCorrect ? 5 : 1;
-      const [existing] = await db.select().from(srCards).where(eq(srCards.questionId, r.questionId)).limit(1);
+      const [existing] = await db.select().from(srCards).where(and(eq(srCards.questionId, r.questionId), eq(srCards.userId, userId))).limit(1);
       const cardInput = existing ?? { easeFactor: 2.5, interval: 1, repetitions: 0 };
       const updated = calculateSM2(cardInput, quality);
       if (existing) {
@@ -124,9 +129,11 @@ export async function POST(
           repetitions: updated.repetitions,
           nextReviewDate: updated.nextReviewDate,
           lastReviewDate: updated.lastReviewDate,
-        }).where(eq(srCards.questionId, r.questionId));
+        }).where(eq(srCards.id, existing.id));
       } else {
         await db.insert(srCards).values({
+          id: nanoid(),
+          userId,
           questionId: r.questionId,
           easeFactor: updated.easeFactor,
           interval: updated.interval,
@@ -140,7 +147,7 @@ export async function POST(
 
     // Mark streak
     const durationMins = Math.ceil((durationSeconds ?? 0) / 60);
-    await markTodayStudied(durationMins);
+    await markTodayStudied(durationMins, userId);
 
     // Award XP
     const isExam = session.mode === 'exam';
@@ -149,17 +156,19 @@ export async function POST(
     const xpUpdated = await db
       .update(userXp)
       .set({ totalXp: sql`${userXp.totalXp} + ${xpEarned}`, updatedAt: xpNow })
-      .where(eq(userXp.id, 1))
+      .where(eq(userXp.userId, userId))
       .returning();
     if (xpUpdated.length === 0) {
-      await db.insert(userXp).values({ id: 1, totalXp: xpEarned, updatedAt: xpNow });
+      await db.insert(userXp).values({ id: nanoid(), userId, totalXp: xpEarned, updatedAt: xpNow });
     }
-    const xpRows = await db.select().from(userXp).where(eq(userXp.id, 1));
+    const xpRows = await db.select().from(userXp).where(eq(userXp.userId, userId));
     const xpProgress = getXpProgress(xpRows[0]?.totalXp ?? xpEarned);
 
     return NextResponse.json({ score, correctCount, totalAnswered, xpEarned, xpProgress });
-  } catch (err) {
-    console.error('Session complete error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Session complete error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

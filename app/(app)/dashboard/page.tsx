@@ -1,12 +1,13 @@
 import { db } from '@/db';
 import { studyPlanItems, srCards, studyGoals, userXp } from '@/db/schema';
 import { getStreakInfo } from '@/lib/streak';
+import { getAuthUser } from '@/lib/auth';
 import { StreakWidget } from '@/components/dashboard/StreakWidget';
 import { TodayPlanCard } from '@/components/dashboard/TodayPlanCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target, GraduationCap } from 'lucide-react';
+import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target } from 'lucide-react';
 import Link from 'next/link';
 import { todayString } from '@/lib/utils';
 import { todayStr } from '@/lib/sr';
@@ -16,18 +17,20 @@ import { eq } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
+  const auth = await getAuthUser();
+  const userId = auth?.userId ?? '';
   const today = todayStr();
   const [streakInfo, todayPlans, allSrCards, goals, xpRows] = await Promise.all([
-    getStreakInfo().catch(() => ({
+    getStreakInfo(userId).catch(() => ({
       currentStreak: 0, longestStreak: 0, totalStudyDays: 0,
       todayComplete: false, last7Days: [],
     })),
     db.query.studyPlanItems.findMany({
-      where: (p, { eq }) => eq(p.planDate, todayString()),
+      where: (p, { eq, and }) => and(eq(p.userId, userId), eq(p.planDate, todayString())),
     }),
-    db.select().from(srCards),
-    db.select().from(studyGoals).limit(1),
-    db.select().from(userXp).where(eq(userXp.id, 1)),
+    db.select().from(srCards).where(eq(srCards.userId, userId)),
+    db.select().from(studyGoals).where(eq(studyGoals.userId, userId)).limit(1),
+    db.select().from(userXp).where(eq(userXp.userId, userId)),
   ]);
 
   const xpProgress = getXpProgress(xpRows[0]?.totalXp ?? 0);

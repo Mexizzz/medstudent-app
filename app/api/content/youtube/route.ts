@@ -3,9 +3,12 @@ import { db } from '@/db';
 import { contentSources } from '@/db/schema';
 import { extractYoutubeTranscript } from '@/lib/content/youtube-extractor';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const body = await req.json();
     const { url, title, subject, topic, manualText } = body;
 
@@ -67,8 +70,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ id, title, wordCount, videoId });
-  } catch (err) {
-    console.error('YouTube error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('YouTube error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

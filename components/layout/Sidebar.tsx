@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Flame
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Flame, LogOut, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -26,13 +26,21 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [xp, setXp] = useState<XpProgress | null>(null);
   const [streak, setStreak] = useState<{ currentStreak: number; todayComplete: boolean } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; name?: string } | null>(null);
 
   useEffect(() => {
     fetch('/api/xp').then(r => r.json()).then(setXp).catch(() => {});
     fetch('/api/streak').then(r => r.json()).then(setStreak).catch(() => {});
+    fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user)).catch(() => {});
   }, []);
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  }
 
   return (
     <aside className="fixed inset-y-0 left-0 w-56 flex flex-col z-20"
@@ -78,9 +86,9 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer: Med Rank */}
-      <div className="px-4 py-3 border-t border-sidebar-border">
-        {xp ? (
+      {/* Footer: Med Rank + User */}
+      <div className="px-4 py-3 border-t border-sidebar-border space-y-3">
+        {xp && (
           <Link href="/dashboard" className="block group">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="text-lg">{xp.rank.badge}</span>
@@ -96,8 +104,17 @@ export function Sidebar() {
               />
             </div>
           </Link>
-        ) : (
-          <p className="text-xs text-sidebar-foreground/40">Powered by Claude AI</p>
+        )}
+        {user && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <User className="w-3.5 h-3.5 text-sidebar-foreground/50 flex-shrink-0" />
+              <span className="text-xs text-sidebar-foreground/60 truncate">{user.name || user.email}</span>
+            </div>
+            <button onClick={handleLogout} className="p-1 rounded hover:bg-white/10 text-sidebar-foreground/40 hover:text-white transition-colors" title="Log out">
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
       </div>
     </aside>

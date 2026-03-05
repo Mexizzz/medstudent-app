@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { streakRecords } from '@/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { todayString } from './utils';
 
 export interface StreakInfo {
@@ -11,10 +11,11 @@ export interface StreakInfo {
   last7Days: { date: string; studied: boolean }[];
 }
 
-export async function getStreakInfo(): Promise<StreakInfo> {
+export async function getStreakInfo(userId: string): Promise<StreakInfo> {
   const records = await db
     .select({ studyDate: streakRecords.studyDate })
     .from(streakRecords)
+    .where(eq(streakRecords.userId, userId))
     .orderBy(desc(streakRecords.studyDate));
 
   const studiedDates = new Set(records.map(r => r.studyDate));
@@ -81,14 +82,14 @@ export async function getStreakInfo(): Promise<StreakInfo> {
   };
 }
 
-export async function markTodayStudied(durationMinutes: number): Promise<void> {
+export async function markTodayStudied(durationMinutes: number, userId: string): Promise<void> {
   const { nanoid } = await import('nanoid');
   const today = todayString();
   const now = new Date();
 
   // Upsert: if today exists, increment; otherwise insert
   const existing = await db.query.streakRecords.findFirst({
-    where: (r, { eq }) => eq(r.studyDate, today),
+    where: (r, { eq, and }) => and(eq(r.userId, userId), eq(r.studyDate, today)),
   });
 
   if (existing) {
@@ -99,11 +100,12 @@ export async function markTodayStudied(durationMinutes: number): Promise<void> {
         totalMinutes: (existing.totalMinutes ?? 0) + durationMinutes,
       })
       .where(
-        (await import('drizzle-orm')).eq(streakRecords.studyDate, today)
+        (await import('drizzle-orm')).eq(streakRecords.id, existing.id)
       );
   } else {
     await db.insert(streakRecords).values({
       id: nanoid(),
+      userId,
       studyDate: today,
       sessionsCount: 1,
       totalMinutes: durationMinutes,

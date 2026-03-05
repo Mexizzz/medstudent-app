@@ -5,9 +5,12 @@ import { contentSources } from '@/db/schema';
 import { savePdfFile, extractPdfText } from '@/lib/content/pdf-extractor';
 import { nanoid } from 'nanoid';
 import path from 'path';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    await requireAuth();
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const title = formData.get('title') as string;
@@ -44,8 +47,10 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ id, title, wordCount, pageCount });
-  } catch (err) {
-    console.error('Upload error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

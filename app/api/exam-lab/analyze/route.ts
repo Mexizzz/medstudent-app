@@ -7,6 +7,7 @@ import { extractPdfText, savePdfFile } from '@/lib/content/pdf-extractor';
 import { nanoid } from 'nanoid';
 import path from 'path';
 import fs from 'fs/promises';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export const maxDuration = 120;
 
@@ -36,6 +37,8 @@ async function callGroqAnalyze(text: string): Promise<ExamStyleAnalysis> {
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const formData = await req.formData();
     const name = (formData.get('name') as string | null)?.trim();
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -66,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     const profile = {
       id: nanoid(),
+      userId,
       name,
       styleAnalysis: JSON.stringify(styleAnalysis),
       rawTextSnippet: rawText.slice(0, 500),
@@ -78,8 +82,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       profile: { ...profile, styleAnalysis },
     });
-  } catch (err) {
-    console.error('Exam analyze error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Exam analyze error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

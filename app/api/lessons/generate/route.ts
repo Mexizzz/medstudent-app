@@ -4,6 +4,7 @@ import { lessons } from '@/db/schema';
 import { groq, MODEL } from '@/lib/ai/client';
 import { fetchMedicalDiagram } from '@/lib/ai/diagrams';
 import { nanoid } from 'nanoid';
+import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export const maxDuration = 120;
 
@@ -41,6 +42,8 @@ Create exactly 3 sections.`;
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await requireAuth();
+
     const { topic } = await req.json();
     if (!topic?.trim()) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
@@ -78,6 +81,7 @@ export async function POST(req: NextRequest) {
 
     await db.insert(lessons).values({
       id,
+      userId,
       title: parsed.title,
       topic: topic.trim(),
       overview: parsed.overview ?? '',
@@ -99,8 +103,10 @@ export async function POST(req: NextRequest) {
         createdAt: now,
       },
     });
-  } catch (err) {
-    console.error('Lesson generate error:', err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+  } catch (error) {
+    const authErr = handleAuthError(error);
+    if (authErr) return authErr;
+    console.error('Lesson generate error:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
