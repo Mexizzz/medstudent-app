@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { sessionResponses, questions } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function GET() {
@@ -42,7 +42,7 @@ export async function GET() {
       })
       .from(sessionResponses)
       .innerJoin(questions, eq(sessionResponses.questionId, questions.id))
-      .where(sql`${sessionResponses.userId} = ${userId} AND ${sessionResponses.isCorrect} = 0`)
+      .where(and(eq(sessionResponses.userId, userId), eq(sessionResponses.isCorrect, false)))
       .groupBy(sessionResponses.questionId)
       .orderBy(sql`wrong_count desc`);
 
@@ -65,7 +65,7 @@ export async function DELETE(req: Request) {
     await db
       .delete(sessionResponses)
       .where(
-        sql`${sessionResponses.userId} = ${userId} AND ${sessionResponses.questionId} = ${questionId} AND ${sessionResponses.isCorrect} = 0`
+        and(eq(sessionResponses.userId, userId), eq(sessionResponses.questionId, questionId), eq(sessionResponses.isCorrect, false))
       );
 
     return NextResponse.json({ ok: true });
