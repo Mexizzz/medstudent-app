@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, roomMembers } from '@/db/schema';
-import { sql, desc } from 'drizzle-orm';
+import { users, contentSources, questions, studySessions, sessionResponses, studyRooms } from '@/db/schema';
+import { sql, desc, eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
         id: users.id,
         email: users.email,
         name: users.name,
+        passwordHash: users.passwordHash,
         createdAt: users.createdAt,
         sessionCount: sql<number>`(SELECT count(*) FROM study_sessions WHERE user_id = ${users.id})`,
         responseCount: sql<number>`(SELECT count(*) FROM session_responses WHERE user_id = ${users.id})`,
@@ -71,6 +73,27 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Admin API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PATCH — reset a user's password
+export async function PATCH(req: NextRequest) {
+  try {
+    const { adminPassword, userId, newPassword } = await req.json();
+    if (adminPassword !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+    if (!userId || !newPassword || newPassword.length < 4) {
+      return NextResponse.json({ error: 'User ID and new password (min 4 chars) required' }, { status: 400 });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 10);
+    await db.update(users).set({ passwordHash: hash }).where(eq(users.id, userId));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Admin reset password error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

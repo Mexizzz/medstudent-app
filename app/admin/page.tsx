@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, Users, BookOpen, HelpCircle, Activity, MessageSquare, LogOut } from 'lucide-react';
+import { Lock, Users, BookOpen, HelpCircle, Activity, MessageSquare, LogOut, KeyRound } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AdminData {
   stats: { users: number; sources: number; questions: number; sessions: number; responses: number; rooms: number };
-  users: { id: string; email: string; name: string | null; createdAt: string; sessionCount: number; responseCount: number }[];
+  users: { id: string; email: string; name: string | null; passwordHash: string; createdAt: string; sessionCount: number; responseCount: number }[];
   recentSessions: { id: string; userId: string; status: string; totalQuestions: number; correctCount: number; score: number | null; startedAt: string }[];
   rooms: { id: string; name: string; joinCode: string; createdAt: string; memberCount: number }[];
 }
@@ -18,6 +19,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<AdminData | null>(null);
+  const [resetUserId, setResetUserId] = useState<string | null>(null);
+  const [newPass, setNewPass] = useState('');
 
   async function handleLogin() {
     if (!password.trim()) return;
@@ -36,6 +39,24 @@ export default function AdminPage() {
       setError('Failed to connect');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResetPassword(userId: string) {
+    if (!newPass || newPass.length < 4) { toast.error('Min 4 characters'); return; }
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, userId, newPassword: newPass }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error); return; }
+      toast.success('Password reset successfully');
+      setResetUserId(null);
+      setNewPass('');
+    } catch {
+      toast.error('Failed to reset');
     }
   }
 
@@ -114,9 +135,11 @@ export default function AdminPage() {
                 <tr>
                   <th className="px-4 py-2">Email</th>
                   <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Password Hash</th>
                   <th className="px-4 py-2">Sessions</th>
                   <th className="px-4 py-2">Responses</th>
                   <th className="px-4 py-2">Joined</th>
+                  <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700">
@@ -124,13 +147,34 @@ export default function AdminPage() {
                   <tr key={u.id} className="hover:bg-slate-750">
                     <td className="px-4 py-2.5 font-mono text-xs">{u.email}</td>
                     <td className="px-4 py-2.5">{u.name || '-'}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-500 max-w-[150px] truncate" title={u.passwordHash}>{u.passwordHash.slice(0, 20)}...</td>
                     <td className="px-4 py-2.5">{u.sessionCount}</td>
                     <td className="px-4 py-2.5">{u.responseCount}</td>
                     <td className="px-4 py-2.5 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-2.5">
+                      {resetUserId === u.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="text"
+                            value={newPass}
+                            onChange={e => setNewPass(e.target.value)}
+                            placeholder="New password"
+                            className="h-7 w-28 text-xs bg-slate-700 border-slate-600"
+                            onKeyDown={e => e.key === 'Enter' && handleResetPassword(u.id)}
+                          />
+                          <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => handleResetPassword(u.id)}>Set</Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setResetUserId(null); setNewPass(''); }}>X</Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-slate-400 hover:text-slate-200" onClick={() => setResetUserId(u.id)}>
+                          <KeyRound className="w-3 h-3" /> Reset
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">No users yet</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No users yet</td></tr>
                 )}
               </tbody>
             </table>
