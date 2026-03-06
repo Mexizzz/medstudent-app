@@ -36,7 +36,8 @@ export async function GET() {
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
-    throw error;
+    console.error('GET /api/study-rooms error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
-    throw error;
+    console.error('POST /api/study-rooms error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
