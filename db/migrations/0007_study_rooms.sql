@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS study_rooms (
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at INTEGER NOT NULL
 );
-
+-->statement-breakpoint
 CREATE TABLE IF NOT EXISTS room_members (
   id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES study_rooms(id) ON DELETE CASCADE,
@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS room_members (
   last_seen_at INTEGER NOT NULL,
   joined_at INTEGER NOT NULL
 );
-
+-->statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS room_user_unique ON room_members(room_id, user_id);
-
+-->statement-breakpoint
 CREATE TABLE IF NOT EXISTS room_messages (
   id TEXT PRIMARY KEY,
   room_id TEXT NOT NULL REFERENCES study_rooms(id) ON DELETE CASCADE,
