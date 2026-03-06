@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -23,6 +23,8 @@ const navItems = [
   { href: '/exam-lab',       label: 'Exam Lab',       icon: FlaskConical },
   { href: '/summaries',      label: 'Summaries',      icon: NotebookPen },
   { href: '/study-rooms',    label: 'Study Rooms',    icon: Users },
+  { href: '/friends',         label: 'Friends',        icon: UserPlus },
+  { href: '/chat',            label: 'Messages',       icon: MessageCircle },
 ];
 
 export function Sidebar() {
@@ -121,10 +123,10 @@ export function Sidebar() {
         )}
         {user && (
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <User className="w-3.5 h-3.5 text-sidebar-foreground/50 flex-shrink-0" />
-              <span className="text-xs text-sidebar-foreground/60 truncate">{user.name || user.email}</span>
-            </div>
+            <Link href="/profile" className="flex items-center gap-2 min-w-0 group">
+              <User className="w-3.5 h-3.5 text-sidebar-foreground/50 flex-shrink-0 group-hover:text-white" />
+              <span className="text-xs text-sidebar-foreground/60 truncate group-hover:text-white transition-colors">{user.name || user.email}</span>
+            </Link>
             <button onClick={handleLogout} className="p-1 rounded hover:bg-white/10 text-sidebar-foreground/40 hover:text-white transition-colors" title="Log out">
               <LogOut className="w-3.5 h-3.5" />
             </button>

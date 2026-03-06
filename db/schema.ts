@@ -6,6 +6,9 @@ export const users = sqliteTable('users', {
   email:        text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   name:         text('name'),
+  username:     text('username').unique(),
+  bio:          text('bio'),
+  avatarUrl:    text('avatar_url'),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -250,6 +253,37 @@ export const passwordResetCodes = sqliteTable('password_reset_codes', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
   used:      integer('used', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+// ── Friend Requests ──────────────────────────────────
+export const friendRequests = sqliteTable('friend_requests', {
+  id:         text('id').primaryKey(),
+  fromUserId: text('from_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  toUserId:   text('to_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status:     text('status').notNull().default('pending'), // 'pending' | 'accepted' | 'rejected'
+  createdAt:  integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  requestUnique: uniqueIndex('friend_request_unique').on(table.fromUserId, table.toUserId),
+}));
+
+// ── Friendships ──────────────────────────────────────
+export const friendships = sqliteTable('friendships', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  friendId:  text('friend_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  friendshipUnique: uniqueIndex('friendship_unique').on(table.userId, table.friendId),
+}));
+
+// ── Direct Messages ──────────────────────────────────
+export const directMessages = sqliteTable('direct_messages', {
+  id:         text('id').primaryKey(),
+  senderId:   text('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  receiverId: text('receiver_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content:    text('content').notNull(),
+  read:       integer('read', { mode: 'boolean' }).notNull().default(false),
+  createdAt:  integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
 // ── Type exports ───────────────────────────────────────
