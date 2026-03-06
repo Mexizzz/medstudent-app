@@ -7,6 +7,7 @@ import { calculateSM2, todayStr } from '@/lib/sr';
 import { calcSessionXp, getXpProgress } from '@/lib/xp';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 interface ResponseInput {
   questionId: string;

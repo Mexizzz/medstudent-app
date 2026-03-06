@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import type { GeneratedLabQuestion } from '@/lib/exam-lab';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

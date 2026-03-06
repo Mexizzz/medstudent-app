@@ -4,6 +4,7 @@ import { friendRequests, friendships } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // POST — accept or reject a friend request
 export async function POST(req: NextRequest) {

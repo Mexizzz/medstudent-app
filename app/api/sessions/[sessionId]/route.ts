@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { questions, studySessions } from '@/db/schema';
 import { inArray, eq, and } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 function shuffleMcqOptions<T extends { type: string; optionA: string | null; optionB: string | null; optionC: string | null; optionD: string | null; correctAnswer: string | null }>(q: T): T {
   if (q.type !== 'mcq' || !q.correctAnswer || !q.optionA) return q;

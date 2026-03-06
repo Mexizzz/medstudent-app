@@ -4,6 +4,7 @@ import { contentSources, questions } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   _req: NextRequest,

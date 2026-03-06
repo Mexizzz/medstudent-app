@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { users, contentSources, questions, studySessions, sessionResponses, studyRooms } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 

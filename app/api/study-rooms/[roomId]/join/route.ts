@@ -4,6 +4,7 @@ import { studyRooms, roomMembers, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // POST — join a room (by roomId from URL, joinCode in body)
 export async function POST(

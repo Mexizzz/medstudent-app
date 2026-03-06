@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { roomMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, AuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // POST — toggle own mic on/off
 export async function POST(

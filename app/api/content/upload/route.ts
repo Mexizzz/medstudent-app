@@ -6,6 +6,7 @@ import { savePdfFile, extractPdfText } from '@/lib/content/pdf-extractor';
 import { nanoid } from 'nanoid';
 import path from 'path';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

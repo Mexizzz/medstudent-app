@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { users, passwordResetCodes } from '@/db/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

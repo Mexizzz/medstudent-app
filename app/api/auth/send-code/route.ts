@@ -4,6 +4,7 @@ import { users, passwordResetCodes } from '@/db/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { sendResetCode } from '@/lib/email';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

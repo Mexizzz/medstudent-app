@@ -4,6 +4,7 @@ import { studyRooms, roomMembers, users } from '@/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, AuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

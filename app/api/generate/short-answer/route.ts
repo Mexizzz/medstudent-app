@@ -6,6 +6,7 @@ import { generateShortAnswers } from '@/lib/ai/generators';
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

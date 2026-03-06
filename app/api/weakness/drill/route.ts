@@ -4,6 +4,7 @@ import { questions, studySessions, contentSources } from '@/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

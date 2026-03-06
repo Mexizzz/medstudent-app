@@ -4,6 +4,7 @@ import { contentSources } from '@/db/schema';
 import { extractYoutubeTranscript } from '@/lib/content/youtube-extractor';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

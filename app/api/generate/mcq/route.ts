@@ -7,6 +7,7 @@ export const maxDuration = 120;
 import { nanoid } from 'nanoid';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

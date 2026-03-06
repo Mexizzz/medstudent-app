@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { questions, contentSources } from '@/db/schema';
 import { inArray, isNotNull, and, eq } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET /api/questions/topics?sourceIds=a,b,c&types=mcq,flashcard
 export async function GET(req: NextRequest) {

@@ -4,6 +4,7 @@ import { topicPerformance, sessionResponses, questions, contentSources } from '@
 import { groq } from '@/lib/ai/client';
 import { sql, eq, and, inArray } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // Use a fast model with a higher daily token limit for interactive chat
 const TUTOR_MODEL = 'llama-3.1-8b-instant';

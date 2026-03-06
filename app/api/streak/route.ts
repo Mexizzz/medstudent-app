@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getStreakInfo } from '@/lib/streak';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

@@ -4,6 +4,7 @@ import { srCards } from '@/db/schema';
 import { lte, eq } from 'drizzle-orm';
 import { todayStr } from '@/lib/sr';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

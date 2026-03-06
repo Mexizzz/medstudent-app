@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { roomMembers, roomMessages } from '@/db/schema';
 import { eq, and, gt, lt } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — poll for updates (members + new messages since timestamp)
 export async function GET(

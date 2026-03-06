@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { studyRooms, roomMembers, roomMessages } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — room details + members + recent messages
 export async function GET(

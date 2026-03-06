@@ -4,6 +4,7 @@ import { directMessages, friendships, users } from '@/db/schema';
 import { eq, and, or, sql, desc } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — list conversations (latest message per friend)
 export async function GET() {

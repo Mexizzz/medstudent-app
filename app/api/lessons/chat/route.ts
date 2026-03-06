@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { groq } from '@/lib/ai/client';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 const CHAT_MODEL = 'llama-3.3-70b-versatile';
 const FALLBACK_MODEL = 'llama-3.1-8b-instant';

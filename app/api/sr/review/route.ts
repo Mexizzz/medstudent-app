@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { calculateSM2, todayStr } from '@/lib/sr';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {

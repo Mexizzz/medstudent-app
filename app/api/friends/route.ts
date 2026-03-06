@@ -4,6 +4,7 @@ import { friendRequests, friendships, users } from '@/db/schema';
 import { eq, and, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — list friends + pending requests
 export async function GET() {

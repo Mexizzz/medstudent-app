@@ -4,6 +4,7 @@ import { questions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { groq } from '@/lib/ai/client';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export const maxDuration = 60;
 

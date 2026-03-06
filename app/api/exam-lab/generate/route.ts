@@ -12,6 +12,7 @@ import { extractPdfText, savePdfFile } from '@/lib/content/pdf-extractor';
 import path from 'path';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
 

@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { lessons } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {

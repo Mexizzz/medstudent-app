@@ -4,6 +4,7 @@ import { directMessages, friendships } from '@/db/schema';
 import { eq, and, or, desc } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — messages with a specific friend
 export async function GET(

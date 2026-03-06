@@ -5,6 +5,7 @@ import { groq, MODEL } from '@/lib/ai/client';
 import { fetchMedicalDiagram } from '@/lib/ai/diagrams';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
 

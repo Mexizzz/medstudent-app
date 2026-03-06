@@ -4,6 +4,7 @@ import { voiceSignals, roomMembers } from '@/db/schema';
 import { eq, and, gt, lt } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, AuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // GET — poll for incoming signals
 export async function GET(

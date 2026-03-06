@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { roomMembers, studyRooms } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, AuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 // POST — admin mute/unmute a user
 export async function POST(

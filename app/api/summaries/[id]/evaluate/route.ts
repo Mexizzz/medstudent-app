@@ -4,6 +4,7 @@ import { summaries } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
 

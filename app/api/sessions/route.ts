@@ -4,6 +4,7 @@ import { studySessions, questions, contentSources } from '@/db/schema';
 import { inArray, sql, and, isNotNull, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 /** Shuffle MCQ options so the correct answer isn't always in the same position */
 function shuffleMcqOptions<T extends { type: string; optionA: string | null; optionB: string | null; optionC: string | null; optionD: string | null; correctAnswer: string | null }>(q: T): T {

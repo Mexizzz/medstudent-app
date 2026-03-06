@@ -4,6 +4,7 @@ import { contentSources, questions } from '@/db/schema';
 import { generateFlashcards } from '@/lib/ai/generators';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
 
