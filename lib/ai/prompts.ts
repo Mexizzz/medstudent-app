@@ -26,6 +26,8 @@ Requirements:
 - Explanation must confirm why the correct answer is right AND why each distractor is wrong
 - Base ALL answers on the provided content only — do not use outside medical knowledge
 
+IMPORTANT: The "topic" field must be a SPECIFIC sub-topic from the content (e.g. "Cell Membrane", "Nucleus", "Mitochondria"), NOT the general subject name. Each question should have the most specific topic possible.
+
 Return ONLY this JSON (no other text):
 {"questions":[{"question":"...","optionA":"...","optionB":"...","optionC":"...","optionD":"...","correctAnswer":"A","explanation":"...","difficulty":"medium","topic":"..."}]}`;
 }
@@ -77,6 +79,8 @@ Include a mix of:
 - Treatment cards (What is the first-line treatment for X?)
 - Mnemonic-based cards where helpful
 
+IMPORTANT: The "topic" field must be a SPECIFIC sub-topic from the content (e.g. "Cell Membrane", "Nucleus", "Mitochondria"), NOT the general subject name.
+
 Return ONLY this JSON (no other text):
 {"cards":[{"front":"...","back":"...","topic":"...","cardType":"definition"}]}`;
 }
@@ -123,6 +127,8 @@ Rules:
 - Include the exact correct answer
 - Include 1-3 alternative acceptable answers if applicable
 - Include a brief explanation (1-2 sentences)
+
+IMPORTANT: The "topic" field must be a SPECIFIC sub-topic from the content (e.g. "Cell Membrane", "Nucleus", "Mitochondria"), NOT the general subject name.
 
 Return ONLY this JSON (no other text):
 {"questions":[{"blankText":"sentence with [BLANK]","blankAnswer":"...","alternativeAnswers":["..."],"explanation":"...","topic":"..."}]}`;
@@ -177,6 +183,8 @@ For each question provide:
 2. A model answer (3-6 sentences, complete and accurate)
 3. A list of 3-5 key points that must be mentioned for full marks
 
+IMPORTANT: The "topic" field must be a SPECIFIC sub-topic from the content (e.g. "Cell Membrane", "Nucleus", "Mitochondria"), NOT the general subject name.
+
 Return ONLY this JSON (no other text):
 {"questions":[{"question":"...","modelAnswer":"...","keyPoints":["...","...","..."],"topic":"...","difficulty":"medium"}]}`;
 }
@@ -228,6 +236,8 @@ Each case must include:
 7. teachingPoint: Key learning objective (1 sentence)
 
 Make cases feel like real patients with realistic values.
+
+IMPORTANT: The "topic" field must be a SPECIFIC sub-topic from the content (e.g. "Cell Membrane", "Nucleus", "Mitochondria"), NOT the general subject name.
 
 Return ONLY this JSON (no other text):
 {"cases":[{"caseScenario":"...","examinationFindings":"...","investigations":"...","caseQuestion":"...","caseAnswer":"...","caseRationale":"...","teachingPoint":"...","topic":"...","difficulty":"medium"}]}`;

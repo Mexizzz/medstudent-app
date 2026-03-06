@@ -50,10 +50,9 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
     }
 
     setLoading(true);
-    let totalGenerated = 0;
 
-    for (const type of selected) {
-      try {
+    const results = await Promise.allSettled(
+      selected.map(async (type) => {
         const endpoint = type.id === 'fill_blank' ? 'fill-blank'
           : type.id === 'short_answer' ? 'short-answer'
           : type.id === 'clinical_case' ? 'clinical-case'
@@ -64,21 +63,26 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sourceId,
-            // MCQ PDFs: pass a very high count so the backend extracts everything
             count: isMcqPdf ? 9999 : selections[type.id].count,
             difficulty,
           }),
         });
-        // Guard against HTML error pages (timeout / server crash)
         const contentType = res.headers.get('content-type') ?? '';
         if (!contentType.includes('application/json')) {
-          throw new Error(`Server error (${res.status}). Try generating fewer questions or try again.`);
+          throw new Error(`Server error (${res.status}). Try again.`);
         }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        totalGenerated += data.generated ?? 0;
-      } catch (err) {
-        toast.error(`Failed to generate ${type.label}: ${err}`);
+        return { label: type.label, generated: data.generated ?? 0 };
+      })
+    );
+
+    let totalGenerated = 0;
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        totalGenerated += r.value.generated;
+      } else {
+        toast.error(`Generation failed: ${r.reason}`);
       }
     }
 
