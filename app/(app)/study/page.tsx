@@ -121,7 +121,7 @@ function StudyPageContent() {
   const allTopicsSelected = selectedTopics.length === 0;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Start Studying</h1>
         <p className="text-slate-500 text-sm mt-1">Configure your study session</p>

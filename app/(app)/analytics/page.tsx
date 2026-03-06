@@ -80,7 +80,7 @@ export default async function AnalyticsPage() {
   const { bySubject, byTopic, overTime, weakTopics, remediationTopics, strongTopics } = await getAnalytics();
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Analytics</h1>
         <p className="text-slate-500 text-sm mt-1">Track your performance over time</p>

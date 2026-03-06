@@ -41,7 +41,7 @@ export default function LibraryPage() {
   useEffect(() => { fetchSources(); }, [fetchSources]);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Library</h1>

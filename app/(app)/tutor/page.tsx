@@ -135,23 +135,23 @@ export default function TutorPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-white shrink-0">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 rounded-xl">
+          <div className="p-2 bg-blue-50 rounded-xl hidden sm:block">
             <GraduationCap className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-800">AI Tutor</h1>
-            <p className="text-xs text-slate-400">Personalized teaching based on your weak areas</p>
+            <h1 className="text-base sm:text-lg font-bold text-slate-800">AI Tutor</h1>
+            <p className="text-xs text-slate-400 hidden sm:block">Personalized teaching based on your weak areas</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {streaming && (
-            <div className="flex items-center gap-1.5 text-xs text-blue-500 bg-blue-50 px-3 py-1.5 rounded-full">
+            <div className="flex items-center gap-1.5 text-xs text-blue-500 bg-blue-50 px-2 sm:px-3 py-1.5 rounded-full">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Teaching…
+              <span className="hidden sm:inline">Teaching…</span>
             </div>
           )}
           <Button
@@ -162,7 +162,7 @@ export default function TutorPage() {
             disabled={streaming}
           >
             <Trash2 className="w-4 h-4" />
-            New Session
+            <span className="hidden sm:inline">New Session</span>
           </Button>
         </div>
       </div>

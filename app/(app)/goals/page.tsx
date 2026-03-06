@@ -87,7 +87,7 @@ export default function GoalsPage() {
     : null;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-blue-100 rounded-xl">
           <Target className="w-6 h-6 text-blue-600" />

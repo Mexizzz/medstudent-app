@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Pen, Eraser, Trash2, Undo2, Save, Sparkles, Plus,
-  Loader2, Type, BookOpen, ChevronRight, Star, ChevronLeft, ImagePlus, X, Lightbulb,
+  Loader2, Type, BookOpen, ChevronRight, Star, ChevronLeft, ImagePlus, X, Lightbulb, Menu,
 } from 'lucide-react';
 import type { Summary } from '@/db/schema';
 
@@ -200,6 +200,7 @@ export default function SummariesPage() {
   const [showResult, setShowResult] = useState(true);
   const [showPanel,  setShowPanel]  = useState(true);
   const [saving,     setSaving]     = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   // ── Redraw entire canvas from vector data ─────────────────────────────────
 
@@ -724,18 +725,35 @@ export default function SummariesPage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-3.5rem)] lg:h-screen">
+
+      {/* Backdrop overlay for mobile sidebar */}
+      {showSidebar && (
+        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setShowSidebar(false)} />
+      )}
 
       {/* ── Left sidebar ───────────────────────────────────────────── */}
-      <aside className="w-52 border-r border-slate-200 bg-slate-50 flex flex-col shrink-0">
-        <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+      <aside className={cn(
+        'w-52 border-r border-slate-200 bg-slate-50 flex flex-col shrink-0 transition-transform duration-200',
+        'fixed inset-y-0 left-0 z-40 lg:relative lg:translate-x-0',
+        showSidebar ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="px-4 py-3 sm:py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-indigo-500" />
             <p className="text-sm font-semibold text-slate-700">My Summaries</p>
           </div>
-          <button onClick={handleNew} className="p-1 rounded-md hover:bg-slate-200 text-slate-500">
-            <Plus className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={handleNew} className="p-1 rounded-md hover:bg-slate-200 text-slate-500">
+              <Plus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors lg:hidden"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
@@ -780,7 +798,14 @@ export default function SummariesPage() {
       <main className="flex-1 overflow-y-auto flex flex-col">
 
         {/* Meta bar */}
-        <div className="border-b border-slate-200 px-5 py-3 flex flex-wrap gap-3 items-center bg-white shrink-0">
+        <div className="border-b border-slate-200 px-4 sm:px-5 py-3 flex flex-wrap gap-3 items-center bg-white shrink-0">
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors lg:hidden"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
           <Input value={title}   onChange={e => { setTitle(e.target.value);   setIsDirty(true); }} placeholder="Summary title…"    className="w-48 h-8 text-sm font-medium" />
           <Input value={subject} onChange={e => { setSubject(e.target.value); setIsDirty(true); }} placeholder="Subject (optional)" className="w-36 h-8 text-xs" />
           <Input value={topic}   onChange={e => { setTopic(e.target.value);   setIsDirty(true); }} placeholder="Lesson / topic"     className="w-44 h-8 text-xs" />
@@ -798,7 +823,7 @@ export default function SummariesPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="border-b border-slate-200 px-5 py-2 flex flex-wrap gap-4 items-center bg-white shrink-0">
+        <div className="border-b border-slate-200 px-4 sm:px-5 py-2 flex flex-wrap gap-4 items-center bg-white shrink-0">
 
           {/* Mode toggle */}
           <div className="flex gap-0.5 bg-slate-100 rounded-lg p-0.5">

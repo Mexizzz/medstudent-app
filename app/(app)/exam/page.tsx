@@ -190,7 +190,7 @@ export default function ExamPage() {
   // ── Config screen ─────────────────────────────────────────────────────────
   if (phase === 'config') {
     return (
-      <div className="p-6 max-w-2xl mx-auto space-y-5">
+      <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-5">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-violet-100 rounded-xl">
             <GraduationCap className="w-6 h-6 text-violet-600" />
@@ -276,7 +276,7 @@ export default function ExamPage() {
     const isCorrect = userAns === reviewQ?.correctAnswer;
 
     return (
-      <div className="p-6 max-w-2xl mx-auto space-y-5">
+      <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-5">
         {/* Score card */}
         <Card className={cn('border-2', score >= 60 ? 'border-emerald-200 bg-emerald-50/30' : 'border-red-200 bg-red-50/20')}>
           <CardContent className="p-6 text-center space-y-2">

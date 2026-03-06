@@ -8,7 +8,7 @@ export default function AppLayout({
   return (
     <>
       <Sidebar />
-      <div className="pl-56">
+      <div className="lg:pl-56 pt-14 lg:pt-0">
         <main className="min-h-screen">
           {children}
         </main>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Flame, LogOut, User
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Flame, LogOut, User, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -30,6 +30,7 @@ export function Sidebar() {
   const [xp, setXp] = useState<XpProgress | null>(null);
   const [streak, setStreak] = useState<{ currentStreak: number; todayComplete: boolean } | null>(null);
   const [user, setUser] = useState<{ id: string; email: string; name?: string } | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/xp').then(r => r.json()).then(setXp).catch(() => {});
@@ -37,14 +38,18 @@ export function Sidebar() {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user)).catch(() => {});
   }, []);
 
+  // Close mobile nav on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   }
 
-  return (
-    <aside className="fixed inset-y-0 left-0 w-56 flex flex-col z-20"
-           style={{ background: 'var(--sidebar)' }}>
+  const sidebarContent = (
+    <>
       {/* Logo + streak */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
@@ -53,19 +58,27 @@ export function Sidebar() {
           </div>
           <span className="font-semibold text-white text-lg tracking-tight">MedStudy</span>
         </div>
-        {streak && (
-          <div className={cn(
-            'flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold',
-            streak.todayComplete ? 'bg-orange-500/20 text-orange-300' : 'bg-white/10 text-white/40'
-          )}>
-            <Flame className="w-3 h-3" />
-            {streak.currentStreak}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {streak && (
+            <div className={cn(
+              'flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold',
+              streak.todayComplete ? 'bg-orange-500/20 text-orange-300' : 'bg-white/10 text-white/40'
+            )}>
+              <Flame className="w-3 h-3" />
+              {streak.currentStreak}
+            </div>
+          )}
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-1 rounded hover:bg-white/10 text-white/60"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (
@@ -117,6 +130,53 @@ export function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 z-30 flex items-center px-4 gap-3 border-b border-slate-200 bg-white">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 -ml-2 rounded-lg hover:bg-slate-100"
+        >
+          <Menu className="w-5 h-5 text-slate-700" />
+        </button>
+        <div className="flex items-center gap-2">
+          <Stethoscope className="w-4 h-4 text-blue-600" />
+          <span className="font-semibold text-slate-800">MedStudy</span>
+        </div>
+        {streak && (
+          <div className={cn(
+            'ml-auto flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold',
+            streak.todayComplete ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'
+          )}>
+            <Flame className="w-3 h-3" />
+            {streak.currentStreak}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop: fixed left, mobile: slide-in drawer */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 w-56 flex flex-col z-50 transition-transform duration-200',
+          'lg:translate-x-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}
+        style={{ background: 'var(--sidebar)' }}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

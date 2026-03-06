@@ -65,7 +65,7 @@ export default function StudyPlanPage() {
   const selectedDatePlans = selectedDate ? (plansByDate[selectedDate] ?? []) : [];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Study Plan</h1>
         <p className="text-slate-500 text-sm mt-1">Plan your daily study sessions</p>

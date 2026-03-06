@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   FlaskConical, Plus, Trash2, Loader2, Upload, FileText,
-  ChevronDown, ChevronUp, BookOpen, Sparkles, CheckCircle2, X,
+  ChevronDown, ChevronUp, BookOpen, Sparkles, CheckCircle2, X, Menu,
 } from 'lucide-react';
 import type { ExamProfile } from '@/db/schema';
 import type { ExamStyleAnalysis, GeneratedLabQuestion, QuestionMode } from '@/lib/exam-lab';
@@ -261,6 +261,9 @@ export default function ExamLabPage() {
   const [generating, setGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedLabQuestion[]>([]);
 
+  // Mobile sidebar
+  const [showSidebar, setShowSidebar] = useState(false);
+
   // Save
   const [saveTitle, setSaveTitle] = useState('');
   const [saving, setSaving] = useState(false);
@@ -407,20 +410,37 @@ export default function ExamLabPage() {
   const hasMaterial = useMaterialText ? materialText.trim().length > 0 : !!materialFile;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-3.5rem)] lg:h-screen">
+      {/* Backdrop overlay for mobile sidebar */}
+      {showSidebar && (
+        <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setShowSidebar(false)} />
+      )}
+
       {/* Left sidebar — profiles */}
-      <aside className="w-52 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0">
-        <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+      <aside className={cn(
+        'w-52 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0 transition-transform duration-200',
+        'fixed inset-y-0 left-0 z-40 lg:relative lg:translate-x-0',
+        showSidebar ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <div className="px-4 py-3 sm:py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FlaskConical className="w-4 h-4 text-indigo-500" />
             <p className="text-sm font-semibold text-slate-700">Exam Profiles</p>
           </div>
-          <button
-            onClick={() => setShowAddForm(v => !v)}
-            className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors"
-          >
-            {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowAddForm(v => !v)}
+              className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors"
+            >
+              {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors lg:hidden"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Add profile form */}
@@ -499,7 +519,15 @@ export default function ExamLabPage() {
       </aside>
 
       {/* Main work area */}
-      <main className="flex-1 overflow-y-auto px-6 py-6">
+      <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-6">
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setShowSidebar(true)}
+          className="mb-3 p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors lg:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
         {!selectedProfile ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
             <div className="p-5 bg-indigo-50 rounded-full">
