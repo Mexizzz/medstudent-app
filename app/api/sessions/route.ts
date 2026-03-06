@@ -5,6 +5,39 @@ import { inArray, sql, and, isNotNull, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
+/** Shuffle MCQ options so the correct answer isn't always in the same position */
+function shuffleMcqOptions<T extends { type: string; optionA: string | null; optionB: string | null; optionC: string | null; optionD: string | null; correctAnswer: string | null }>(q: T): T {
+  if (q.type !== 'mcq' || !q.correctAnswer || !q.optionA) return q;
+
+  const labels = ['A', 'B', 'C', 'D'] as const;
+  const options: Record<string, string | null> = { A: q.optionA, B: q.optionB, C: q.optionC, D: q.optionD };
+  const correctText = options[q.correctAnswer];
+
+  // Fisher-Yates shuffle of label order
+  const shuffled = [...labels];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const newOptions: Record<string, string | null> = {};
+  let newCorrect = q.correctAnswer;
+  shuffled.forEach((origLabel, idx) => {
+    const newLabel = labels[idx];
+    newOptions[newLabel] = options[origLabel];
+    if (options[origLabel] === correctText) newCorrect = newLabel;
+  });
+
+  return {
+    ...q,
+    optionA: newOptions.A,
+    optionB: newOptions.B,
+    optionC: newOptions.C,
+    optionD: newOptions.D,
+    correctAnswer: newCorrect,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
@@ -81,7 +114,9 @@ export async function POST(req: NextRequest) {
       startedAt: now,
     });
 
-    return NextResponse.json({ sessionId, questions: pool, total: pool.length });
+    const shuffledPool = pool.map(q => shuffleMcqOptions(q));
+
+    return NextResponse.json({ sessionId, questions: shuffledPool, total: shuffledPool.length });
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
