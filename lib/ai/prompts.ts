@@ -10,11 +10,11 @@ CRITICAL ACCURACY RULES:
 
 You MUST respond with valid JSON only. No text outside the JSON object.`;
 
-export function mcqUserPrompt(text: string, count: number, subject: string, topic: string, difficulty: string): string {
+export function mcqUserPrompt(text: string, count: number, subject: string, topic: string, difficulty: string, focusTopic?: string): string {
   return `Based on the following medical content, generate exactly ${count} multiple choice questions.
 
 Content topic: ${subject} — ${topic}
-Difficulty level: ${difficulty}
+Difficulty level: ${difficulty}${focusTopic ? `\n\nFOCUS: Generate ALL questions specifically about "${focusTopic}". Every question must be related to this sub-topic.` : ''}
 
 CONTENT:
 ${text}
@@ -64,10 +64,10 @@ Backs should be concise but complete — enough to fully answer the front.
 All information must be medically accurate.
 You MUST respond with valid JSON only. No text outside the JSON object.`;
 
-export function flashcardUserPrompt(text: string, count: number, subject: string, topic: string): string {
+export function flashcardUserPrompt(text: string, count: number, subject: string, topic: string, focusTopic?: string): string {
   return `Generate exactly ${count} flashcards from the following medical content.
 
-Content topic: ${subject} — ${topic}
+Content topic: ${subject} — ${topic}${focusTopic ? `\n\nFOCUS: Generate ALL flashcards specifically about "${focusTopic}". Every card must be related to this sub-topic.` : ''}
 
 CONTENT:
 ${text}
@@ -112,10 +112,10 @@ Sentences should be complete and medically accurate with the blank replaced by [
 Never create blanks for common words like "the", "is", "and", etc.
 You MUST respond with valid JSON only. No text outside the JSON object.`;
 
-export function fillBlankUserPrompt(text: string, count: number, subject: string, topic: string): string {
+export function fillBlankUserPrompt(text: string, count: number, subject: string, topic: string, focusTopic?: string): string {
   return `Generate exactly ${count} fill-in-the-blank questions from the following content.
 
-Content topic: ${subject} — ${topic}
+Content topic: ${subject} — ${topic}${focusTopic ? `\n\nFOCUS: Generate ALL questions specifically about "${focusTopic}". Every question must be related to this sub-topic.` : ''}
 
 CONTENT:
 ${text}
@@ -162,11 +162,11 @@ Model answers should be structured and cover all key points a student should men
 All information must be medically accurate.
 You MUST respond with valid JSON only. No text outside the JSON object.`;
 
-export function shortAnswerUserPrompt(text: string, count: number, subject: string, topic: string, difficulty: string): string {
+export function shortAnswerUserPrompt(text: string, count: number, subject: string, topic: string, difficulty: string, focusTopic?: string): string {
   return `Generate exactly ${count} short-answer questions from the following content.
 
 Content topic: ${subject} — ${topic}
-Difficulty: ${difficulty}
+Difficulty: ${difficulty}${focusTopic ? `\n\nFOCUS: Generate ALL questions specifically about "${focusTopic}". Every question must be related to this sub-topic.` : ''}
 
 CONTENT:
 ${text}
@@ -218,10 +218,10 @@ Patient demographics and presentations should be realistic and varied.
 Do NOT create textbook-perfect presentations — add realistic nuance.
 You MUST respond with valid JSON only. No text outside the JSON object.`;
 
-export function clinicalCaseUserPrompt(text: string, count: number, subject: string, topic: string): string {
+export function clinicalCaseUserPrompt(text: string, count: number, subject: string, topic: string, focusTopic?: string): string {
   return `Generate exactly ${count} clinical case scenarios based on the following medical content.
 
-Content topic: ${subject} — ${topic}
+Content topic: ${subject} — ${topic}${focusTopic ? `\n\nFOCUS: Generate ALL cases specifically about "${focusTopic}". Every case must be related to this sub-topic.` : ''}
 
 CONTENT:
 ${text}

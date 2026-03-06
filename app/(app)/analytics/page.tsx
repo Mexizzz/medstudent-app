@@ -9,15 +9,19 @@ import { scoreBg, scoreColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { db } from '@/db';
 import { topicPerformance, studySessions } from '@/db/schema';
-import { sql, desc } from 'drizzle-orm';
+import { sql, desc, eq, and } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 async function getAnalytics() {
   try {
+    const { userId } = await requireAuth();
+
     const topics = await db
       .select()
       .from(topicPerformance)
+      .where(eq(topicPerformance.userId, userId))
       .orderBy(sql`${topicPerformance.avgScore} asc`);
 
     const subjectMap = new Map<string, { totalAttempts: number; correctAttempts: number }>();
@@ -44,7 +48,7 @@ async function getAnalytics() {
         correctCount: studySessions.correctCount,
       })
       .from(studySessions)
-      .where(sql`${studySessions.status} = 'completed'`)
+      .where(and(eq(studySessions.userId, userId), sql`${studySessions.status} = 'completed'`))
       .orderBy(desc(studySessions.startedAt))
       .limit(30);
 

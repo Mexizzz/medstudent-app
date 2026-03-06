@@ -107,13 +107,17 @@ async function generateAcrossChunks<T>(
   subject: string,
   topic: string,
   difficulty: string,
-  generatorFn: (chunk: string, count: number, subject: string, topic: string, difficulty: string) => Promise<T[]>
+  generatorFn: (chunk: string, count: number, subject: string, topic: string, difficulty: string) => Promise<T[]>,
+  focusTopic?: string
 ): Promise<T[]> {
   const chunks = chunkText(rawText, 5000);
-  const perChunk = Math.ceil(totalCount / chunks.length);
+  // If focusing on a specific topic, use fewer chunks (the topic content is likely in a subset)
+  const perChunk = Math.ceil(totalCount / (focusTopic ? Math.min(chunks.length, 2) : chunks.length));
   const results: T[] = [];
 
   for (const chunk of chunks) {
+    // Skip chunks that don't mention the focus topic (if set)
+    if (focusTopic && !chunk.toLowerCase().includes(focusTopic.toLowerCase())) continue;
     const needed = Math.min(perChunk, totalCount - results.length);
     if (needed <= 0) break;
     try {
@@ -129,6 +133,24 @@ async function generateAcrossChunks<T>(
     }
   }
 
+  // If no chunks matched the focus topic, fall back to using all chunks
+  if (results.length === 0 && focusTopic) {
+    for (const chunk of chunks) {
+      const needed = Math.min(perChunk, totalCount - results.length);
+      if (needed <= 0) break;
+      try {
+        const batch = await generatorFn(chunk, needed, subject, topic, difficulty);
+        results.push(...batch);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {
+          throw new Error(msg);
+        }
+        console.error('Chunk generation error:', e);
+      }
+    }
+  }
+
   return results.slice(0, totalCount);
 }
 
@@ -139,45 +161,48 @@ export async function generateMCQs(
   count: number,
   subject: string,
   topic: string,
-  difficulty: string
+  difficulty: string,
+  focusTopic?: string
 ): Promise<GeneratedMCQ[]> {
   return generateAcrossChunks(rawText, count, subject, topic, difficulty, async (chunk, n, subj, top, diff) => {
     const result = await callGroqJSON<{ questions: GeneratedMCQ[] }>(
       MCQ_SYSTEM,
-      mcqUserPrompt(chunk, n, subj, top, diff)
+      mcqUserPrompt(chunk, n, subj, top, diff, focusTopic)
     );
     return result.questions ?? [];
-  });
+  }, focusTopic);
 }
 
 export async function generateFlashcards(
   rawText: string,
   count: number,
   subject: string,
-  topic: string
+  topic: string,
+  focusTopic?: string
 ): Promise<GeneratedFlashcard[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
     const result = await callGroqJSON<{ cards: GeneratedFlashcard[] }>(
       FLASHCARD_SYSTEM,
-      flashcardUserPrompt(chunk, n, subj, top)
+      flashcardUserPrompt(chunk, n, subj, top, focusTopic)
     );
     return result.cards ?? [];
-  });
+  }, focusTopic);
 }
 
 export async function generateFillBlanks(
   rawText: string,
   count: number,
   subject: string,
-  topic: string
+  topic: string,
+  focusTopic?: string
 ): Promise<GeneratedFillBlank[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
     const result = await callGroqJSON<{ questions: GeneratedFillBlank[] }>(
       FILL_BLANK_SYSTEM,
-      fillBlankUserPrompt(chunk, n, subj, top)
+      fillBlankUserPrompt(chunk, n, subj, top, focusTopic)
     );
     return result.questions ?? [];
-  });
+  }, focusTopic);
 }
 
 export async function generateShortAnswers(
@@ -185,30 +210,32 @@ export async function generateShortAnswers(
   count: number,
   subject: string,
   topic: string,
-  difficulty: string
+  difficulty: string,
+  focusTopic?: string
 ): Promise<GeneratedShortAnswer[]> {
   return generateAcrossChunks(rawText, count, subject, topic, difficulty, async (chunk, n, subj, top, diff) => {
     const result = await callGroqJSON<{ questions: GeneratedShortAnswer[] }>(
       SHORT_ANSWER_SYSTEM,
-      shortAnswerUserPrompt(chunk, n, subj, top, diff)
+      shortAnswerUserPrompt(chunk, n, subj, top, diff, focusTopic)
     );
     return result.questions ?? [];
-  });
+  }, focusTopic);
 }
 
 export async function generateClinicalCases(
   rawText: string,
   count: number,
   subject: string,
-  topic: string
+  topic: string,
+  focusTopic?: string
 ): Promise<GeneratedClinicalCase[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
     const result = await callGroqJSON<{ cases: GeneratedClinicalCase[] }>(
       CLINICAL_CASE_SYSTEM,
-      clinicalCaseUserPrompt(chunk, n, subj, top)
+      clinicalCaseUserPrompt(chunk, n, subj, top, focusTopic)
     );
     return result.cases ?? [];
-  });
+  }, focusTopic);
 }
 
 export async function evaluateShortAnswer(

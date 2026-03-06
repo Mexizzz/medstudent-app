@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     await requireAuth();
 
-    const { sourceId, count = 15 } = await req.json();
+    const { sourceId, count = 15, focusTopic } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
 
     const source = await db.query.contentSources.findFirst({
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (!source?.rawText) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
 
     const generated = await generateFillBlanks(
-      source.rawText, count, source.subject ?? 'Medicine', source.topic ?? 'General'
+      source.rawText, count, source.subject ?? 'Medicine', source.topic ?? 'General', focusTopic
     );
 
     const now = new Date();

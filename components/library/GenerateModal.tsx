@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ACTIVITY_LABELS } from '@/lib/utils';
@@ -30,6 +31,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [difficulty, setDifficulty] = useState('medium');
+  const [focusTopic, setFocusTopic] = useState('');
 
   // For each type, whether it's enabled and how many to generate
   const [selections, setSelections] = useState<Record<string, { enabled: boolean; count: number }>>(
@@ -65,6 +67,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
             sourceId,
             count: isMcqPdf ? 9999 : selections[type.id].count,
             difficulty,
+            ...(focusTopic.trim() && { focusTopic: focusTopic.trim() }),
           }),
         });
         const contentType = res.headers.get('content-type') ?? '';
@@ -120,6 +123,19 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
                   <SelectItem value="hard">Hard</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {!isMcqPdf && (
+            <div>
+              <Label>Focus Topic <span className="text-xs text-slate-400 font-normal">(optional)</span></Label>
+              <Input
+                value={focusTopic}
+                onChange={e => setFocusTopic(e.target.value)}
+                placeholder="e.g. Cell Membrane, Mitochondria…"
+                className="mt-1 text-sm"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">Leave empty to generate from all topics</p>
             </div>
           )}
 

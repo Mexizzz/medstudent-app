@@ -42,7 +42,7 @@ export async function GET() {
       })
       .from(sessionResponses)
       .innerJoin(questions, eq(sessionResponses.questionId, questions.id))
-      .where(and(eq(sessionResponses.userId, userId), eq(sessionResponses.isCorrect, false)))
+      .where(and(eq(sessionResponses.userId, userId), sql`(${sessionResponses.isCorrect} = 0 OR ${sessionResponses.isCorrect} IS NULL)`))
       .groupBy(sessionResponses.questionId)
       .orderBy(sql`wrong_count desc`);
 
@@ -65,7 +65,7 @@ export async function DELETE(req: Request) {
     await db
       .delete(sessionResponses)
       .where(
-        and(eq(sessionResponses.userId, userId), eq(sessionResponses.questionId, questionId), eq(sessionResponses.isCorrect, false))
+        and(eq(sessionResponses.userId, userId), eq(sessionResponses.questionId, questionId), sql`${sessionResponses.isCorrect} = 0`)
       );
 
     return NextResponse.json({ ok: true });
