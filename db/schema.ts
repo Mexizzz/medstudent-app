@@ -232,9 +232,21 @@ export const roomMembers = sqliteTable('room_members', {
   totalStudiedSecs:integer('total_studied_secs').notNull().default(0),
   lastSeenAt:      integer('last_seen_at', { mode: 'timestamp' }).notNull(),
   joinedAt:        integer('joined_at', { mode: 'timestamp' }).notNull(),
+  isMicOn:         integer('is_mic_on', { mode: 'boolean' }).notNull().default(false),
+  isMutedByAdmin:  integer('is_muted_by_admin', { mode: 'boolean' }).notNull().default(false),
 }, (table) => ({
   roomUserUnique: uniqueIndex('room_user_unique').on(table.roomId, table.userId),
 }));
+
+export const voiceSignals = sqliteTable('voice_signals', {
+  id:         text('id').primaryKey(),
+  roomId:     text('room_id').notNull().references(() => studyRooms.id, { onDelete: 'cascade' }),
+  fromUserId: text('from_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  toUserId:   text('to_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type:       text('type').notNull(), // 'offer' | 'answer' | 'ice-candidate'
+  payload:    text('payload').notNull(), // JSON stringified SDP or ICE candidate
+  createdAt:  integer('created_at', { mode: 'timestamp' }).notNull(),
+});
 
 export const roomMessages = sqliteTable('room_messages', {
   id:        text('id').primaryKey(),

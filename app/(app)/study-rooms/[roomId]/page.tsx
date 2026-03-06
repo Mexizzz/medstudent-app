@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { VoiceChat } from '@/components/voice/VoiceChat';
 
 interface Member {
   id: string;
@@ -20,6 +21,8 @@ interface Member {
   timerStartedAt: string | null;
   totalStudiedSecs: number;
   lastSeenAt: string;
+  isMicOn: boolean;
+  isMutedByAdmin: boolean;
 }
 
 interface Message {
@@ -279,6 +282,25 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
               </span>
             </div>
           </div>
+
+          {/* Voice Chat */}
+          {myUserId && room && (
+            <div className="mb-8">
+              <VoiceChat
+                roomId={roomId}
+                myUserId={myUserId}
+                isRoomCreator={room.createdBy === myUserId}
+                members={members.map(m => ({
+                  userId: m.userId,
+                  userName: m.userName,
+                  isOnline: m.isOnline,
+                  isMicOn: m.isMicOn ?? false,
+                  isMutedByAdmin: m.isMutedByAdmin ?? false,
+                }))}
+                onMembersUpdate={() => {}}
+              />
+            </div>
+          )}
 
           {/* Members grid */}
           <div>
