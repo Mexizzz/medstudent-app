@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { studyRooms, roomMembers, users } from '@/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { requireAuth, handleAuthError } from '@/lib/auth';
+import { requireAuth, AuthError } from '@/lib/auth';
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -34,8 +34,7 @@ export async function GET() {
 
     return NextResponse.json({ rooms: rows });
   } catch (error) {
-    const authErr = handleAuthError(error);
-    if (authErr) return authErr;
+    if (error instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('GET /api/study-rooms error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -78,8 +77,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ roomId, joinCode });
   } catch (error) {
-    const authErr = handleAuthError(error);
-    if (authErr) return authErr;
+    if (error instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('POST /api/study-rooms error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
