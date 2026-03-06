@@ -223,13 +223,13 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
       {/* Left: Main area (timer + members) */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="shrink-0 border-b border-slate-200 bg-white px-4 sm:px-6 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/study-rooms')} className="gap-1 text-slate-400 -ml-1">
+        <div className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3 flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/study-rooms')} className="gap-1 text-muted-foreground -ml-1">
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-slate-800 truncate">{room.name}</h1>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <h1 className="text-base font-bold text-foreground truncate">{room.name}</h1>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
                 {onlineMembers.length} online
@@ -244,7 +244,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
             variant="ghost"
             size="sm"
             onClick={() => { router.push('/study-rooms'); }}
-            className="text-slate-400 hover:text-red-500 gap-1"
+            className="text-muted-foreground hover:text-red-500 gap-1"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Leave</span>
@@ -255,10 +255,10 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
           {/* My Timer */}
           <div className="text-center mb-8">
-            <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Your Study Time</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Your Study Time</p>
             <div className={cn(
               'text-5xl sm:text-6xl font-mono font-bold tabular-nums transition-colors',
-              isTimerRunning ? 'text-indigo-600' : 'text-slate-700'
+              isTimerRunning ? 'text-indigo-600' : 'text-foreground'
             )}>
               {formatTime(myLiveTime)}
             </div>
@@ -275,7 +275,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
               {isTimerRunning ? <><Pause className="w-5 h-5" />Pause</> : <><Play className="w-5 h-5" />Start Studying</>}
             </Button>
 
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-slate-400">
+            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Room total: {formatTime(totalRoomSecs)}
@@ -305,32 +305,32 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
 
           {/* Members grid */}
           <div>
-            <p className="text-xs text-slate-400 uppercase tracking-wide mb-3 px-1">Members</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3 px-1">Members</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {members.map(m => {
                 const liveSecs = getLiveSeconds(m);
                 return (
                   <Card key={m.id} className={cn(
                     'transition-all',
-                    m.isOnline ? 'border-slate-200' : 'border-slate-100 opacity-50',
+                    m.isOnline ? 'border-border' : 'border-border opacity-50',
                     m.timerRunning && 'border-indigo-200 bg-indigo-50/30'
                   )}>
                     <CardContent className="p-3 text-center">
                       <div className="relative inline-block mb-1">
                         <div className={cn(
                           'w-10 h-10 rounded-full flex items-center justify-center',
-                          m.userId === myUserId ? 'bg-indigo-100' : 'bg-slate-100'
+                          m.userId === myUserId ? 'bg-indigo-100' : 'bg-muted'
                         )}>
-                          <User className={cn('w-4 h-4', m.userId === myUserId ? 'text-indigo-600' : 'text-slate-400')} />
+                          <User className={cn('w-4 h-4', m.userId === myUserId ? 'text-indigo-600' : 'text-muted-foreground')} />
                         </div>
                         {m.isOnline && (
                           <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
                         )}
                       </div>
-                      <p className="text-xs font-medium text-slate-700 truncate">{m.userName || 'Anonymous'}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{m.userName || 'Anonymous'}</p>
                       <p className={cn(
                         'text-xs font-mono mt-1',
-                        m.timerRunning ? 'text-indigo-600 font-semibold' : 'text-slate-400'
+                        m.timerRunning ? 'text-indigo-600 font-semibold' : 'text-muted-foreground'
                       )}>
                         {m.timerRunning && <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1 animate-pulse" />}
                         {formatTime(liveSecs)}
@@ -345,9 +345,9 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
       </div>
 
       {/* Right: Chat panel */}
-      <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-slate-200 flex flex-col bg-white shrink-0 h-64 lg:h-auto">
-        <div className="px-4 py-3 border-b border-slate-200 shrink-0">
-          <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+      <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-border flex flex-col bg-card shrink-0 h-64 lg:h-auto">
+        <div className="px-4 py-3 border-b border-border shrink-0">
+          <p className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Send className="w-3.5 h-3.5 text-indigo-500" />
             Chat
           </p>
@@ -356,21 +356,21 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
           {messages.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-6">No messages yet. Say hi!</p>
+            <p className="text-xs text-muted-foreground text-center py-6">No messages yet. Say hi!</p>
           )}
           {messages.map(msg => (
             <div key={msg.id} className={cn(
               'text-xs',
               msg.userId === myUserId ? 'text-right' : ''
             )}>
-              <span className="font-semibold text-slate-600">
+              <span className="font-semibold text-muted-foreground">
                 {msg.userId === myUserId ? 'You' : (msg.userName || 'Anonymous')}
               </span>
               <div className={cn(
                 'inline-block px-3 py-1.5 rounded-2xl mt-0.5 max-w-[85%] text-left',
                 msg.userId === myUserId
                   ? 'bg-indigo-500 text-white ml-auto'
-                  : 'bg-slate-100 text-slate-700'
+                  : 'bg-muted text-foreground'
               )}>
                 {msg.content}
               </div>
@@ -380,7 +380,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
         </div>
 
         {/* Chat input */}
-        <div className="shrink-0 border-t border-slate-200 px-3 py-2 flex gap-2">
+        <div className="shrink-0 border-t border-border px-3 py-2 flex gap-2">
           <Input
             value={chatInput}
             onChange={e => setChatInput(e.target.value)}

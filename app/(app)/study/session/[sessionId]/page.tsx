@@ -174,7 +174,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
   if (!current) {
     return (
       <div className="p-6 text-center">
-        <p className="text-slate-500">Session not found.</p>
+        <p className="text-muted-foreground">Session not found.</p>
         <Button asChild variant="outline" className="mt-4">
           <a href="/study">Back to Study</a>
         </Button>
@@ -186,11 +186,11 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" className="gap-1.5 text-slate-400" onClick={() => router.push('/study')}>
+        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => router.push('/study')}>
           <X className="w-4 h-4" />
         </Button>
         <div className="flex-1">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
             <span>{currentIndex + 1} / {questions.length}</span>
             <span>{Math.round(progress)}%</span>
           </div>
@@ -205,13 +205,13 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
             {current.subject}
           </span>
         )}
-        {current.topic && <span className="text-xs text-slate-400">{current.topic}</span>}
+        {current.topic && <span className="text-xs text-muted-foreground">{current.topic}</span>}
         {current.difficulty && (
           <span className={cn(
             'text-xs px-2 py-0.5 rounded-full',
             current.difficulty === 'easy' ? 'bg-emerald-50 text-emerald-600' :
             current.difficulty === 'hard' ? 'bg-red-50 text-red-600' :
-            'bg-slate-100 text-slate-500'
+            'bg-muted text-muted-foreground'
           )}>
             {current.difficulty}
           </span>
@@ -243,7 +243,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
 
           {explainOpen && explainText && (
             <Card className="border-violet-100 bg-violet-50/40">
-              <CardContent className="p-4 text-sm text-slate-700 leading-relaxed space-y-3">
+              <CardContent className="p-4 text-sm text-foreground leading-relaxed space-y-3">
                 {explainText.split(/\n(?=## )/).map((section, i) => {
                   const [header, ...body] = section.split('\n');
                   const heading = header.replace(/^## /, '');

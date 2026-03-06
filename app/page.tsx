@@ -7,19 +7,19 @@ import {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-card">
       {/* Nav */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-blue-500/10 rounded-lg">
               <Stethoscope className="w-5 h-5 text-blue-600" />
             </div>
-            <span className="font-bold text-xl text-slate-900">MedStudy</span>
+            <span className="font-bold text-xl text-foreground">MedStudy</span>
             <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-full tracking-wider">Beta</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-3 py-2">
+            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
               Log in
             </Link>
             <Link href="/signup" className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
@@ -37,10 +37,10 @@ export default function LandingPage() {
             <Sparkles className="w-4 h-4" />
             Free during Beta — No limits, no credit card
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.1] max-w-4xl mx-auto">
             Your AI Study Partner for <span className="text-blue-600">Medical School</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly creates questions, flashcards, and study plans personalized to <em>your</em> material. Study smarter, track your progress, and connect with classmates.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -52,14 +52,14 @@ export default function LandingPage() {
             </Link>
             <Link
               href="#features"
-              className="flex items-center gap-2 px-6 py-3.5 bg-white text-slate-700 rounded-xl text-base font-semibold hover:bg-slate-50 transition-colors border border-slate-200"
+              className="flex items-center gap-2 px-6 py-3.5 bg-card text-foreground rounded-xl text-base font-semibold hover:bg-muted transition-colors border border-border"
             >
               See How It Works
             </Link>
           </div>
 
           {/* Trust signals */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> 100% Free</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
@@ -69,12 +69,12 @@ export default function LandingPage() {
       </section>
 
       {/* Problem / Solution */}
-      <section className="py-16 sm:py-20 border-t border-slate-100">
+      <section className="py-16 sm:py-20 border-t border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
-            <p className="mt-4 text-lg text-slate-500 leading-relaxed">
-              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong className="text-slate-700">actually learning</strong>.
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
+            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong className="text-foreground">actually learning</strong>.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -99,8 +99,8 @@ export default function LandingPage() {
                 <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mx-auto mb-5 shadow-lg shadow-blue-500/20">
                   {emoji}
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">{title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -108,11 +108,11 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="bg-slate-50 py-16 sm:py-24" id="features">
+      <section className="bg-muted py-16 sm:py-24" id="features">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Packed with Features Built for Med Students</h2>
-            <p className="mt-3 text-lg text-slate-500 max-w-xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Packed with Features Built for Med Students</h2>
+            <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
               Every tool you need in one place — no switching between apps.
             </p>
           </div>
@@ -191,12 +191,12 @@ export default function LandingPage() {
                 color: 'bg-cyan-50 text-cyan-600',
               },
             ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md hover:border-slate-300 transition-all group">
+              <div key={title} className="bg-card rounded-xl border border-border p-5 hover:shadow-md hover:border-border transition-all group">
                 <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-800 mb-1.5">{title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                <h3 className="text-base font-semibold text-foreground mb-1.5">{title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -207,10 +207,10 @@ export default function LandingPage() {
       <section className="py-16 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 sm:p-12 text-white overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-card/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-card/5 rounded-full translate-y-1/2 -translate-x-1/2" />
             <div className="relative max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/15 rounded-full text-sm font-semibold mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-card/15 rounded-full text-sm font-semibold mb-4">
                 <Zap className="w-3.5 h-3.5" />
                 Beta Program
               </div>
@@ -234,7 +234,7 @@ export default function LandingPage() {
               </div>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-white text-blue-700 rounded-xl text-base font-bold hover:bg-blue-50 transition-colors shadow-lg"
+                className="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-card text-blue-700 rounded-xl text-base font-bold hover:bg-blue-50 transition-colors shadow-lg"
               >
                 Join the Beta <ArrowRight className="w-4 h-4" />
               </Link>
@@ -244,7 +244,7 @@ export default function LandingPage() {
       </section>
 
       {/* We Listen Section */}
-      <section className="bg-slate-50 py-16 sm:py-20">
+      <section className="bg-muted py-16 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
@@ -252,13 +252,13 @@ export default function LandingPage() {
                 <Heart className="w-3.5 h-3.5" />
                 Built With Students
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground leading-tight">
                 Your Voice Shapes MedStudy
               </h2>
-              <p className="mt-4 text-lg text-slate-500 leading-relaxed">
+              <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
                 We&apos;re not just building <em>for</em> medical students — we&apos;re building <em>with</em> you. Every feature request, bug report, and suggestion from our users is reviewed and prioritized.
               </p>
-              <p className="mt-3 text-lg text-slate-500 leading-relaxed">
+              <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
                 Have an idea that would make your study life easier? Tell us. We actively implement student requests and ship improvements every week.
               </p>
             </div>
@@ -283,13 +283,13 @@ export default function LandingPage() {
                   color: 'bg-rose-50 text-rose-600',
                 },
               ].map(({ icon: Icon, title, desc, color }) => (
-                <div key={title} className="flex gap-4 bg-white p-5 rounded-xl border border-slate-200">
+                <div key={title} className="flex gap-4 bg-card p-5 rounded-xl border border-border">
                   <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-800 mb-1">{title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -301,11 +301,11 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="py-20 sm:py-28">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
             Stop Wasting Hours Making Flashcards.<br />
             <span className="text-blue-600">Let AI Do It in Seconds.</span>
           </h2>
-          <p className="mt-5 text-lg text-slate-500 max-w-xl mx-auto">
+          <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto">
             Join the beta and get full access to every feature — completely free. Your exams won&apos;t wait, and neither should you.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -317,26 +317,26 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="flex items-center gap-2 px-6 py-4 text-slate-600 rounded-xl text-lg font-medium hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 px-6 py-4 text-muted-foreground rounded-xl text-lg font-medium hover:bg-muted transition-colors"
             >
               Already have an account? Log in
             </Link>
           </div>
-          <p className="mt-5 text-sm text-slate-400">
+          <p className="mt-5 text-sm text-muted-foreground">
             Free during beta. No credit card. No limits. No catch.
           </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 py-8 bg-slate-50">
+      <footer className="border-t border-border py-8 bg-muted">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4 text-blue-600" />
-            <span className="font-semibold text-slate-700">MedStudy</span>
+            <span className="font-semibold text-foreground">MedStudy</span>
             <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold uppercase rounded tracking-wider">Beta</span>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} MedStudy. Built with care for medical students everywhere.
           </p>
         </div>

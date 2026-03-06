@@ -83,7 +83,7 @@ export function DayPlanEditor({ date, open, onClose, sources, onSuccess }: DayPl
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Study Plan</DialogTitle>
-          <p className="text-sm text-slate-500">{formattedDate}</p>
+          <p className="text-sm text-muted-foreground">{formattedDate}</p>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -94,11 +94,11 @@ export function DayPlanEditor({ date, open, onClose, sources, onSuccess }: DayPl
 
           <div>
             <Label>Content Sources * ({selectedSources.length} selected)</Label>
-            <div className="mt-1 max-h-36 overflow-y-auto space-y-1 border rounded-lg p-2 bg-slate-50">
+            <div className="mt-1 max-h-36 overflow-y-auto space-y-1 border rounded-lg p-2 bg-muted">
               {sources.length === 0 ? (
-                <p className="text-xs text-slate-400 p-2">No content sources. Add some in the Library first.</p>
+                <p className="text-xs text-muted-foreground p-2">No content sources. Add some in the Library first.</p>
               ) : sources.map(s => (
-                <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white cursor-pointer text-sm">
+                <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-card cursor-pointer text-sm">
                   <input
                     type="checkbox"
                     checked={selectedSources.includes(s.id)}
@@ -106,7 +106,7 @@ export function DayPlanEditor({ date, open, onClose, sources, onSuccess }: DayPl
                     className="rounded"
                   />
                   <span className="truncate">{s.title}</span>
-                  {s.subject && <span className="text-xs text-slate-400 flex-shrink-0">{s.subject}</span>}
+                  {s.subject && <span className="text-xs text-muted-foreground flex-shrink-0">{s.subject}</span>}
                 </label>
               ))}
             </div>
@@ -122,7 +122,7 @@ export function DayPlanEditor({ date, open, onClose, sources, onSuccess }: DayPl
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     activityTypes.includes(type)
                       ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                      : 'bg-card text-muted-foreground border-border hover:border-blue-300'
                   }`}
                 >
                   {ACTIVITY_LABELS[type]}
@@ -134,7 +134,7 @@ export function DayPlanEditor({ date, open, onClose, sources, onSuccess }: DayPl
           <div>
             <div className="flex justify-between mb-1">
               <Label>Questions</Label>
-              <span className="text-sm font-semibold text-slate-600">{questionCount}</span>
+              <span className="text-sm font-semibold text-muted-foreground">{questionCount}</span>
             </div>
             <Slider
               value={[questionCount]}

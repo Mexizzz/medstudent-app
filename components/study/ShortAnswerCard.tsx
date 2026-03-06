@@ -106,7 +106,7 @@ export function ShortAnswerCard({ question, onAnswer }: ShortAnswerCardProps) {
               <p className="text-xs font-semibold text-emerald-600 uppercase mb-1">Covered</p>
               <ul className="space-y-1">
                 {result.coveredPoints.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                     <span className="text-emerald-500 mt-0.5">✓</span>{p}
                   </li>
                 ))}
@@ -119,7 +119,7 @@ export function ShortAnswerCard({ question, onAnswer }: ShortAnswerCardProps) {
               <p className="text-xs font-semibold text-red-500 uppercase mb-1">Missing</p>
               <ul className="space-y-1">
                 {result.missingPoints.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                  <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                     <span className="text-red-400 mt-0.5">✗</span>{p}
                   </li>
                 ))}
@@ -128,9 +128,9 @@ export function ShortAnswerCard({ question, onAnswer }: ShortAnswerCardProps) {
           )}
 
           {question.modelAnswer && (
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Model Answer</p>
-              <p className="text-sm text-slate-700 leading-relaxed">{question.modelAnswer}</p>
+            <div className="bg-muted border border-border rounded-lg p-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Model Answer</p>
+              <p className="text-sm text-foreground leading-relaxed">{question.modelAnswer}</p>
             </div>
           )}
         </div>

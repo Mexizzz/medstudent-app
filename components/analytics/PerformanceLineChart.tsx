@@ -17,7 +17,7 @@ interface SessionData {
 export function PerformanceLineChart({ data }: { data: SessionData[] }) {
   if (data.length < 2) {
     return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-400">
+      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
         Complete more sessions to see your progress chart
       </div>
     );

@@ -106,7 +106,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>Generate Questions</DialogTitle>
-          <p className="text-sm text-slate-500 line-clamp-1">{sourceTitle}</p>
+          <p className="text-sm text-muted-foreground line-clamp-1">{sourceTitle}</p>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -128,14 +128,14 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
 
           {!isMcqPdf && (
             <div>
-              <Label>Focus Topic <span className="text-xs text-slate-400 font-normal">(optional)</span></Label>
+              <Label>Focus Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
               <Input
                 value={focusTopic}
                 onChange={e => setFocusTopic(e.target.value)}
                 placeholder="e.g. Cell Membrane, Mitochondria…"
                 className="mt-1 text-sm"
               />
-              <p className="text-[11px] text-slate-400 mt-1">Leave empty to generate from all topics</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Leave empty to generate from all topics</p>
             </div>
           )}
 
@@ -162,7 +162,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
                       <span className="text-sm">{type.label}</span>
                     </div>
                     {sel.enabled && (
-                      <span className="text-xs text-slate-500">{sel.count}</span>
+                      <span className="text-xs text-muted-foreground">{sel.count}</span>
                     )}
                   </div>
                   {sel.enabled && (

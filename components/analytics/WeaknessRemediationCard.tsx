@@ -46,21 +46,21 @@ export function WeaknessRemediationCard({ weakTopics }: { weakTopics: WeakTopic[
           <Zap className="w-4 h-4" />
           Fix Your Weaknesses
         </CardTitle>
-        <p className="text-xs text-slate-400">15-minute focused drills on your worst topics</p>
+        <p className="text-xs text-muted-foreground">15-minute focused drills on your worst topics</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {weakTopics.map((t) => (
-          <div key={t.id} className="flex items-center justify-between gap-3 p-3 bg-white rounded-xl border border-orange-100">
+          <div key={t.id} className="flex items-center justify-between gap-3 p-3 bg-card rounded-xl border border-orange-100">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-700 truncate">{t.topic || t.subject}</p>
+              <p className="text-sm font-medium text-foreground truncate">{t.topic || t.subject}</p>
               <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-24">
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-24">
                   <div
                     className="h-full bg-red-400 rounded-full"
                     style={{ width: `${Math.round(t.confidence)}%` }}
                   />
                 </div>
-                <span className="text-xs text-slate-400">{Math.round(t.confidence)}% confidence</span>
+                <span className="text-xs text-muted-foreground">{Math.round(t.confidence)}% confidence</span>
               </div>
             </div>
             <Button

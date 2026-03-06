@@ -25,6 +25,6 @@ export function ActivityRouter({ question, onAnswer }: ActivityRouterProps) {
     case 'clinical_case':
       return <ClinicalCaseCard question={question} onAnswer={onAnswer} />;
     default:
-      return <div className="text-slate-500 text-sm">Unknown question type: {question.type}</div>;
+      return <div className="text-muted-foreground text-sm">Unknown question type: {question.type}</div>;
   }
 }

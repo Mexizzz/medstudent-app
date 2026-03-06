@@ -46,11 +46,11 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
           if (submitted) {
             if (isCorrectOption) variant = 'bg-emerald-50 border-emerald-400 text-emerald-800';
             else if (isSelectedOption && !isCorrectOption) variant = 'bg-red-50 border-red-400 text-red-800';
-            else variant = 'bg-white border-slate-200 text-slate-400';
+            else variant = 'bg-card border-border text-muted-foreground';
           } else {
             variant = isSelectedOption
               ? 'bg-blue-50 border-blue-500 text-blue-800'
-              : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer';
+              : 'bg-card border-border hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer';
           }
 
           return (
@@ -68,7 +68,7 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
                 submitted && isCorrectOption ? 'bg-emerald-500 text-white border-emerald-500' :
                 submitted && isSelectedOption && !isCorrectOption ? 'bg-red-500 text-white border-red-500' :
                 isSelectedOption ? 'bg-blue-500 text-white border-blue-500' :
-                'bg-slate-100 text-slate-600 border-slate-200'
+                'bg-muted text-muted-foreground border-border'
               )}>
                 {key}
               </span>
@@ -106,7 +106,7 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
               {isCorrect ? 'Explanation' : `Why ${question.correctAnswer} is correct`}
             </p>
           </div>
-          <p className="text-sm text-slate-700 leading-relaxed">{question.explanation}</p>
+          <p className="text-sm text-foreground leading-relaxed">{question.explanation}</p>
         </div>
       )}
 

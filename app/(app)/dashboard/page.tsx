@@ -56,8 +56,8 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
@@ -75,18 +75,18 @@ export default async function DashboardPage() {
               <div className="text-3xl shrink-0">{xpProgress.rank.badge}</div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-800 text-base">{xpProgress.rank.title}</span>
+                  <span className="font-bold text-foreground text-base">{xpProgress.rank.title}</span>
                   <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
                     Level {xpProgress.rank.level}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {xpProgress.totalXp.toLocaleString()} XP total
                 </p>
                 <div className="mt-2 space-y-1">
                   <Progress value={xpProgress.percent} className="h-2 bg-violet-100" />
                   {xpProgress.nextRank ? (
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-muted-foreground">
                       {xpProgress.xpInLevel.toLocaleString()} / {xpProgress.xpForNext.toLocaleString()} XP → {xpProgress.nextRank.title}
                     </p>
                   ) : (
@@ -96,9 +96,9 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-xs text-slate-400">Med Rank</p>
-              <p className="text-xs text-slate-500 mt-1">+10 XP per correct</p>
-              <p className="text-xs text-slate-500">+50 per session</p>
+              <p className="text-xs text-muted-foreground">Med Rank</p>
+              <p className="text-xs text-muted-foreground mt-1">+10 XP per correct</p>
+              <p className="text-xs text-muted-foreground">+50 per session</p>
             </div>
           </div>
         </CardContent>
@@ -114,12 +114,12 @@ export default async function DashboardPage() {
                 <Layers className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm">Spaced Repetition</p>
-                <p className="text-xs text-slate-400">{totalSrCards} cards tracked</p>
+                <p className="font-semibold text-foreground text-sm">Spaced Repetition</p>
+                <p className="text-xs text-muted-foreground">{totalSrCards} cards tracked</p>
               </div>
             </div>
             {totalSrCards === 0 ? (
-              <p className="text-xs text-slate-400 mb-3">Complete a study session to start building your SR deck.</p>
+              <p className="text-xs text-muted-foreground mb-3">Complete a study session to start building your SR deck.</p>
             ) : dueCount > 0 ? (
               <p className="text-sm font-medium text-amber-700 mb-3">
                 <span className="text-2xl font-bold">{dueCount}</span> card{dueCount !== 1 ? 's' : ''} due for review today
@@ -145,22 +145,22 @@ export default async function DashboardPage() {
                 <Target className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-semibold text-slate-800 text-sm">Study Goals</p>
-                <p className="text-xs text-slate-400">{goal?.examType ?? 'No exam set'}</p>
+                <p className="font-semibold text-foreground text-sm">Study Goals</p>
+                <p className="text-xs text-muted-foreground">{goal?.examType ?? 'No exam set'}</p>
               </div>
             </div>
             {goal ? (
               <div className="space-y-2">
                 {daysUntilExam !== null && (
-                  <p className="text-sm text-slate-700">
+                  <p className="text-sm text-foreground">
                     <span className="text-2xl font-bold text-blue-600">{daysUntilExam}</span>{' '}
                     day{daysUntilExam !== 1 ? 's' : ''} until exam
                   </p>
                 )}
-                <p className="text-xs text-slate-400">Target: {goal.weeklyHoursTarget}h/week</p>
+                <p className="text-xs text-muted-foreground">Target: {goal.weeklyHoursTarget}h/week</p>
               </div>
             ) : (
-              <p className="text-xs text-slate-400 mb-3">Set your exam date and weekly study goal.</p>
+              <p className="text-xs text-muted-foreground mb-3">Set your exam date and weekly study goal.</p>
             )}
             <Link href="/goals">
               <Button size="sm" variant="outline" className="w-full mt-3">
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
 
       {/* Quick actions */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Quick Access</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {quickActions.map(({ href, icon: Icon, label, desc }) => (
             <Link key={href} href={href}>
@@ -184,7 +184,7 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-sm">{label}</p>
-                    <p className="text-xs text-slate-400">{desc}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
                   </div>
                 </CardContent>
               </Card>

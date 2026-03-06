@@ -23,10 +23,10 @@ export function TodayPlanCard({ plans }: TodayPlanCardProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center space-y-3">
-          <CalendarDays className="w-10 h-10 text-slate-300 mx-auto" />
+          <CalendarDays className="w-10 h-10 text-muted-foreground mx-auto" />
           <div>
-            <p className="font-medium text-slate-600">No plan for today</p>
-            <p className="text-sm text-slate-400">Set up your study plan for the day</p>
+            <p className="font-medium text-muted-foreground">No plan for today</p>
+            <p className="text-sm text-muted-foreground">Set up your study plan for the day</p>
           </div>
           <Button asChild variant="outline" size="sm">
             <Link href="/study-plan">Create Study Plan</Link>
@@ -50,7 +50,7 @@ export function TodayPlanCard({ plans }: TodayPlanCardProps) {
           const sourceIds: string[] = JSON.parse(plan.sourceIds);
 
           return (
-            <div key={plan.id} className={`flex items-center justify-between p-3 rounded-lg border ${plan.isCompleted ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
+            <div key={plan.id} className={`flex items-center justify-between p-3 rounded-lg border ${plan.isCompleted ? 'bg-emerald-50 border-emerald-200' : 'bg-card border-border'}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   {plan.isCompleted && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
@@ -58,11 +58,11 @@ export function TodayPlanCard({ plans }: TodayPlanCardProps) {
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {actTypes.map(t => (
-                    <span key={t} className={`text-xs px-1.5 py-0.5 rounded font-medium ${ACTIVITY_COLORS[t] ?? 'bg-slate-100 text-slate-600'}`}>
+                    <span key={t} className={`text-xs px-1.5 py-0.5 rounded font-medium ${ACTIVITY_COLORS[t] ?? 'bg-muted text-muted-foreground'}`}>
                       {ACTIVITY_LABELS[t] ?? t}
                     </span>
                   ))}
-                  <span className="text-xs text-slate-400">{plan.questionCount} Qs</span>
+                  <span className="text-xs text-muted-foreground">{plan.questionCount} Qs</span>
                 </div>
               </div>
               {!plan.isCompleted && (

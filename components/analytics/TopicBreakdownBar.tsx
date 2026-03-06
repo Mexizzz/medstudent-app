@@ -16,7 +16,7 @@ interface TopicData {
 export function TopicBreakdownBar({ data }: { data: TopicData[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-400">
+      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
         No topic data yet. Complete some study sessions first.
       </div>
     );

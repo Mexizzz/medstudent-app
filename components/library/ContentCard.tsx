@@ -47,7 +47,7 @@ export function ContentCard({ source, onDelete }: ContentCardProps) {
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start gap-3">
-          <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">{icon}</div>
+          <div className="p-2 bg-muted rounded-lg flex-shrink-0">{icon}</div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-sm leading-tight truncate">{source.title}</h3>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -57,7 +57,7 @@ export function ContentCard({ source, onDelete }: ContentCardProps) {
                 </span>
               )}
               {source.topic && (
-                <span className="text-xs text-slate-500">{source.topic}</span>
+                <span className="text-xs text-muted-foreground">{source.topic}</span>
               )}
             </div>
           </div>
@@ -74,7 +74,7 @@ export function ContentCard({ source, onDelete }: ContentCardProps) {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-slate-500">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {source.wordCount && <span>{source.wordCount.toLocaleString()} words</span>}
           {source.pageCount && <span>{source.pageCount} pages</span>}
           <Badge variant="secondary" className="text-xs">
@@ -86,13 +86,13 @@ export function ContentCard({ source, onDelete }: ContentCardProps) {
         {totalQuestions > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {source.questionCounts.map(qc => (
-              <span key={qc.type} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+              <span key={qc.type} className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                 {ACTIVITY_LABELS[qc.type] ?? qc.type}: {qc.count}
               </span>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-slate-400 italic">No questions generated yet</p>
+          <p className="text-xs text-muted-foreground italic">No questions generated yet</p>
         )}
 
         <GenerateModal

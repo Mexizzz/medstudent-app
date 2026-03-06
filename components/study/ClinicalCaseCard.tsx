@@ -37,29 +37,29 @@ export function ClinicalCaseCard({ question, onAnswer }: ClinicalCaseCardProps) 
       </div>
 
       {/* Patient presentation */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
-        <div className="flex items-center gap-2 bg-slate-100 border-b border-slate-200 px-4 py-2.5">
-          <Stethoscope className="w-4 h-4 text-slate-500" />
-          <span className="text-sm font-semibold text-slate-600">Patient Presentation</span>
+      <div className="bg-muted border border-border rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2 bg-muted border-b border-border px-4 py-2.5">
+          <Stethoscope className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold text-muted-foreground">Patient Presentation</span>
         </div>
         <div className="p-4">
-          <p className="text-sm text-slate-800 leading-relaxed">{question.caseScenario}</p>
+          <p className="text-sm text-foreground leading-relaxed">{question.caseScenario}</p>
         </div>
       </div>
 
       {/* Examination */}
       {question.examinationFindings && (
-        <div className="border border-slate-200 rounded-xl overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           <button
             onClick={() => setShowExam(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 bg-card hover:bg-muted transition-colors"
           >
-            <span className="text-sm font-semibold text-slate-600">Examination Findings</span>
+            <span className="text-sm font-semibold text-muted-foreground">Examination Findings</span>
             {showExam ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           {showExam && (
-            <div className="px-4 pb-4 bg-white border-t border-slate-100">
-              <p className="text-sm text-slate-700 leading-relaxed pt-3">{question.examinationFindings}</p>
+            <div className="px-4 pb-4 bg-card border-t border-border">
+              <p className="text-sm text-foreground leading-relaxed pt-3">{question.examinationFindings}</p>
             </div>
           )}
         </div>
@@ -67,17 +67,17 @@ export function ClinicalCaseCard({ question, onAnswer }: ClinicalCaseCardProps) 
 
       {/* Investigations */}
       {question.investigations && (
-        <div className="border border-slate-200 rounded-xl overflow-hidden">
+        <div className="border border-border rounded-xl overflow-hidden">
           <button
             onClick={() => setShowInvestigations(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 bg-card hover:bg-muted transition-colors"
           >
-            <span className="text-sm font-semibold text-slate-600">Investigation Results</span>
+            <span className="text-sm font-semibold text-muted-foreground">Investigation Results</span>
             {showInvestigations ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           {showInvestigations && (
-            <div className="px-4 pb-4 bg-white border-t border-slate-100">
-              <p className="text-sm text-slate-700 leading-relaxed pt-3 font-mono text-xs">{question.investigations}</p>
+            <div className="px-4 pb-4 bg-card border-t border-border">
+              <p className="text-sm text-foreground leading-relaxed pt-3 font-mono text-xs">{question.investigations}</p>
             </div>
           )}
         </div>
@@ -100,9 +100,9 @@ export function ClinicalCaseCard({ question, onAnswer }: ClinicalCaseCardProps) 
             <p className="text-sm font-semibold text-emerald-900">{question.caseAnswer}</p>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Rationale</p>
-            <p className="text-sm text-slate-700 leading-relaxed">{question.caseRationale}</p>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Rationale</p>
+            <p className="text-sm text-foreground leading-relaxed">{question.caseRationale}</p>
           </div>
 
           {question.teachingPoint && (
@@ -114,7 +114,7 @@ export function ClinicalCaseCard({ question, onAnswer }: ClinicalCaseCardProps) 
 
           {!rated && (
             <div className="space-y-2">
-              <p className="text-center text-sm text-slate-500">Did you get it right?</p>
+              <p className="text-center text-sm text-muted-foreground">Did you get it right?</p>
               <div className="grid grid-cols-2 gap-2">
                 <Button onClick={() => rate(true)} variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
                   Yes, I got it

@@ -50,21 +50,21 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
           <CardContent className="pt-4 pb-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
             <div className="text-2xl font-bold text-emerald-600">{correctCount}</div>
-            <div className="text-xs text-slate-500">Correct</div>
+            <div className="text-xs text-muted-foreground">Correct</div>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-4 pb-3">
             <XCircle className="w-5 h-5 text-red-400 mx-auto mb-1" />
             <div className="text-2xl font-bold text-red-500">{totalAnswered - correctCount}</div>
-            <div className="text-xs text-slate-500">Incorrect</div>
+            <div className="text-xs text-muted-foreground">Incorrect</div>
           </CardContent>
         </Card>
         <Card className="text-center">
           <CardContent className="pt-4 pb-3">
             <Clock className="w-5 h-5 text-blue-400 mx-auto mb-1" />
             <div className="text-2xl font-bold text-blue-600">{durationLabel(durationSeconds)}</div>
-            <div className="text-xs text-slate-500">Duration</div>
+            <div className="text-xs text-muted-foreground">Duration</div>
           </CardContent>
         </Card>
       </div>
@@ -72,14 +72,14 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
       {/* Wrong answers */}
       {result.responses.filter(r => !r.isCorrect).length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-slate-600 mb-2">Questions to review:</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-2">Questions to review:</h3>
           <div className="space-y-2">
             {result.responses.filter(r => !r.isCorrect).map((r, i) => (
               <div key={i} className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-lg p-3">
                 <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <Badge variant="outline" className="text-xs mb-1 capitalize">{r.type.replace('_', ' ')}</Badge>
-                  <p className="text-sm text-slate-700 line-clamp-2">{r.question}</p>
+                  <p className="text-sm text-foreground line-clamp-2">{r.question}</p>
                 </div>
               </div>
             ))}

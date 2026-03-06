@@ -137,14 +137,14 @@ export default function TutorPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-white shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-50 rounded-xl hidden sm:block">
             <GraduationCap className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-800">AI Tutor</h1>
-            <p className="text-xs text-slate-400 hidden sm:block">Personalized teaching based on your weak areas</p>
+            <h1 className="text-base sm:text-lg font-bold text-foreground">AI Tutor</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Personalized teaching based on your weak areas</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export default function TutorPage() {
             variant="ghost"
             size="sm"
             onClick={handleClear}
-            className="gap-1.5 text-slate-400 hover:text-red-500"
+            className="gap-1.5 text-muted-foreground hover:text-red-500"
             disabled={streaming}
           >
             <Trash2 className="w-4 h-4" />
@@ -170,12 +170,12 @@ export default function TutorPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-slate-400">
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-muted-foreground">
             <div className="p-5 bg-blue-50 rounded-full">
               <Sparkles className="w-8 h-8 text-blue-400" />
             </div>
             <div>
-              <p className="font-medium text-slate-500">Starting your tutoring session…</p>
+              <p className="font-medium text-muted-foreground">Starting your tutoring session…</p>
               <p className="text-sm mt-1">Analyzing your performance data</p>
             </div>
           </div>
@@ -191,17 +191,17 @@ export default function TutorPage() {
           >
             <div className={cn(
               'w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-              msg.role === 'assistant' ? 'bg-blue-100' : 'bg-slate-200'
+              msg.role === 'assistant' ? 'bg-blue-100' : 'bg-muted'
             )}>
               {msg.role === 'assistant'
                 ? <GraduationCap className="w-4 h-4 text-blue-600" />
-                : <User className="w-4 h-4 text-slate-500" />}
+                : <User className="w-4 h-4 text-muted-foreground" />}
             </div>
 
             <div className={cn(
               'px-4 py-3 rounded-2xl text-sm leading-relaxed max-w-[80%]',
               msg.role === 'assistant'
-                ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm'
+                ? 'bg-card border border-border text-foreground rounded-tl-sm shadow-sm'
                 : 'bg-blue-600 text-white rounded-tr-sm'
             )}>
               {msg.content === '' && streaming ? (
@@ -222,7 +222,7 @@ export default function TutorPage() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3">
+      <div className="shrink-0 border-t border-border bg-card px-4 py-3">
         <div className="max-w-3xl mx-auto flex gap-3 items-end">
           <Textarea
             value={input}
@@ -242,7 +242,7 @@ export default function TutorPage() {
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-center text-xs text-slate-300 mt-2">
+        <p className="text-center text-xs text-muted-foreground mt-2">
           Chat is saved — come back anytime. Click "New Session" to reset.
         </p>
       </div>

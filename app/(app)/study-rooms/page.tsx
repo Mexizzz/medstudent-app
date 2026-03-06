@@ -107,11 +107,11 @@ export default function StudyRoomsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Users className="w-6 h-6 text-indigo-500" />
             Study Rooms
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Study together with friends in real-time</p>
+          <p className="text-muted-foreground text-sm mt-1">Study together with friends in real-time</p>
         </div>
         <div className="flex gap-2">
           {/* Join Dialog */}
@@ -187,8 +187,8 @@ export default function StudyRoomsPage() {
           <div className="p-5 bg-indigo-50 rounded-full">
             <Users className="w-10 h-10 text-indigo-400" />
           </div>
-          <p className="text-lg font-semibold text-slate-600">No study rooms yet</p>
-          <p className="text-slate-400 text-sm">Create a room or join one with a code to start studying together.</p>
+          <p className="text-lg font-semibold text-muted-foreground">No study rooms yet</p>
+          <p className="text-muted-foreground text-sm">Create a room or join one with a code to start studying together.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -203,8 +203,8 @@ export default function StudyRoomsPage() {
                   <Users className="w-5 h-5 text-indigo-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 truncate">{room.name}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                  <p className="font-semibold text-foreground truncate">{room.name}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
                       {room.memberCount} online
@@ -214,7 +214,7 @@ export default function StudyRoomsPage() {
                 </div>
                 <button
                   onClick={e => handleDelete(room.id, e)}
-                  className="p-1.5 text-slate-300 hover:text-red-400 transition-colors shrink-0"
+                  className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
                   title="Close room"
                 >
                   <Trash2 className="w-4 h-4" />

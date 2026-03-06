@@ -67,8 +67,8 @@ export default function StudyPlanPage() {
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Study Plan</h1>
-        <p className="text-slate-500 text-sm mt-1">Plan your daily study sessions</p>
+        <h1 className="text-2xl font-bold text-foreground">Study Plan</h1>
+        <p className="text-muted-foreground text-sm mt-1">Plan your daily study sessions</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -81,7 +81,7 @@ export default function StudyPlanPage() {
                 <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(m => subMonths(m, 1))}>
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <h2 className="font-semibold text-slate-700">
+                <h2 className="font-semibold text-foreground">
                   {format(currentMonth, 'MMMM yyyy')}
                 </h2>
                 <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(m => addMonths(m, 1))}>
@@ -92,7 +92,7 @@ export default function StudyPlanPage() {
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-2">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                  <div key={d} className="text-center text-xs font-semibold text-slate-400 py-1">{d}</div>
+                  <div key={d} className="text-center text-xs font-semibold text-muted-foreground py-1">{d}</div>
                 ))}
               </div>
 
@@ -117,7 +117,7 @@ export default function StudyPlanPage() {
                       onClick={() => setSelectedDate(selected ? null : dateStr)}
                       className={`
                         relative aspect-square flex flex-col items-center justify-center rounded-lg text-sm transition-colors
-                        ${selected ? 'bg-blue-600 text-white' : today ? 'bg-blue-50 border-2 border-blue-300' : 'hover:bg-slate-50'}
+                        ${selected ? 'bg-blue-600 text-white' : today ? 'bg-blue-50 border-2 border-blue-300' : 'hover:bg-muted'}
                         ${!isSameMonth(day, currentMonth) ? 'opacity-30' : ''}
                       `}
                     >
@@ -125,7 +125,7 @@ export default function StudyPlanPage() {
                         {format(day, 'd')}
                       </span>
                       {hasPlans && (
-                        <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${allDone ? 'bg-emerald-400' : 'bg-blue-400'} ${selected ? 'bg-white' : ''}`} />
+                        <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${allDone ? 'bg-emerald-400' : 'bg-blue-400'} ${selected ? 'bg-card' : ''}`} />
                       )}
                     </button>
                   );
@@ -140,7 +140,7 @@ export default function StudyPlanPage() {
           {selectedDate ? (
             <>
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-slate-700">
+                <h3 className="font-semibold text-foreground">
                   {format(new Date(selectedDate + 'T00:00:00'), 'MMM d, yyyy')}
                 </h3>
                 <Button
@@ -155,7 +155,7 @@ export default function StudyPlanPage() {
               </div>
 
               {selectedDatePlans.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">
+                <div className="text-center py-8 text-muted-foreground text-sm">
                   No plans for this day.
                 </div>
               ) : selectedDatePlans.map(plan => {
@@ -184,7 +184,7 @@ export default function StudyPlanPage() {
                             {ACTIVITY_LABELS[t]}
                           </span>
                         ))}
-                        <span className="text-xs text-slate-400">{plan.questionCount} Qs</span>
+                        <span className="text-xs text-muted-foreground">{plan.questionCount} Qs</span>
                       </div>
                       {!plan.isCompleted && (
                         <Button asChild size="sm" className="w-full gap-1.5">
@@ -200,7 +200,7 @@ export default function StudyPlanPage() {
               })}
             </>
           ) : (
-            <div className="text-center py-12 text-slate-400 text-sm">
+            <div className="text-center py-12 text-muted-foreground text-sm">
               Click a day to view or add plans
             </div>
           )}

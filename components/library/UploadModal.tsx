@@ -141,16 +141,16 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
             <div>
               <Label>PDF File *</Label>
               <div
-                className="mt-1 border-2 border-dashed border-slate-200 rounded-lg p-6 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+                className="mt-1 border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
                 onClick={() => fileRef.current?.click()}
               >
                 {file ? (
-                  <div className="flex items-center gap-2 justify-center text-sm text-slate-700">
+                  <div className="flex items-center gap-2 justify-center text-sm text-foreground">
                     <FileText className="w-5 h-5 text-blue-500" />
                     {file.name}
                   </div>
                 ) : (
-                  <div className="text-slate-400">
+                  <div className="text-muted-foreground">
                     <Upload className="w-8 h-8 mx-auto mb-2" />
                     <p className="text-sm">Click to choose a PDF</p>
                   </div>
@@ -254,7 +254,7 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
             ) : (
               <div className="space-y-1">
                 <Label>Paste Transcript *</Label>
-                <p className="text-xs text-slate-500 flex items-start gap-1">
+                <p className="text-xs text-muted-foreground flex items-start gap-1">
                   <Info className="w-3 h-3 mt-0.5 shrink-0" />
                   On YouTube: click <strong>…More</strong> → <strong>Show transcript</strong>, select all text and paste it here.
                 </p>

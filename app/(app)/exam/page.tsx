@@ -196,8 +196,8 @@ export default function ExamPage() {
             <GraduationCap className="w-6 h-6 text-violet-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Exam Mode</h1>
-            <p className="text-slate-500 text-sm">Simulate a real exam — no feedback during the session</p>
+            <h1 className="text-2xl font-bold text-foreground">Exam Mode</h1>
+            <p className="text-muted-foreground text-sm">Simulate a real exam — no feedback during the session</p>
           </div>
         </div>
 
@@ -208,13 +208,13 @@ export default function ExamPage() {
             {EXAM_TYPES.map(et => (
               <label key={et.id} className={cn(
                 'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-                examTypeId === et.id ? 'bg-violet-50 border-violet-300' : 'hover:bg-slate-50 border-slate-200'
+                examTypeId === et.id ? 'bg-violet-50 border-violet-300' : 'hover:bg-muted border-border'
               )}>
                 <input type="radio" name="examType" value={et.id} checked={examTypeId === et.id}
                   onChange={() => setExamTypeId(et.id)} className="accent-violet-600" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">{et.label}</p>
-                  <p className="text-xs text-slate-400">{et.questions} questions · {et.minutes} min</p>
+                  <p className="text-xs text-muted-foreground">{et.questions} questions · {et.minutes} min</p>
                 </div>
               </label>
             ))}
@@ -226,17 +226,17 @@ export default function ExamPage() {
           <CardHeader className="pb-3"><CardTitle className="text-base">Content Sources</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {loadingSources ? (
-              <div className="flex items-center gap-2 text-sm text-slate-400 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading sources…
               </div>
             ) : sources.length === 0 ? (
-              <p className="text-sm text-slate-400 py-2">No sources yet. Add content in Library first.</p>
+              <p className="text-sm text-muted-foreground py-2">No sources yet. Add content in Library first.</p>
             ) : sources.map(s => {
               const mcqCount = s.questionCounts.find(c => c.type === 'mcq')?.count ?? 0;
               return (
                 <label key={s.id} className={cn(
                   'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-                  selectedSources.includes(s.id) ? 'bg-violet-50 border-violet-300' : 'hover:bg-slate-50 border-slate-200',
+                  selectedSources.includes(s.id) ? 'bg-violet-50 border-violet-300' : 'hover:bg-muted border-border',
                   mcqCount === 0 && 'opacity-40'
                 )}>
                   <input type="checkbox" checked={selectedSources.includes(s.id)}
@@ -246,7 +246,7 @@ export default function ExamPage() {
                     )} className="rounded" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{s.title}</p>
-                    <p className="text-xs text-slate-400">{mcqCount} MCQs</p>
+                    <p className="text-xs text-muted-foreground">{mcqCount} MCQs</p>
                   </div>
                   {s.subject && (
                     <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium shrink-0', subjectColor(s.subject))}>
@@ -282,16 +282,16 @@ export default function ExamPage() {
           <CardContent className="p-6 text-center space-y-2">
             <GraduationCap className={cn('w-10 h-10 mx-auto', score >= 60 ? 'text-emerald-500' : 'text-red-400')} />
             <p className="text-4xl font-bold">{Math.round(score)}%</p>
-            <p className="text-slate-600 text-sm">{correctCount} / {totalQ} correct</p>
+            <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
             <Badge variant="outline" className="text-xs">{percentile}</Badge>
-            <p className="text-xs text-slate-400 mt-1">Exam type: {examType.label}</p>
+            <p className="text-xs text-muted-foreground mt-1">Exam type: {examType.label}</p>
           </CardContent>
         </Card>
 
         {/* Question review */}
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-700 text-sm">Review Questions</h2>
-          <span className="text-xs text-slate-400">{reviewIndex + 1} / {totalQ}</span>
+          <h2 className="font-semibold text-foreground text-sm">Review Questions</h2>
+          <span className="text-xs text-muted-foreground">{reviewIndex + 1} / {totalQ}</span>
         </div>
 
         {reviewQ && (
@@ -315,7 +315,7 @@ export default function ExamPage() {
                       'flex items-start gap-2 p-2.5 rounded-lg text-sm border',
                       isCorrectOpt ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
                       isUserOpt && !isCorrectOpt ? 'bg-red-50 border-red-200 text-red-700' :
-                      'border-transparent text-slate-500'
+                      'border-transparent text-muted-foreground'
                     )}>
                       <span className="font-bold shrink-0 w-5">{letter})</span>
                       <span>{text}</span>
@@ -343,7 +343,7 @@ export default function ExamPage() {
             disabled={reviewIndex === totalQ - 1} className="flex-1">Next →</Button>
         </div>
 
-        <Button variant="ghost" className="w-full gap-2 text-slate-500" onClick={() => {
+        <Button variant="ghost" className="w-full gap-2 text-muted-foreground" onClick={() => {
           setPhase('config'); setQuestions([]); setAnswers({}); setFlagged(new Set()); setCurrentIndex(0);
         }}>
           <RotateCcw className="w-4 h-4" /> New Exam
@@ -361,18 +361,18 @@ export default function ExamPage() {
   return (
     <div className="flex flex-col h-screen">
       {/* Exam header */}
-      <div className="shrink-0 bg-white border-b border-slate-200 px-6 py-3 flex items-center gap-4">
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+      <div className="shrink-0 bg-card border-b border-border px-6 py-3 flex items-center gap-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <GraduationCap className="w-4 h-4 text-violet-500" />
           <span className="font-medium text-violet-700">{examType.label}</span>
         </div>
         <div className="flex-1">
           <Progress value={(currentIndex / totalQ) * 100} className="h-2" />
         </div>
-        <span className="text-xs text-slate-500">{currentIndex + 1}/{totalQ}</span>
+        <span className="text-xs text-muted-foreground">{currentIndex + 1}/{totalQ}</span>
         <div className={cn(
           'flex items-center gap-1.5 text-sm font-mono font-medium px-3 py-1 rounded-full',
-          secsLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600'
+          secsLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-muted text-muted-foreground'
         )}>
           <Timer className="w-3.5 h-3.5" />
           {timeDisplay}
@@ -390,7 +390,7 @@ export default function ExamPage() {
           )}
           <button onClick={toggleFlag} className={cn(
             'ml-auto flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors',
-            isFlagged ? 'bg-amber-100 text-amber-700' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50'
+            isFlagged ? 'bg-amber-100 text-amber-700' : 'text-muted-foreground hover:text-amber-600 hover:bg-amber-50'
           )}>
             <Flag className="w-3.5 h-3.5" />
             {isFlagged ? 'Flagged' : 'Flag'}
@@ -400,7 +400,7 @@ export default function ExamPage() {
         {/* Question */}
         <Card className="shadow-sm">
           <CardContent className="p-5 space-y-4">
-            <p className="text-sm leading-relaxed font-medium text-slate-800">{current.question}</p>
+            <p className="text-sm leading-relaxed font-medium text-foreground">{current.question}</p>
 
             <div className="space-y-2">
               {opts.map(letter => {
@@ -415,7 +415,7 @@ export default function ExamPage() {
                       'w-full flex items-start gap-3 p-3 rounded-xl border text-sm text-left transition-all',
                       selected
                         ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-violet-300 hover:bg-violet-50'
+                        : 'bg-card text-foreground border-border hover:border-violet-300 hover:bg-violet-50'
                     )}
                   >
                     <span className={cn('font-bold shrink-0 w-5', selected ? 'text-white' : 'text-violet-600')}>
@@ -431,7 +431,7 @@ export default function ExamPage() {
       </div>
 
       {/* Navigation footer */}
-      <div className="shrink-0 bg-white border-t border-slate-200 px-6 py-4 flex items-center gap-3">
+      <div className="shrink-0 bg-card border-t border-border px-6 py-4 flex items-center gap-3">
         <Button variant="outline" onClick={goPrev} disabled={currentIndex === 0}>← Prev</Button>
         <div className="flex-1 flex gap-1 overflow-x-auto">
           {questions.map((q, i) => (
@@ -443,7 +443,7 @@ export default function ExamPage() {
                 i === currentIndex ? 'bg-violet-600 text-white' :
                 flagged.has(q.id) ? 'bg-amber-200 text-amber-700' :
                 answers[q.id] ? 'bg-emerald-100 text-emerald-700' :
-                'bg-slate-100 text-slate-500'
+                'bg-muted text-muted-foreground'
               )}
             >
               {i + 1}

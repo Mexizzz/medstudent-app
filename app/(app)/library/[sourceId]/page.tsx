@@ -51,26 +51,26 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
 
       {/* Source header */}
       <div className="flex items-start gap-4">
-        <div className="p-3 bg-slate-100 rounded-xl">
+        <div className="p-3 bg-muted rounded-xl">
           {source.type === 'youtube'
             ? <Youtube className="w-7 h-7 text-red-500" />
             : <FileText className="w-7 h-7 text-blue-500" />
           }
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-slate-800">{source.title}</h1>
+          <h1 className="text-xl font-bold text-foreground">{source.title}</h1>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {source.subject && (
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${subjectColor(source.subject)}`}>
                 {source.subject}
               </span>
             )}
-            {source.topic && <span className="text-sm text-slate-500">{source.topic}</span>}
+            {source.topic && <span className="text-sm text-muted-foreground">{source.topic}</span>}
             <Badge variant="outline" className="text-xs">
               {source.type === 'mcq_pdf' ? 'MCQ PDF' : source.type === 'youtube' ? 'YouTube' : 'PDF'}
             </Badge>
             {source.wordCount && (
-              <span className="text-xs text-slate-400">{source.wordCount.toLocaleString()} words</span>
+              <span className="text-xs text-muted-foreground">{source.wordCount.toLocaleString()} words</span>
             )}
           </div>
           {source.youtubeUrl && (
@@ -88,7 +88,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
           <Card key={type} className={byType[type] ? '' : 'opacity-40'}>
             <CardContent className="p-3 text-center">
               <div className="text-2xl font-bold">{byType[type]?.length ?? 0}</div>
-              <div className="text-xs text-slate-500 mt-0.5">{ACTIVITY_LABELS[type]}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{ACTIVITY_LABELS[type]}</div>
             </CardContent>
           </Card>
         ))}
@@ -96,7 +96,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
 
       {/* Questions by type */}
       {types.length === 0 ? (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-muted-foreground">
           <p>No questions generated yet.</p>
           <p className="text-sm">Go back to the Library and click Generate on this source.</p>
         </div>
@@ -117,7 +117,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                 <Card key={q.id}>
                   <CardContent className="p-4 text-sm space-y-2">
                     <div className="flex items-start gap-2">
-                      <span className="text-xs font-semibold text-slate-400 mt-0.5 flex-shrink-0">#{i + 1}</span>
+                      <span className="text-xs font-semibold text-muted-foreground mt-0.5 flex-shrink-0">#{i + 1}</span>
                       <div className="flex-1 space-y-2">
                         {/* MCQ */}
                         {type === 'mcq' && (
@@ -128,13 +128,13 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                                 const text = q[`option${opt}` as keyof typeof q] as string;
                                 if (!text) return null;
                                 return (
-                                  <div key={opt} className={`text-xs p-1.5 rounded border ${q.correctAnswer === opt ? 'bg-emerald-50 border-emerald-300 text-emerald-700 font-semibold' : 'border-slate-100 text-slate-600'}`}>
+                                  <div key={opt} className={`text-xs p-1.5 rounded border ${q.correctAnswer === opt ? 'bg-emerald-50 border-emerald-300 text-emerald-700 font-semibold' : 'border-border text-muted-foreground'}`}>
                                     {opt}. {text}
                                   </div>
                                 );
                               })}
                             </div>
-                            {q.explanation && <p className="text-xs text-slate-500 bg-slate-50 p-2 rounded">{q.explanation}</p>}
+                            {q.explanation && <p className="text-xs text-muted-foreground bg-muted p-2 rounded">{q.explanation}</p>}
                           </>
                         )}
                         {/* Flashcard */}
@@ -153,7 +153,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                         {/* Fill blank */}
                         {type === 'fill_blank' && (
                           <>
-                            <p className="bg-slate-50 p-2 rounded font-mono text-xs">{q.blankText}</p>
+                            <p className="bg-muted p-2 rounded font-mono text-xs">{q.blankText}</p>
                             <p>Answer: <strong>{q.blankAnswer}</strong></p>
                           </>
                         )}
@@ -162,17 +162,17 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                           <>
                             <p className="font-medium">{q.question}</p>
                             {q.keyPoints && (
-                              <ul className="text-xs text-slate-500 space-y-0.5 list-disc list-inside">
+                              <ul className="text-xs text-muted-foreground space-y-0.5 list-disc list-inside">
                                 {(JSON.parse(q.keyPoints) as string[]).map((kp, j) => <li key={j}>{kp}</li>)}
                               </ul>
                             )}
-                            {q.modelAnswer && <p className="bg-slate-50 p-2 rounded text-xs">{q.modelAnswer}</p>}
+                            {q.modelAnswer && <p className="bg-muted p-2 rounded text-xs">{q.modelAnswer}</p>}
                           </>
                         )}
                         {/* Clinical case */}
                         {type === 'clinical_case' && (
                           <>
-                            <p className="bg-slate-50 p-2 rounded text-xs">{q.caseScenario}</p>
+                            <p className="bg-muted p-2 rounded text-xs">{q.caseScenario}</p>
                             <p className="font-medium">{q.caseQuestion}</p>
                             <p className="text-emerald-700 font-semibold text-xs">{q.caseAnswer}</p>
                           </>

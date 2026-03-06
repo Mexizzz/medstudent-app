@@ -115,24 +115,24 @@ export default function LessonsPage() {
 
       {/* Left sidebar — saved lessons */}
       <aside className={cn(
-        'w-52 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0',
+        'w-52 border-r border-border flex flex-col bg-muted shrink-0',
         'lg:relative lg:translate-x-0',
         'fixed inset-y-0 left-0 z-40 transition-transform duration-200',
         showSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
-        <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-4 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4 text-amber-500" />
-            <p className="text-sm font-semibold text-slate-700">My Lessons</p>
+            <p className="text-sm font-semibold text-foreground">My Lessons</p>
           </div>
-          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 rounded hover:bg-slate-200">
-            <X className="w-4 h-4 text-slate-500" />
+          <button onClick={() => setShowSidebar(false)} className="lg:hidden p-1 rounded hover:bg-muted">
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-2">
           {lessonList.length === 0 ? (
-            <p className="text-xs text-slate-400 px-4 py-3 text-center">
+            <p className="text-xs text-muted-foreground px-4 py-3 text-center">
               No lessons yet.<br />Generate your first one!
             </p>
           ) : (
@@ -141,24 +141,24 @@ export default function LessonsPage() {
                 key={lesson.id}
                 onClick={() => { loadLesson(lesson.id); setShowSidebar(false); }}
                 className={cn(
-                  'w-full text-left px-4 py-3 flex items-start gap-2 hover:bg-slate-100 transition-colors group',
+                  'w-full text-left px-4 py-3 flex items-start gap-2 hover:bg-muted transition-colors group',
                   activeLesson?.id === lesson.id && 'bg-amber-50 border-r-2 border-amber-400'
                 )}
               >
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     'text-xs font-medium truncate',
-                    activeLesson?.id === lesson.id ? 'text-amber-700' : 'text-slate-700'
+                    activeLesson?.id === lesson.id ? 'text-amber-700' : 'text-foreground'
                   )}>
                     {loadingId === lesson.id
                       ? <span className="flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Loading…</span>
                       : lesson.title}
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 truncate">{lesson.topic}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{lesson.topic}</p>
                 </div>
                 <button
                   onClick={e => deleteLesson(lesson.id, e)}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-300 hover:text-red-400 transition-all shrink-0 mt-0.5"
+                  className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-red-400 transition-all shrink-0 mt-0.5"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -171,13 +171,13 @@ export default function LessonsPage() {
       {/* Main area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topic input bar */}
-        <div className="shrink-0 border-b border-slate-200 bg-white px-4 sm:px-6 py-3 sm:py-4">
+        <div className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex gap-2 sm:gap-3 items-center max-w-2xl">
-            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 -ml-1 rounded-lg hover:bg-slate-100 shrink-0">
-              <Menu className="w-4 h-4 text-slate-600" />
+            <button onClick={() => setShowSidebar(true)} className="lg:hidden p-2 -ml-1 rounded-lg hover:bg-muted shrink-0">
+              <Menu className="w-4 h-4 text-muted-foreground" />
             </button>
             <div className="relative flex-1">
-              <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
@@ -200,14 +200,14 @@ export default function LessonsPage() {
             {activeLesson && (
               <button
                 onClick={() => setShowChat(v => !v)}
-                className="lg:hidden p-2 rounded-lg hover:bg-slate-100 shrink-0"
+                className="lg:hidden p-2 rounded-lg hover:bg-muted shrink-0"
               >
-                <MessageSquare className={cn('w-4 h-4', showChat ? 'text-amber-600' : 'text-slate-600')} />
+                <MessageSquare className={cn('w-4 h-4', showChat ? 'text-amber-600' : 'text-muted-foreground')} />
               </button>
             )}
           </div>
           {generating && (
-            <p className="text-xs text-slate-400 mt-2 flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-amber-400" />
               Creating lesson with whiteboard diagrams… this takes 20–40 seconds
             </p>
@@ -221,13 +221,13 @@ export default function LessonsPage() {
             {activeLesson ? (
               <LessonViewer lesson={activeLesson} />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-slate-400">
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-4 text-muted-foreground">
                 <div className="p-5 bg-amber-50 rounded-full">
                   <Lightbulb className="w-8 h-8 text-amber-400" />
                 </div>
                 <div>
-                  <p className="font-medium text-slate-500">No lesson selected</p>
-                  <p className="text-sm mt-1 text-slate-400">
+                  <p className="font-medium text-muted-foreground">No lesson selected</p>
+                  <p className="text-sm mt-1 text-muted-foreground">
                     Type a medical topic above and click <strong>Generate Lesson</strong>,<br />
                     or pick a saved lesson from the sidebar.
                   </p>
@@ -252,7 +252,7 @@ export default function LessonsPage() {
             <>
               {showChat && <div className="lg:hidden absolute inset-0 bg-black/50 z-10" onClick={() => setShowChat(false)} />}
               <aside className={cn(
-                'w-80 border-l border-slate-200 flex flex-col overflow-hidden shrink-0 bg-white',
+                'w-80 border-l border-border flex flex-col overflow-hidden shrink-0 bg-card',
                 'lg:relative lg:translate-x-0',
                 'absolute right-0 top-0 bottom-0 z-20 transition-transform duration-200',
                 showChat ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'

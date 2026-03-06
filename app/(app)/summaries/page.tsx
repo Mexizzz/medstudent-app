@@ -734,22 +734,22 @@ export default function SummariesPage() {
 
       {/* ── Left sidebar ───────────────────────────────────────────── */}
       <aside className={cn(
-        'w-52 border-r border-slate-200 bg-slate-50 flex flex-col shrink-0 transition-transform duration-200',
+        'w-52 border-r border-border bg-muted flex flex-col shrink-0 transition-transform duration-200',
         'fixed inset-y-0 left-0 z-40 lg:relative lg:translate-x-0',
         showSidebar ? 'translate-x-0' : '-translate-x-full'
       )}>
-        <div className="px-4 py-3 sm:py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-4 py-3 sm:py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-indigo-500" />
-            <p className="text-sm font-semibold text-slate-700">My Summaries</p>
+            <p className="text-sm font-semibold text-foreground">My Summaries</p>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={handleNew} className="p-1 rounded-md hover:bg-slate-200 text-slate-500">
+            <button onClick={handleNew} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
               <Plus className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowSidebar(false)}
-              className="p-1 rounded-md hover:bg-slate-200 text-slate-500 transition-colors lg:hidden"
+              className="p-1 rounded-md hover:bg-muted text-muted-foreground transition-colors lg:hidden"
             >
               <X className="w-4 h-4" />
             </button>
@@ -758,24 +758,24 @@ export default function SummariesPage() {
 
         <div className="flex-1 overflow-y-auto py-1">
           {summariesList.length === 0 ? (
-            <p className="text-[10px] text-slate-400 px-4 py-3 text-center leading-relaxed">
+            <p className="text-[10px] text-muted-foreground px-4 py-3 text-center leading-relaxed">
               No summaries yet.<br />Start writing to save one.
             </p>
           ) : summariesList.map(s => (
             <div
               key={s.id}
               className={cn(
-                'group w-full text-left px-4 py-2.5 flex items-start gap-2 hover:bg-slate-100 transition-colors cursor-pointer',
+                'group w-full text-left px-4 py-2.5 flex items-start gap-2 hover:bg-muted transition-colors cursor-pointer',
                 currentId === s.id && 'bg-indigo-50 border-r-2 border-indigo-500'
               )}
               onClick={() => handleLoad(s.id)}
             >
               <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-semibold truncate', currentId === s.id ? 'text-indigo-700' : 'text-slate-700')}>
+                <p className={cn('text-xs font-semibold truncate', currentId === s.id ? 'text-indigo-700' : 'text-foreground')}>
                   {s.title}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  {s.subject && <p className="text-[10px] text-slate-400 truncate">{s.subject}</p>}
+                  {s.subject && <p className="text-[10px] text-muted-foreground truncate">{s.subject}</p>}
                   {s.aiScore != null && (
                     <span className={cn('text-[10px] font-bold', s.aiScore >= 85 ? 'text-emerald-600' : s.aiScore >= 65 ? 'text-blue-600' : 'text-amber-600')}>
                       {s.aiScore}/100
@@ -785,7 +785,7 @@ export default function SummariesPage() {
               </div>
               <button
                 onClick={e => { e.stopPropagation(); handleDelete(s.id); }}
-                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-300 hover:text-red-400 shrink-0 mt-0.5"
+                className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-red-400 shrink-0 mt-0.5"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -798,11 +798,11 @@ export default function SummariesPage() {
       <main className="flex-1 overflow-y-auto flex flex-col">
 
         {/* Meta bar */}
-        <div className="border-b border-slate-200 px-4 sm:px-5 py-3 flex flex-wrap gap-3 items-center bg-white shrink-0">
+        <div className="border-b border-border px-4 sm:px-5 py-3 flex flex-wrap gap-3 items-center bg-card shrink-0">
           {/* Mobile menu button */}
           <button
             onClick={() => setShowSidebar(true)}
-            className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 transition-colors lg:hidden"
+            className="p-2 rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors lg:hidden"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -823,14 +823,14 @@ export default function SummariesPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="border-b border-slate-200 px-4 sm:px-5 py-2 flex flex-wrap gap-4 items-center bg-white shrink-0">
+        <div className="border-b border-border px-4 sm:px-5 py-2 flex flex-wrap gap-4 items-center bg-card shrink-0">
 
           {/* Mode toggle */}
-          <div className="flex gap-0.5 bg-slate-100 rounded-lg p-0.5">
+          <div className="flex gap-0.5 bg-muted rounded-lg p-0.5">
             {(['pen', 'text'] as const).map(m => (
               <button key={m} onClick={() => setMode(m)}
                 className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                  mode === m ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
+                  mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>
                 {m === 'pen' ? <><Pen className="w-3 h-3" /> Pen</> : <><Type className="w-3 h-3" /> Keyboard</>}
               </button>
             ))}
@@ -843,7 +843,7 @@ export default function SummariesPage() {
                 {(['pen', 'eraser'] as const).map(t => (
                   <button key={t} onClick={() => setTool(t)}
                     className={cn('p-2 rounded-lg border transition-colors',
-                      tool === t ? 'bg-slate-800 text-white border-slate-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50')}
+                      tool === t ? 'bg-foreground text-white border-border' : 'border-border text-muted-foreground hover:bg-muted')}
                     title={t === 'pen' ? 'Pen' : 'Eraser — removes whole strokes on touch'}>
                     {t === 'pen' ? <Pen className="w-3.5 h-3.5" /> : <Eraser className="w-3.5 h-3.5" />}
                   </button>
@@ -855,7 +855,7 @@ export default function SummariesPage() {
                 {COLORS.map(c => (
                   <button key={c.value} onClick={() => { setColor(c.value); setTool('pen'); }}
                     className={cn('w-5 h-5 rounded-full border-2 transition-all',
-                      color === c.value && tool === 'pen' ? 'border-slate-500 scale-125' : 'border-transparent hover:scale-110')}
+                      color === c.value && tool === 'pen' ? 'border-primary scale-125' : 'border-transparent hover:scale-110')}
                     style={{ background: c.value }} title={c.label} />
                 ))}
               </div>
@@ -865,7 +865,7 @@ export default function SummariesPage() {
                 {SIZES.map(s => (
                   <button key={s.value} onClick={() => setStrokeSize(s.value)}
                     className={cn('w-7 h-7 rounded-lg border flex items-center justify-center transition-colors',
-                      strokeSize === s.value ? 'bg-slate-800 border-slate-800' : 'border-slate-200 hover:bg-slate-50')}
+                      strokeSize === s.value ? 'bg-foreground border-border' : 'border-border hover:bg-muted')}
                     title={s.label}>
                     <div className="rounded-full" style={{
                       width: s.value * 2 + 2, height: s.value * 2 + 2,
@@ -877,21 +877,21 @@ export default function SummariesPage() {
 
               {/* Undo / Clear / + Page / Navigation */}
               <div className="flex gap-1 items-center">
-                <button onClick={handleUndo} className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" title="Undo last stroke">
+                <button onClick={handleUndo} className="p-2 rounded-lg border border-border text-muted-foreground hover:bg-muted" title="Undo last stroke">
                   <Undo2 className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={handleClear} className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-500" title="Clear canvas">
+                <button onClick={handleClear} className="p-2 rounded-lg border border-border text-muted-foreground hover:bg-red-50 hover:text-red-500" title="Clear canvas">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
                 <button onClick={addPage}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-xs font-medium transition-colors">
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 text-xs font-medium transition-colors">
                   <Plus className="w-3.5 h-3.5" /> Page
                 </button>
 
                 {/* Image import */}
                 <button
                   onClick={() => imageInputRef.current?.click()}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 text-xs font-medium transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 text-xs font-medium transition-colors"
                   title="Insert image (PNG, JPG, etc.)">
                   <ImagePlus className="w-3.5 h-3.5" /> Image
                 </button>
@@ -905,12 +905,12 @@ export default function SummariesPage() {
 
                 {/* Page navigation (only if more than 1 page) */}
                 {pageCount > 1 && (
-                  <div className="flex items-center gap-0.5 ml-1 border border-slate-200 rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-0.5 ml-1 border border-border rounded-lg overflow-hidden">
                     {Array.from({ length: pageCount }, (_, i) => i + 1).map(n => (
                       <button
                         key={n}
                         onClick={() => goToPage(n)}
-                        className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors border-r border-slate-200 last:border-r-0"
+                        className="px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 transition-colors border-r border-border last:border-r-0"
                         title={`Go to page ${n}`}
                       >
                         {n}
@@ -924,7 +924,7 @@ export default function SummariesPage() {
         </div>
 
         {/* Writing area */}
-        <div ref={scrollAreaRef} className="flex-1 overflow-auto bg-slate-200 flex justify-center items-start py-6 px-4" style={{ position: 'relative' }}>
+        <div ref={scrollAreaRef} className="flex-1 overflow-auto bg-muted flex justify-center items-start py-6 px-4" style={{ position: 'relative' }}>
           <div className="shadow-lg rounded-sm overflow-hidden" style={{ width: '100%', maxWidth: CANVAS_W }}>
             {mode === 'pen' ? (
               <canvas
@@ -1026,8 +1026,8 @@ export default function SummariesPage() {
 
         {/* Text notes (pen mode — for AI evaluation) */}
         {mode === 'pen' && (
-          <div className="border-t border-slate-200 px-5 py-3 bg-white shrink-0">
-            <p className="text-xs text-slate-500 mb-1.5 flex items-center gap-1.5">
+          <div className="border-t border-border px-5 py-3 bg-card shrink-0">
+            <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
               <Type className="w-3 h-3" />
               Written notes (for AI evaluation) — type the key points from your drawing
             </p>
@@ -1035,7 +1035,7 @@ export default function SummariesPage() {
               value={textContent}
               onChange={e => { setTextContent(e.target.value); setIsDirty(true); }}
               placeholder="Type the key points from your handwritten notes here so the AI can evaluate them…"
-              className="w-full h-20 text-sm border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 leading-relaxed"
+              className="w-full h-20 text-sm border border-border rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200 leading-relaxed"
             />
           </div>
         )}
@@ -1057,23 +1057,23 @@ export default function SummariesPage() {
           </button>
         )}
         {result && showPanel && (
-          <div className="border-t border-slate-200 bg-white shrink-0">
+          <div className="border-t border-border bg-card shrink-0">
             {/* Always-visible compact header — click to expand/collapse */}
             <div className="flex items-center gap-3 px-5 py-2.5">
               <button
                 onClick={() => setShowResult(v => !v)}
-                className="flex items-center gap-3 flex-1 hover:bg-slate-50 rounded-lg transition-colors -ml-1 pl-1"
+                className="flex items-center gap-3 flex-1 hover:bg-muted rounded-lg transition-colors -ml-1 pl-1"
               >
                 <ScoreRing score={result.score ?? 0} />
                 <div className="flex-1 text-left">
                   <p className={cn('text-sm font-bold', gradeColor(result.grade ?? ''))}>{result.grade} — {result.score}/100</p>
-                  <p className="text-[11px] text-slate-400">{showResult ? 'Click to hide details' : 'Click to see full evaluation'}</p>
+                  <p className="text-[11px] text-muted-foreground">{showResult ? 'Click to hide details' : 'Click to see full evaluation'}</p>
                 </div>
-                <ChevronRight className={cn('w-4 h-4 text-slate-400 transition-transform', showResult && 'rotate-90')} />
+                <ChevronRight className={cn('w-4 h-4 text-muted-foreground transition-transform', showResult && 'rotate-90')} />
               </button>
               <button
                 onClick={() => setShowPanel(false)}
-                className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+                className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-muted-foreground transition-colors shrink-0"
                 title="Hide rating panel"
               >
                 <X className="w-3.5 h-3.5" />
@@ -1085,26 +1085,26 @@ export default function SummariesPage() {
             <div className="px-5 pb-4 space-y-3">
               <div className="flex-1 min-w-0 space-y-3">
                 {(result?.transcription || textContent?.trim()) && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">What AI read from your handwriting</p>
-                    <p className="text-xs text-slate-600 italic leading-relaxed">{result?.transcription || textContent.trim()}</p>
+                  <div className="bg-muted border border-border rounded-lg px-3 py-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">What AI read from your handwriting</p>
+                    <p className="text-xs text-muted-foreground italic leading-relaxed">{result?.transcription || textContent.trim()}</p>
                   </div>
                 )}
-                <p className="text-sm text-slate-700 leading-relaxed">{result.overallFeedback}</p>
+                <p className="text-sm text-foreground leading-relaxed">{result.overallFeedback}</p>
                 <div className="grid grid-cols-3 gap-3">
                   {(['coverage', 'accuracy', 'organization'] as const).map(key => {
                     const item = result[key] as { score: number; comment: string } | undefined;
                     if (!item) return null;
                     return (
-                      <div key={key} className="bg-slate-50 rounded-lg p-2.5">
+                      <div key={key} className="bg-muted rounded-lg p-2.5">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{key}</p>
-                          <p className="text-xs font-bold text-slate-700">{item.score}%</p>
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{key}</p>
+                          <p className="text-xs font-bold text-foreground">{item.score}%</p>
                         </div>
-                        <div className="h-1 bg-slate-200 rounded-full overflow-hidden mb-1.5">
+                        <div className="h-1 bg-muted rounded-full overflow-hidden mb-1.5">
                           <div className="h-full rounded-full" style={{ width: `${item.score}%`, background: scoreRingColor(item.score) }} />
                         </div>
-                        <p className="text-[10px] text-slate-500 leading-relaxed">{item.comment}</p>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">{item.comment}</p>
                       </div>
                     );
                   })}
@@ -1117,7 +1117,7 @@ export default function SummariesPage() {
                       </p>
                       <ul className="space-y-0.5">
                         {result.strengths.map((s, i) => (
-                          <li key={i} className="text-[11px] text-slate-600 flex gap-1.5">
+                          <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5">
                             <span className="text-emerald-400 shrink-0">✓</span>{s}
                           </li>
                         ))}
@@ -1131,7 +1131,7 @@ export default function SummariesPage() {
                       </p>
                       <ul className="space-y-0.5">
                         {result.improvements.map((s, i) => (
-                          <li key={i} className="text-[11px] text-slate-600 flex gap-1.5">
+                          <li key={i} className="text-[11px] text-muted-foreground flex gap-1.5">
                             <span className="text-amber-400 shrink-0">→</span>{s}
                           </li>
                         ))}
@@ -1152,7 +1152,7 @@ export default function SummariesPage() {
                           <span className="shrink-0 w-4 h-4 rounded-full bg-violet-200 text-violet-700 font-bold flex items-center justify-center text-[9px]">{i + 1}</span>
                           <span>
                             <span className="font-semibold text-violet-800">{step.label}</span>
-                            <span className="text-slate-500"> — {step.example}</span>
+                            <span className="text-muted-foreground"> — {step.example}</span>
                           </span>
                         </li>
                       ))}

@@ -44,8 +44,8 @@ export function FillBlankCard({ question, onAnswer }: FillBlankCardProps) {
     <div className="space-y-5">
       <Badge variant="outline">Fill in the Blank</Badge>
 
-      <div className="bg-slate-50 rounded-xl border border-slate-200 p-5">
-        <p className="text-base leading-8 text-slate-800">
+      <div className="bg-muted rounded-xl border border-border p-5">
+        <p className="text-base leading-8 text-foreground">
           {parts[0]}
           {submitted ? (
             <span className={cn(
@@ -89,13 +89,13 @@ export function FillBlankCard({ question, onAnswer }: FillBlankCardProps) {
             }
           </div>
           {!isCorrect && (
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-foreground">
               Correct answer: <strong>{question.blankAnswer}</strong>
               {alternatives.length > 0 && ` (also accepted: ${alternatives.join(', ')})`}
             </p>
           )}
           {question.explanation && (
-            <p className="text-sm text-slate-600 border-t border-current/10 pt-2 mt-2">{question.explanation}</p>
+            <p className="text-sm text-muted-foreground border-t border-current/10 pt-2 mt-2">{question.explanation}</p>
           )}
         </div>
       )}

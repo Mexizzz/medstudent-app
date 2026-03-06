@@ -136,11 +136,11 @@ export default function WrongAnswersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <XCircle className="w-6 h-6 text-red-500" />
             Wrong Answers
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {items.length === 0
               ? 'No wrong answers yet — keep studying!'
               : `${items.length} question${items.length !== 1 ? 's' : ''} you got wrong`}
@@ -166,8 +166,8 @@ export default function WrongAnswersPage() {
           <div className="p-5 bg-emerald-50 rounded-full">
             <XCircle className="w-10 h-10 text-emerald-400" />
           </div>
-          <p className="text-lg font-semibold text-slate-600">All clear!</p>
-          <p className="text-slate-400 text-sm">Complete some study sessions to see wrong answers here.</p>
+          <p className="text-lg font-semibold text-muted-foreground">All clear!</p>
+          <p className="text-muted-foreground text-sm">Complete some study sessions to see wrong answers here.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -182,7 +182,7 @@ export default function WrongAnswersPage() {
                       <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-xs font-bold text-red-600">
                         {item.wrongCount}×
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-tight text-center">wrong</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight text-center">wrong</p>
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -194,18 +194,18 @@ export default function WrongAnswersPage() {
                             {item.subject}
                           </span>
                         )}
-                        {item.topic && <span className="text-xs text-slate-400">{item.topic}</span>}
+                        {item.topic && <span className="text-xs text-muted-foreground">{item.topic}</span>}
                       </div>
 
                       {/* Question */}
-                      <p className="text-sm font-medium text-slate-800 leading-relaxed">
+                      <p className="text-sm font-medium text-foreground leading-relaxed">
                         {questionLabel(item)}
                       </p>
 
                       {/* Correct answer (always shown) */}
                       <div className="mt-2 flex items-start gap-1.5">
                         <span className="text-xs font-semibold text-emerald-600 shrink-0 mt-0.5">✓ Correct:</span>
-                        <span className="text-xs text-slate-600">{correctAnswerLabel(item)}</span>
+                        <span className="text-xs text-muted-foreground">{correctAnswerLabel(item)}</span>
                       </div>
 
                       {/* Expandable explanation */}
@@ -219,7 +219,7 @@ export default function WrongAnswersPage() {
                       )}
                       {isOpen && item.explanation && (
                         <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                          <p className="text-xs text-slate-700 leading-relaxed">{item.explanation}</p>
+                          <p className="text-xs text-foreground leading-relaxed">{item.explanation}</p>
                         </div>
                       )}
                     </div>
@@ -227,7 +227,7 @@ export default function WrongAnswersPage() {
                     {/* Remove button */}
                     <button
                       onClick={() => handleRemove(item)}
-                      className="shrink-0 p-1.5 text-slate-300 hover:text-red-400 transition-colors"
+                      className="shrink-0 p-1.5 text-muted-foreground hover:text-red-400 transition-colors"
                       title="Remove from wrong answers"
                     >
                       <Trash2 className="w-4 h-4" />

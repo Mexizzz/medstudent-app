@@ -83,38 +83,47 @@
   --sidebar-ring: oklch(0.55 0.1 255);
 }
 
+/* Dark Neon Theme */
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: #0a0b14;
+  --foreground: #e2e8f0;
+  --card: #111222;
+  --card-foreground: #e2e8f0;
+  --popover: #111222;
+  --popover-foreground: #e2e8f0;
+  --primary: #00e5ff;
+  --primary-foreground: #0a0b14;
+  --secondary: #181a2e;
+  --secondary-foreground: #c4b5fd;
+  --muted: #181a2e;
+  --muted-foreground: #7e829a;
+  --accent: #1c1e38;
+  --accent-foreground: #e0e7ff;
+  --destructive: #ff4d6a;
+  --border: #1c1e38;
+  --input: #1c1e38;
+  --ring: #6366f1;
+  --chart-1: #818cf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #00e5ff;
+  --sidebar: #0c0d1a;
+  --sidebar-foreground: #b8bdd0;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #181a30;
+  --sidebar-accent-foreground: #e0e7ff;
+  --sidebar-border: #1c1e40;
+  --sidebar-ring: #6366f1;
+}
+
+/* Neon glow effects for dark theme */
+.dark .neon-glow {
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.15), 0 0 30px rgba(99, 102, 241, 0.05);
+}
+.dark .neon-text {
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
 }
 
 @layer base {

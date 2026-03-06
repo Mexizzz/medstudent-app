@@ -174,16 +174,16 @@ export function LessonChat({ lesson, onSectionUpdate }: LessonChatProps) {
   const busy = streaming || fetchingDiagram;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-card">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-200 shrink-0">
+      <div className="px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-violet-100 rounded-lg">
             <Bot className="w-4 h-4 text-violet-600" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800">Lesson Assistant</p>
-            <p className="text-xs text-slate-400">Ask questions or request diagrams</p>
+            <p className="text-sm font-semibold text-foreground">Lesson Assistant</p>
+            <p className="text-xs text-muted-foreground">Ask questions or request diagrams</p>
           </div>
         </div>
       </div>
@@ -192,14 +192,14 @@ export function LessonChat({ lesson, onSectionUpdate }: LessonChatProps) {
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
         {messages.length === 0 && (
           <div className="text-center mt-8 space-y-2 px-4">
-            <Bot className="w-7 h-7 mx-auto text-slate-300" />
-            <p className="text-xs font-medium text-slate-400">Ask about the lesson</p>
+            <Bot className="w-7 h-7 mx-auto text-muted-foreground" />
+            <p className="text-xs font-medium text-muted-foreground">Ask about the lesson</p>
             <div className="space-y-1">
               {['Show me phagocytosis', 'Show me a nephron diagram', 'What is the clinical significance?'].map(s => (
                 <button
                   key={s}
                   onClick={() => setInput(s)}
-                  className="block w-full text-left text-xs text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg px-2 py-1 transition-colors"
+                  className="block w-full text-left text-xs text-muted-foreground hover:text-violet-600 hover:bg-violet-50 rounded-lg px-2 py-1 transition-colors"
                 >
                   &ldquo;{s}&rdquo;
                 </button>
@@ -212,16 +212,16 @@ export function LessonChat({ lesson, onSectionUpdate }: LessonChatProps) {
           <div key={i} className={cn('flex gap-2', msg.role === 'user' ? 'flex-row-reverse' : '')}>
             <div className={cn(
               'w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-              msg.role === 'assistant' ? 'bg-violet-100' : 'bg-slate-200'
+              msg.role === 'assistant' ? 'bg-violet-100' : 'bg-muted'
             )}>
               {msg.role === 'assistant'
                 ? <Bot className="w-3.5 h-3.5 text-violet-600" />
-                : <User className="w-3.5 h-3.5 text-slate-500" />}
+                : <User className="w-3.5 h-3.5 text-muted-foreground" />}
             </div>
             <div className={cn(
               'px-3 py-2 rounded-xl text-xs leading-relaxed max-w-[82%]',
               msg.role === 'assistant'
-                ? 'bg-slate-50 border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'
+                ? 'bg-muted border border-border text-foreground rounded-tl-sm shadow-sm'
                 : 'bg-violet-600 text-white rounded-tr-sm'
             )}>
               {msg.content === '' && streaming ? (
@@ -250,7 +250,7 @@ export function LessonChat({ lesson, onSectionUpdate }: LessonChatProps) {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 border-t border-slate-200 px-3 py-3">
+      <div className="shrink-0 border-t border-border px-3 py-3">
         <div className="flex gap-2 items-end">
           <Textarea
             value={input}

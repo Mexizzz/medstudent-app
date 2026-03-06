@@ -86,18 +86,18 @@ export default async function AnalyticsPage() {
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Analytics</h1>
-        <p className="text-slate-500 text-sm mt-1">Track your performance over time</p>
+        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+        <p className="text-muted-foreground text-sm mt-1">Track your performance over time</p>
       </div>
 
       {byTopic.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-          <div className="p-5 bg-slate-100 rounded-full">
-            <BarChart2 className="w-10 h-10 text-slate-400" />
+          <div className="p-5 bg-muted rounded-full">
+            <BarChart2 className="w-10 h-10 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-600">No data yet</p>
-            <p className="text-slate-400 text-sm">Complete some study sessions to see your analytics</p>
+            <p className="text-lg font-semibold text-muted-foreground">No data yet</p>
+            <p className="text-muted-foreground text-sm">Complete some study sessions to see your analytics</p>
           </div>
         </div>
       ) : (
@@ -117,7 +117,7 @@ export default async function AnalyticsPage() {
                     <div key={t.id} className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">{t.topic || t.subject}</p>
-                        <p className="text-xs text-slate-400">{t.totalAttempts} attempts</p>
+                        <p className="text-xs text-muted-foreground">{t.totalAttempts} attempts</p>
                       </div>
                       <Badge className={cn('text-xs', scoreBg(Math.round(t.avgScore ?? 0)))}>
                         {Math.round(t.avgScore ?? 0)}%
@@ -141,7 +141,7 @@ export default async function AnalyticsPage() {
                     <div key={t.id} className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">{t.topic || t.subject}</p>
-                        <p className="text-xs text-slate-400">{t.totalAttempts} attempts</p>
+                        <p className="text-xs text-muted-foreground">{t.totalAttempts} attempts</p>
                       </div>
                       <Badge className={cn('text-xs', scoreBg(Math.round(t.avgScore ?? 0)))}>
                         {Math.round(t.avgScore ?? 0)}%

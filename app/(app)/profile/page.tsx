@@ -65,7 +65,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-2xl font-bold text-slate-900">Profile</h1>
+      <h1 className="text-2xl font-bold text-foreground">Profile</h1>
 
       {/* Rank Card */}
       <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl p-6 text-white">
@@ -82,9 +82,9 @@ export default function ProfilePage() {
               <span>{xp.xpInLevel} / {xp.xpForNext} XP</span>
               <span>Next: {nextRank.badge} {nextRank.title}</span>
             </div>
-            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-card/20 rounded-full overflow-hidden">
               <div
-                className="h-full bg-white/80 rounded-full transition-all"
+                className="h-full bg-card/80 rounded-full transition-all"
                 style={{ width: `${xp.percent}%` }}
               />
             </div>
@@ -93,55 +93,55 @@ export default function ProfilePage() {
       </div>
 
       {/* Edit Profile */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
-        <h2 className="text-lg font-semibold text-slate-800">Edit Profile</h2>
+      <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+        <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Email</label>
           <input
             type="text"
             value={profile.email}
             disabled
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 text-sm"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-muted text-muted-foreground text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Display Name</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Display Name</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Your name"
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Username</label>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 text-sm">@</span>
+            <span className="text-muted-foreground text-sm">@</span>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
               placeholder="username"
               maxLength={20}
-              className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <p className="text-xs text-slate-400 mt-1">Letters, numbers, and underscores only. Friends can find you by this.</p>
+          <p className="text-xs text-muted-foreground mt-1">Letters, numbers, and underscores only. Friends can find you by this.</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Bio</label>
           <textarea
             value={bio}
             onChange={e => setBio(e.target.value)}
             placeholder="Tell others about yourself..."
             rows={3}
             maxLength={200}
-            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
 
@@ -162,8 +162,8 @@ export default function ProfilePage() {
       </div>
 
       {/* All Ranks */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">All Ranks</h2>
+      <div className="bg-card rounded-xl border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">All Ranks</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {RANKS.map(r => (
             <div
@@ -172,14 +172,14 @@ export default function ProfilePage() {
                 r.level === rank.level
                   ? 'border-violet-300 bg-violet-50'
                   : r.minXp <= xp.totalXp
-                    ? 'border-slate-200 bg-white'
-                    : 'border-slate-100 bg-slate-50 opacity-50'
+                    ? 'border-border bg-card'
+                    : 'border-border bg-muted opacity-50'
               }`}
             >
               <span className="text-2xl">{r.badge}</span>
               <div>
-                <p className="text-sm font-medium text-slate-800">{r.title}</p>
-                <p className="text-xs text-slate-400">Lv.{r.level} · {r.minXp.toLocaleString()} XP</p>
+                <p className="text-sm font-medium text-foreground">{r.title}</p>
+                <p className="text-xs text-muted-foreground">Lv.{r.level} · {r.minXp.toLocaleString()} XP</p>
               </div>
               {r.level === rank.level && (
                 <span className="ml-auto text-xs font-medium text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">Current</span>

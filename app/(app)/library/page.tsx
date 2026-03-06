@@ -44,8 +44,8 @@ export default function LibraryPage() {
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Library</h1>
-          <p className="text-slate-500 text-sm mt-1">{sources.length} content source{sources.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-2xl font-bold text-foreground">Library</h1>
+          <p className="text-muted-foreground text-sm mt-1">{sources.length} content source{sources.length !== 1 ? 's' : ''}</p>
         </div>
         <UploadModal onSuccess={fetchSources} />
       </div>
@@ -62,12 +62,12 @@ export default function LibraryPage() {
         </div>
       ) : sources.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-          <div className="p-5 bg-slate-100 rounded-full">
-            <BookOpen className="w-10 h-10 text-slate-400" />
+          <div className="p-5 bg-muted rounded-full">
+            <BookOpen className="w-10 h-10 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-600">No content yet</p>
-            <p className="text-slate-400 text-sm">Upload a PDF or add a YouTube video to get started</p>
+            <p className="text-lg font-semibold text-muted-foreground">No content yet</p>
+            <p className="text-muted-foreground text-sm">Upload a PDF or add a YouTube video to get started</p>
           </div>
           <UploadModal onSuccess={fetchSources} />
         </div>

@@ -123,19 +123,19 @@ function StudyPageContent() {
   return (
     <div className="p-4 sm:p-6 max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Start Studying</h1>
-        <p className="text-slate-500 text-sm mt-1">Configure your study session</p>
+        <h1 className="text-2xl font-bold text-foreground">Start Studying</h1>
+        <p className="text-muted-foreground text-sm mt-1">Configure your study session</p>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : sources.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center space-y-3">
-            <Brain className="w-10 h-10 text-slate-300 mx-auto" />
-            <p className="text-slate-500">No content sources yet.</p>
+            <Brain className="w-10 h-10 text-muted-foreground mx-auto" />
+            <p className="text-muted-foreground">No content sources yet.</p>
             <Button asChild variant="outline" size="sm"><a href="/library">Go to Library</a></Button>
           </CardContent>
         </Card>
@@ -153,12 +153,12 @@ function StudyPageContent() {
                 return (
                   <label key={source.id} className={cn(
                     'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
-                    selected ? 'bg-blue-50 border-blue-300' : 'hover:bg-slate-50 border-slate-200'
+                    selected ? 'bg-blue-50 border-blue-300' : 'hover:bg-muted border-border'
                   )}>
                     <input type="checkbox" checked={selected} onChange={() => toggleSource(source.id)} className="rounded" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{source.title}</p>
-                      <p className="text-xs text-slate-400">{total} questions available</p>
+                      <p className="text-xs text-muted-foreground">{total} questions available</p>
                     </div>
                     {source.subject && (
                       <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium shrink-0', subjectColor(source.subject))}>
@@ -188,12 +188,12 @@ function StudyPageContent() {
                       disabled={available === 0}
                       className={cn(
                         'text-sm px-4 py-2 rounded-lg border transition-colors flex items-center gap-1.5',
-                        active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300',
+                        active ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-muted-foreground border-border hover:border-blue-300',
                         available === 0 && 'opacity-40 cursor-not-allowed'
                       )}
                     >
                       {ACTIVITY_LABELS[type]}
-                      <span className={cn('text-xs', active ? 'text-blue-200' : 'text-slate-400')}>
+                      <span className={cn('text-xs', active ? 'text-blue-200' : 'text-muted-foreground')}>
                         ({available})
                       </span>
                     </button>
@@ -224,26 +224,26 @@ function StudyPageContent() {
                         {selectedTopics.length} selected
                       </span>
                     ) : topics.length > 0 ? (
-                      <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-normal">
+                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-normal">
                         All {topics.length} topics
                       </span>
                     ) : null}
                   </CardTitle>
-                  {showTopics ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                  {showTopics ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                 </button>
               </CardHeader>
 
               {showTopics && (
                 <CardContent className="pt-3 pb-4">
                   {topicsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                       <Loader2 className="w-4 h-4 animate-spin" /> Loading topics…
                     </div>
                   ) : topics.length === 0 ? (
-                    <p className="text-sm text-slate-400">No topics found. Generate questions first.</p>
+                    <p className="text-sm text-muted-foreground">No topics found. Generate questions first.</p>
                   ) : (
                     <div className="space-y-2.5">
-                      <p className="text-xs text-slate-400">Select specific topics, or leave all unselected to include everything.</p>
+                      <p className="text-xs text-muted-foreground">Select specific topics, or leave all unselected to include everything.</p>
                       <div className="flex flex-wrap gap-2">
                         {/* All button */}
                         <button
@@ -252,7 +252,7 @@ function StudyPageContent() {
                             'text-sm px-3 py-1.5 rounded-full border transition-colors font-medium',
                             allTopicsSelected
                               ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'
+                              : 'bg-card text-muted-foreground border-border hover:border-blue-300'
                           )}
                         >
                           All topics
@@ -268,7 +268,7 @@ function StudyPageContent() {
                                 'text-sm px-3 py-1.5 rounded-full border transition-colors',
                                 active
                                   ? 'bg-blue-600 text-white border-blue-600'
-                                  : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                                  : 'bg-card text-muted-foreground border-border hover:border-blue-300'
                               )}
                             >
                               {topic}

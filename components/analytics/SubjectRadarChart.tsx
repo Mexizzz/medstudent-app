@@ -14,7 +14,7 @@ interface SubjectData {
 export function SubjectRadarChart({ data }: { data: SubjectData[] }) {
   if (data.length < 3) {
     return (
-      <div className="flex items-center justify-center h-48 text-sm text-slate-400">
+      <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
         Study at least 3 subjects to see the radar chart
       </div>
     );

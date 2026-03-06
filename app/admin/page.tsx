@@ -69,8 +69,8 @@ export default function AdminPage() {
               <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
                 <Lock className="w-6 h-6 text-indigo-600" />
               </div>
-              <h1 className="text-xl font-bold text-slate-800">Admin Panel</h1>
-              <p className="text-sm text-slate-500 mt-1">Enter admin password</p>
+              <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
+              <p className="text-sm text-muted-foreground mt-1">Enter admin password</p>
             </div>
             <Input
               type="password"
@@ -100,11 +100,11 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 sm:p-8">
+    <div className="min-h-screen bg-foreground text-slate-100 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <Button variant="outline" size="sm" onClick={() => setData(null)} className="text-slate-300 border-slate-600 hover:bg-slate-800">
+          <Button variant="outline" size="sm" onClick={() => setData(null)} className="text-muted-foreground border-slate-600 hover:bg-foreground">
             <LogOut className="w-4 h-4 mr-1.5" /> Logout
           </Button>
         </div>
@@ -112,12 +112,12 @@ export default function AdminPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {statCards.map(s => (
-            <div key={s.label} className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <div key={s.label} className="bg-foreground rounded-xl p-4 border border-slate-700">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`p-1.5 rounded-lg ${s.color}`}>
                   <s.icon className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-xs text-slate-400">{s.label}</span>
+                <span className="text-xs text-muted-foreground">{s.label}</span>
               </div>
               <p className="text-2xl font-bold">{s.value}</p>
             </div>
@@ -125,13 +125,13 @@ export default function AdminPage() {
         </div>
 
         {/* Users */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-foreground rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
             <h2 className="font-semibold">All Users ({users.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-750 text-slate-400 text-left">
+              <thead className="bg-slate-750 text-muted-foreground text-left">
                 <tr>
                   <th className="px-4 py-2">Email</th>
                   <th className="px-4 py-2">Name</th>
@@ -142,15 +142,15 @@ export default function AdminPage() {
                   <th className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {users.map(u => (
-                  <tr key={u.id} className="hover:bg-slate-750">
+                  <tr key={u.id} className="hover:bg-muted">
                     <td className="px-4 py-2.5 font-mono text-xs">{u.email}</td>
                     <td className="px-4 py-2.5">{u.name || '-'}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-slate-500 max-w-[150px] truncate" title={u.passwordHash}>{u.passwordHash.slice(0, 20)}...</td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground max-w-[150px] truncate" title={u.passwordHash}>{u.passwordHash.slice(0, 20)}...</td>
                     <td className="px-4 py-2.5">{u.sessionCount}</td>
                     <td className="px-4 py-2.5">{u.responseCount}</td>
-                    <td className="px-4 py-2.5 text-slate-400 text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-2.5">
                       {resetUserId === u.id ? (
                         <div className="flex items-center gap-1.5">
@@ -166,7 +166,7 @@ export default function AdminPage() {
                           <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setResetUserId(null); setNewPass(''); }}>X</Button>
                         </div>
                       ) : (
-                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-slate-400 hover:text-slate-200" onClick={() => setResetUserId(u.id)}>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-muted-foreground hover:text-slate-200" onClick={() => setResetUserId(u.id)}>
                           <KeyRound className="w-3 h-3" /> Reset
                         </Button>
                       )}
@@ -174,7 +174,7 @@ export default function AdminPage() {
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-500">No users yet</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No users yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -182,13 +182,13 @@ export default function AdminPage() {
         </div>
 
         {/* Recent Sessions */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-foreground rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
             <h2 className="font-semibold">Recent Sessions (last 20)</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-750 text-slate-400 text-left">
+              <thead className="bg-slate-750 text-muted-foreground text-left">
                 <tr>
                   <th className="px-4 py-2">User ID</th>
                   <th className="px-4 py-2">Status</th>
@@ -198,9 +198,9 @@ export default function AdminPage() {
                   <th className="px-4 py-2">Started</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {recentSessions.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-750">
+                  <tr key={s.id} className="hover:bg-muted">
                     <td className="px-4 py-2.5 font-mono text-xs">{s.userId.slice(0, 12)}...</td>
                     <td className="px-4 py-2.5">
                       <span className={`px-2 py-0.5 rounded-full text-xs ${s.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
@@ -210,11 +210,11 @@ export default function AdminPage() {
                     <td className="px-4 py-2.5">{s.totalQuestions}</td>
                     <td className="px-4 py-2.5">{s.correctCount}</td>
                     <td className="px-4 py-2.5">{s.score != null ? `${Math.round(s.score)}%` : '-'}</td>
-                    <td className="px-4 py-2.5 text-slate-400 text-xs">{new Date(s.startedAt).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{new Date(s.startedAt).toLocaleString()}</td>
                   </tr>
                 ))}
                 {recentSessions.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">No sessions yet</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No sessions yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -222,13 +222,13 @@ export default function AdminPage() {
         </div>
 
         {/* Study Rooms */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-foreground rounded-xl border border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-slate-700">
             <h2 className="font-semibold">Study Rooms ({rooms.length})</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-750 text-slate-400 text-left">
+              <thead className="bg-slate-750 text-muted-foreground text-left">
                 <tr>
                   <th className="px-4 py-2">Name</th>
                   <th className="px-4 py-2">Join Code</th>
@@ -236,17 +236,17 @@ export default function AdminPage() {
                   <th className="px-4 py-2">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700">
+              <tbody className="divide-y divide-border">
                 {rooms.map(r => (
-                  <tr key={r.id} className="hover:bg-slate-750">
+                  <tr key={r.id} className="hover:bg-muted">
                     <td className="px-4 py-2.5">{r.name}</td>
                     <td className="px-4 py-2.5 font-mono tracking-wider">{r.joinCode}</td>
                     <td className="px-4 py-2.5">{r.memberCount}</td>
-                    <td className="px-4 py-2.5 text-slate-400 text-xs">{new Date(r.createdAt).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{new Date(r.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
                 {rooms.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No rooms yet</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No rooms yet</td></tr>
                 )}
               </tbody>
             </table>

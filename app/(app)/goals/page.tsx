@@ -77,7 +77,7 @@ export default function GoalsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -93,8 +93,8 @@ export default function GoalsPage() {
           <Target className="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Study Goals</h1>
-          <p className="text-slate-500 text-sm">Set your exam target and weekly study commitment</p>
+          <h1 className="text-2xl font-bold text-foreground">Study Goals</h1>
+          <p className="text-muted-foreground text-sm">Set your exam target and weekly study commitment</p>
         </div>
       </div>
 
@@ -102,7 +102,7 @@ export default function GoalsPage() {
       {daysLeft !== null && (
         <div className={`p-4 rounded-2xl text-center ${daysLeft < 30 ? 'bg-red-50 border border-red-100' : 'bg-blue-50 border border-blue-100'}`}>
           <p className={`text-4xl font-bold ${daysLeft < 30 ? 'text-red-600' : 'text-blue-600'}`}>{daysLeft}</p>
-          <p className="text-sm text-slate-500 mt-1">days until {examType || 'exam'}</p>
+          <p className="text-sm text-muted-foreground mt-1">days until {examType || 'exam'}</p>
         </div>
       )}
 
@@ -116,7 +116,7 @@ export default function GoalsPage() {
                 className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                   examType === et
                     ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                    : 'bg-card text-muted-foreground border-border hover:border-blue-300'
                 }`}>
                 {et}
               </button>
@@ -154,7 +154,7 @@ export default function GoalsPage() {
             onChange={e => setWeeklyHours(Number(e.target.value))}
             className="w-full accent-blue-600"
           />
-          <div className="flex justify-between text-xs text-slate-400 mt-1">
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>1h</span><span>20h</span><span>40h</span>
           </div>
         </CardContent>
@@ -172,14 +172,14 @@ export default function GoalsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-slate-400 mb-3">Leave all unselected to study everything.</p>
+          <p className="text-xs text-muted-foreground mb-3">Leave all unselected to study everything.</p>
           <div className="flex flex-wrap gap-2">
             {ALL_SUBJECTS.map(subj => (
               <button key={subj} onClick={() => toggleSubject(subj)}
                 className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                   targetSubjects.includes(subj)
                     ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                    : 'bg-card text-muted-foreground border-border hover:border-blue-300'
                 }`}>
                 {subj}
               </button>
