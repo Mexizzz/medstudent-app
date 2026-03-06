@@ -1,4 +1,6 @@
-ALTER TABLE users ADD COLUMN username TEXT UNIQUE;
+ALTER TABLE users ADD COLUMN username TEXT;
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON users(username);
 --> statement-breakpoint
 ALTER TABLE users ADD COLUMN bio TEXT;
 --> statement-breakpoint
