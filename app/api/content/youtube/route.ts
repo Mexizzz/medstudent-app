@@ -7,7 +7,7 @@ import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const body = await req.json();
     const { url, title, subject, topic, manualText } = body;
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
 
     await db.insert(contentSources).values({
       id,
+      userId,
       type: 'youtube',
       title,
       subject: subject || null,

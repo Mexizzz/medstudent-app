@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { studySessions, questions } from '@/db/schema';
+import { studySessions, questions, contentSources } from '@/db/schema';
 import { inArray, sql, and, isNotNull, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
@@ -27,7 +27,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'At least one source required' }, { status: 400 });
       }
 
-      const conditions = [inArray(questions.sourceId, sourceIds)];
+      // Verify all sourceIds belong to the current user
+      const ownedSources = await db
+        .select({ id: contentSources.id })
+        .from(contentSources)
+        .where(and(inArray(contentSources.id, sourceIds), eq(contentSources.userId, userId)));
+      const ownedIds = ownedSources.map(s => s.id);
+      if (ownedIds.length === 0) {
+        return NextResponse.json({ error: 'No valid sources found' }, { status: 403 });
+      }
+
+      const conditions = [inArray(questions.sourceId, ownedIds)];
       if (activityTypes?.length) conditions.push(inArray(questions.type, activityTypes));
       if (topicFilter?.length) conditions.push(inArray(questions.topic, topicFilter));
       const filter = and(...conditions);

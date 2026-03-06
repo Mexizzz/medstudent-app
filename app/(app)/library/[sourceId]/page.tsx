@@ -1,7 +1,8 @@
 import { db } from '@/db';
 import { questions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { requireAuth } from '@/lib/auth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,10 +14,18 @@ import { subjectColor, ACTIVITY_LABELS } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export default async function SourceDetailPage({ params }: { params: Promise<{ sourceId: string }> }) {
+  let userId: string;
+  try {
+    const auth = await requireAuth();
+    userId = auth.userId;
+  } catch {
+    redirect('/login');
+  }
+
   const { sourceId } = await params;
 
   const source = await db.query.contentSources.findFirst({
-    where: (s, { eq }) => eq(s.id, sourceId),
+    where: (s, { eq: e, and: a }) => a(e(s.id, sourceId), e(s.userId, userId)),
   });
 
   if (!source) notFound();

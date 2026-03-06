@@ -9,7 +9,7 @@ import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
 
     await db.insert(contentSources).values({
       id,
+      userId,
       type,
       title,
       subject: subject || null,

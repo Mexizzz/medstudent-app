@@ -6,7 +6,7 @@ import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function GET() {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const sources = await db
       .select({
@@ -23,6 +23,7 @@ export async function GET() {
         createdAt: contentSources.createdAt,
       })
       .from(contentSources)
+      .where(eq(contentSources.userId, userId))
       .orderBy(sql`${contentSources.createdAt} desc`);
 
     // Get question counts per source

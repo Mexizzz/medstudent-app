@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { topicPerformance, sessionResponses, questions, contentSources } from '@/db/schema';
 import { groq } from '@/lib/ai/client';
-import { sql, eq, inArray } from 'drizzle-orm';
+import { sql, eq, and, inArray } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
 // Use a fast model with a higher daily token limit for interactive chat
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       const sources = await db
         .select({ title: contentSources.title, subject: contentSources.subject, rawText: contentSources.rawText })
         .from(contentSources)
-        .where(inArray(contentSources.subject, weakSubjects))
+        .where(and(inArray(contentSources.subject, weakSubjects), eq(contentSources.userId, userId)))
         .limit(3);
 
       contentSnippets = sources
@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       const anySources = await db
         .select({ title: contentSources.title, subject: contentSources.subject, rawText: contentSources.rawText })
         .from(contentSources)
+        .where(eq(contentSources.userId, userId))
         .limit(2);
       contentSnippets = anySources
         .map(s => `[${s.subject ?? 'General'} — ${s.title}]\n${(s.rawText ?? '').slice(0, 1500)}`)

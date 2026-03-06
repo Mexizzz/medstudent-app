@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
@@ -10,11 +10,11 @@ export async function GET(
   { params }: { params: Promise<{ sourceId: string }> }
 ) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const { sourceId } = await params;
     const source = await db.query.contentSources.findFirst({
-      where: (s, { eq }) => eq(s.id, sourceId),
+      where: (s, { eq: e, and: a }) => a(e(s.id, sourceId), e(s.userId, userId)),
     });
 
     if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -39,11 +39,11 @@ export async function DELETE(
   { params }: { params: Promise<{ sourceId: string }> }
 ) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const { sourceId } = await params;
     const source = await db.query.contentSources.findFirst({
-      where: (s, { eq }) => eq(s.id, sourceId),
+      where: (s, { eq: e, and: a }) => a(e(s.id, sourceId), e(s.userId, userId)),
     });
 
     if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 });

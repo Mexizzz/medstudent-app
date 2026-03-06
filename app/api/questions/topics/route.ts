@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { questions } from '@/db/schema';
-import { inArray, isNotNull, and } from 'drizzle-orm';
+import { questions, contentSources } from '@/db/schema';
+import { inArray, isNotNull, and, eq } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
 // GET /api/questions/topics?sourceIds=a,b,c&types=mcq,flashcard
 export async function GET(req: NextRequest) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const { searchParams } = new URL(req.url);
     const sourceIds = searchParams.get('sourceIds')?.split(',').filter(Boolean) ?? [];
@@ -15,8 +15,16 @@ export async function GET(req: NextRequest) {
 
     if (!sourceIds.length) return NextResponse.json({ topics: [] });
 
+    // Verify sourceIds belong to user
+    const ownedSources = await db
+      .select({ id: contentSources.id })
+      .from(contentSources)
+      .where(and(inArray(contentSources.id, sourceIds), eq(contentSources.userId, userId)));
+    const ownedIds = ownedSources.map(s => s.id);
+    if (!ownedIds.length) return NextResponse.json({ topics: [] });
+
     const conditions = [
-      inArray(questions.sourceId, sourceIds),
+      inArray(questions.sourceId, ownedIds),
       isNotNull(questions.topic),
     ];
     if (types.length) conditions.push(inArray(questions.type, types));

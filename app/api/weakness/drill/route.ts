@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { questions, studySessions } from '@/db/schema';
+import { questions, studySessions, contentSources } from '@/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
@@ -14,11 +14,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'subject and topic required' }, { status: 400 });
     }
 
-    // Fetch up to 15 questions from this weak topic, preferring harder questions
+    // Get user's source IDs to scope questions
+    const userSources = await db
+      .select({ id: contentSources.id })
+      .from(contentSources)
+      .where(eq(contentSources.userId, userId));
+    const userSourceIds = userSources.map(s => s.id);
+
+    if (userSourceIds.length === 0) {
+      return NextResponse.json({ error: 'No content sources found' }, { status: 400 });
+    }
+
+    // Fetch up to 15 questions from this weak topic, scoped to user's sources
     const pool = await db
       .select()
       .from(questions)
-      .where(and(eq(questions.subject, subject), eq(questions.topic, topic)))
+      .where(and(
+        eq(questions.subject, subject),
+        eq(questions.topic, topic),
+        inArray(questions.sourceId, userSourceIds)
+      ))
       .orderBy(sql`RANDOM()`)
       .limit(15);
 

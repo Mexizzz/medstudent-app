@@ -1,0 +1,1 @@
+ALTER TABLE content_sources ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE;

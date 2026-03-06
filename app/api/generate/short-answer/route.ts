@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { questions } from '@/db/schema';
+import { contentSources, questions } from '@/db/schema';
 import { generateShortAnswers } from '@/lib/ai/generators';
 
 export const maxDuration = 120;
@@ -9,13 +9,13 @@ import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const { sourceId, count = 10, difficulty = 'medium', focusTopic } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
 
     const source = await db.query.contentSources.findFirst({
-      where: (s, { eq }) => eq(s.id, sourceId),
+      where: (s, { eq: e, and: a }) => a(e(s.id, sourceId), e(s.userId, userId)),
     });
     if (!source?.rawText) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
 

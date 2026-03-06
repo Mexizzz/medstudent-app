@@ -9,9 +9,10 @@ export const users = sqliteTable('users', {
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
-// ── Shared tables (no userId) ──────────────────────────
+// ── Content (per-user) ───────────────────────────────────
 export const contentSources = sqliteTable('content_sources', {
   id:          text('id').primaryKey(),
+  userId:      text('user_id').references(() => users.id, { onDelete: 'cascade' }),
   type:        text('type').notNull(), // 'pdf' | 'youtube' | 'mcq_pdf'
   title:       text('title').notNull(),
   description: text('description'),

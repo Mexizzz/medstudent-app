@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import type { GeneratedLabQuestion } from '@/lib/exam-lab';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAuth();
+    const { userId } = await requireAuth();
 
     const { title, subject, generatedQuestions, existingSourceId } = await req.json() as {
       title: string;
@@ -24,17 +24,22 @@ export async function POST(req: NextRequest) {
     let sourceId: string;
 
     if (existingSourceId) {
-      // Append to existing source — just update its timestamp
+      // Verify ownership and append to existing source
+      const existing = await db.query.contentSources.findFirst({
+        where: (s, { eq: e, and: a }) => a(e(s.id, existingSourceId), e(s.userId, userId)),
+      });
+      if (!existing) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
       sourceId = existingSourceId;
       await db.update(contentSources)
         .set({ updatedAt: now })
-        .where(eq(contentSources.id, existingSourceId));
+        .where(and(eq(contentSources.id, existingSourceId), eq(contentSources.userId, userId)));
     } else {
       // Create new content source
       if (!title?.trim()) return NextResponse.json({ error: 'Title required' }, { status: 400 });
       sourceId = nanoid();
       await db.insert(contentSources).values({
         id: sourceId,
+        userId,
         type: 'exam_lab',
         title: title.trim(),
         subject: subject?.trim() || null,
