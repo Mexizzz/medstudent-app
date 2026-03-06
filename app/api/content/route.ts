@@ -26,15 +26,19 @@ export async function GET() {
       .where(eq(contentSources.userId, userId))
       .orderBy(sql`${contentSources.createdAt} desc`);
 
-    // Get question counts per source
-    const counts = await db
-      .select({
-        sourceId: questions.sourceId,
-        type: questions.type,
-        count: sql<number>`count(*)`,
-      })
-      .from(questions)
-      .groupBy(questions.sourceId, questions.type);
+    // Get question counts per source (only for this user's sources)
+    const sourceIds = sources.map(s => s.id);
+    const counts = sourceIds.length > 0
+      ? await db
+          .select({
+            sourceId: questions.sourceId,
+            type: questions.type,
+            count: sql<number>`count(*)`,
+          })
+          .from(questions)
+          .where(sql`${questions.sourceId} IN (${sql.join(sourceIds.map(id => sql`${id}`), sql`, `)})`)
+          .groupBy(questions.sourceId, questions.type)
+      : [];
 
     // Attach counts to sources
     const sourcesWithCounts = sources.map(s => ({
