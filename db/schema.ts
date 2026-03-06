@@ -241,6 +241,16 @@ export const roomMessages = sqliteTable('room_messages', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Password Reset Codes ─────────────────────────────
+export const passwordResetCodes = sqliteTable('password_reset_codes', {
+  id:        text('id').primaryKey(),
+  email:     text('email').notNull(),
+  code:      text('code').notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  used:      integer('used', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
