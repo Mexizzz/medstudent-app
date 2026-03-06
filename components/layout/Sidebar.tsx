@@ -10,22 +10,49 @@ import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
 import { useTheme } from '@/components/ThemeProvider';
 
-const navItems = [
-  { href: '/dashboard',     label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/library',       label: 'Library',        icon: BookOpen },
-  { href: '/study',         label: 'Study',          icon: Brain },
-  { href: '/tutor',         label: 'AI Tutor',       icon: GraduationCap },
-  { href: '/lessons',       label: 'Lessons',        icon: Lightbulb },
-  { href: '/exam',          label: 'Exam Mode',      icon: GraduationCap },
-  { href: '/wrong-answers', label: 'Wrong Answers',  icon: XCircle },
-  { href: '/analytics',     label: 'Analytics',      icon: BarChart2 },
-  { href: '/study-plan',    label: 'Study Plan',     icon: CalendarDays },
-  { href: '/goals',          label: 'Goals',          icon: Target },
-  { href: '/exam-lab',       label: 'Exam Lab',       icon: FlaskConical },
-  { href: '/summaries',      label: 'Summaries',      icon: NotebookPen },
-  { href: '/study-rooms',    label: 'Study Rooms',    icon: Users },
-  { href: '/friends',         label: 'Friends',        icon: UserPlus },
-  { href: '/chat',            label: 'Messages',       icon: MessageCircle },
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+type NavSection = { title?: string; items: NavItem[] };
+
+const navSections: NavSection[] = [
+  {
+    items: [
+      { href: '/dashboard',     label: 'Dashboard',      icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: 'Learn',
+    items: [
+      { href: '/library',       label: 'Library',        icon: BookOpen },
+      { href: '/study',         label: 'Study',          icon: Brain },
+      { href: '/tutor',         label: 'AI Tutor',       icon: GraduationCap },
+      { href: '/lessons',       label: 'Lessons',        icon: Lightbulb },
+      { href: '/summaries',     label: 'Summaries',      icon: NotebookPen },
+    ],
+  },
+  {
+    title: 'Test',
+    items: [
+      { href: '/exam',          label: 'Exam Mode',      icon: GraduationCap },
+      { href: '/exam-lab',      label: 'Exam Lab',       icon: FlaskConical },
+      { href: '/wrong-answers', label: 'Wrong Answers',  icon: XCircle },
+    ],
+  },
+  {
+    title: 'Track',
+    items: [
+      { href: '/analytics',     label: 'Analytics',      icon: BarChart2 },
+      { href: '/study-plan',    label: 'Study Plan',     icon: CalendarDays },
+      { href: '/goals',         label: 'Goals',          icon: Target },
+    ],
+  },
+  {
+    title: 'Social',
+    items: [
+      { href: '/study-rooms',   label: 'Study Rooms',    icon: Users },
+      { href: '/friends',       label: 'Friends',        icon: UserPlus },
+      { href: '/chat',          label: 'Messages',       icon: MessageCircle },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -83,25 +110,36 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                active
-                  ? 'bg-sidebar-accent text-white'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white'
-              )}
-            >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-3 overflow-y-auto">
+        {navSections.map((section, i) => (
+          <div key={i} className={i > 0 ? 'mt-4' : ''}>
+            {section.title && (
+              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+                {section.title}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map(({ href, label, icon: Icon }) => {
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-sidebar-accent text-white'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white'
+                    )}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer: Med Rank + User */}
