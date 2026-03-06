@@ -6,6 +6,11 @@ const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/api/auth/login'
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Allow landing page, sitemap, robots
+  if (pathname === '/' || pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    return NextResponse.next();
+  }
+
   // Allow public paths
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
