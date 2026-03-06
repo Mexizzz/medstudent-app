@@ -152,3 +152,17 @@
 .flashcard-back {
   transform: rotateY(180deg);
 }
+
+/* Voice chat soundbar animations */
+@keyframes soundbar1 {
+  0%, 100% { height: 4px; }
+  50% { height: 12px; }
+}
+@keyframes soundbar2 {
+  0%, 100% { height: 8px; }
+  50% { height: 16px; }
+}
+@keyframes soundbar3 {
+  0%, 100% { height: 6px; }
+  50% { height: 10px; }
+}

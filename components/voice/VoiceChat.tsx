@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Mic, MicOff, Phone, PhoneOff, VolumeX, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff, VolumeX, Volume2, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VoiceMember {
@@ -16,6 +16,7 @@ interface Props {
   roomId: string;
   myUserId: string;
   isRoomCreator: boolean;
+  creatorId: string;
   members: VoiceMember[];
   onMembersUpdate?: () => void;
 }
@@ -27,27 +28,115 @@ const ICE_SERVERS: RTCConfiguration = {
   ],
 };
 
-export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersUpdate }: Props) {
+// Audio level analyzer — returns true if speaking
+function useSpeakingDetector(stream: MediaStream | null, enabled: boolean) {
+  const [speaking, setSpeaking] = useState(false);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!stream || !enabled) {
+      setSpeaking(false);
+      return;
+    }
+
+    const ctx = new AudioContext();
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.5;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let speakingTimeout: ReturnType<typeof setTimeout>;
+
+    function check() {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length;
+      if (avg > 15) {
+        setSpeaking(true);
+        clearTimeout(speakingTimeout);
+        speakingTimeout = setTimeout(() => setSpeaking(false), 300);
+      }
+      rafRef.current = requestAnimationFrame(check);
+    }
+    check();
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      clearTimeout(speakingTimeout);
+      ctx.close();
+      setSpeaking(false);
+    };
+  }, [stream, enabled]);
+
+  return speaking;
+}
+
+export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members, onMembersUpdate }: Props) {
   const [inVoice, setInVoice] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [isMutedByAdmin, setIsMutedByAdmin] = useState(false);
+  const [speakingPeers, setSpeakingPeers] = useState<Set<string>>(new Set());
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const remoteStreamsRef = useRef<Map<string, MediaStream>>(new Map());
   const signalPollRef = useRef<ReturnType<typeof setInterval>>(undefined);
+  const speakingPollRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const lastSignalTime = useRef(Date.now());
   const connectedPeersRef = useRef<Set<string>>(new Set());
   const makingOfferRef = useRef<Set<string>>(new Set());
 
+  const localSpeaking = useSpeakingDetector(localStreamRef.current, inVoice && micOn && !isMutedByAdmin);
+
   const onlineMembers = members.filter(m => m.isOnline && m.userId !== myUserId && m.isMicOn);
+  const voiceMembers = members.filter(m => m.isMicOn && m.isOnline);
+
+  // Detect speaking on remote streams
+  useEffect(() => {
+    if (!inVoice) return;
+
+    const analysers = new Map<string, { analyser: AnalyserNode; ctx: AudioContext }>();
+
+    for (const [peerId, stream] of remoteStreamsRef.current) {
+      if (!analysers.has(peerId)) {
+        try {
+          const ctx = new AudioContext();
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          analyser.smoothingTimeConstant = 0.5;
+          source.connect(analyser);
+          analysers.set(peerId, { analyser, ctx });
+        } catch {}
+      }
+    }
+
+    const data = new Uint8Array(128);
+    speakingPollRef.current = setInterval(() => {
+      const newSpeaking = new Set<string>();
+      for (const [peerId, { analyser }] of analysers) {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        if (avg > 15) newSpeaking.add(peerId);
+      }
+      setSpeakingPeers(newSpeaking);
+    }, 150);
+
+    return () => {
+      clearInterval(speakingPollRef.current);
+      for (const [, { ctx }] of analysers) ctx.close();
+    };
+  }, [inVoice, voiceMembers.length]);
 
   // Check if I'm muted by admin
   useEffect(() => {
     const me = members.find(m => m.userId === myUserId);
     if (me?.isMutedByAdmin && !isMutedByAdmin) {
       setIsMutedByAdmin(true);
-      // Disable mic if admin-muted
       if (localStreamRef.current) {
         localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = false; });
       }
@@ -88,6 +177,7 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
         audioElementsRef.current.set(remoteUserId, audio);
       }
       audio.srcObject = event.streams[0];
+      remoteStreamsRef.current.set(remoteUserId, event.streams[0]);
     };
 
     pc.onconnectionstatechange = () => {
@@ -98,7 +188,6 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
       }
     };
 
-    // Add local tracks
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         pc.addTrack(track, localStreamRef.current!);
@@ -141,13 +230,11 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
     } catch {}
   }, [roomId, createPeerConnection, sendSignal]);
 
-  // When voice members change, create offers to new members
   useEffect(() => {
     if (!inVoice) return;
 
     for (const m of onlineMembers) {
       if (!connectedPeersRef.current.has(m.userId) && !makingOfferRef.current.has(m.userId)) {
-        // Only the user with the "lesser" ID initiates to avoid collision
         if (myUserId < m.userId) {
           makingOfferRef.current.add(m.userId);
           (async () => {
@@ -163,7 +250,6 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
       }
     }
 
-    // Clean up peers for members who left
     const onlineIds = new Set(onlineMembers.map(m => m.userId));
     for (const [peerId, pc] of peersRef.current.entries()) {
       if (!onlineIds.has(peerId)) {
@@ -172,6 +258,7 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
         connectedPeersRef.current.delete(peerId);
         audioElementsRef.current.get(peerId)?.pause();
         audioElementsRef.current.delete(peerId);
+        remoteStreamsRef.current.delete(peerId);
       }
     }
   }, [inVoice, onlineMembers, myUserId, createPeerConnection, sendSignal]);
@@ -183,7 +270,6 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
       setInVoice(true);
       setMicOn(true);
 
-      // Tell server mic is on
       await fetch(`/api/study-rooms/${roomId}/voice/toggle-mic`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,7 +277,6 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
       });
 
       lastSignalTime.current = Date.now();
-      // Start polling for signals
       signalPollRef.current = setInterval(handleSignals, 1500);
     } catch {
       alert('Could not access microphone. Please allow microphone permissions.');
@@ -199,25 +284,21 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
   }
 
   function leaveVoice() {
-    // Stop polling
     clearInterval(signalPollRef.current);
+    clearInterval(speakingPollRef.current);
 
-    // Close all peer connections
-    for (const [, pc] of peersRef.current) {
-      pc.close();
-    }
+    for (const [, pc] of peersRef.current) pc.close();
     peersRef.current.clear();
     connectedPeersRef.current.clear();
     makingOfferRef.current.clear();
 
-    // Stop audio elements
     for (const [, audio] of audioElementsRef.current) {
       audio.pause();
       audio.srcObject = null;
     }
     audioElementsRef.current.clear();
+    remoteStreamsRef.current.clear();
 
-    // Stop local stream
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
@@ -225,8 +306,8 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
 
     setInVoice(false);
     setMicOn(false);
+    setSpeakingPeers(new Set());
 
-    // Tell server mic is off
     fetch(`/api/study-rooms/${roomId}/voice/toggle-mic`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,13 +339,12 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
     onMembersUpdate?.();
   }
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearInterval(signalPollRef.current);
+      clearInterval(speakingPollRef.current);
       for (const [, pc] of peersRef.current) pc.close();
       if (localStreamRef.current) localStreamRef.current.getTracks().forEach(t => t.stop());
-      // Tell server we left voice
       fetch(`/api/study-rooms/${roomId}/voice/toggle-mic`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -273,65 +353,119 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
     };
   }, [roomId]);
 
-  const voiceMembers = members.filter(m => m.isMicOn && m.isOnline);
+  function isSpeaking(userId: string): boolean {
+    if (userId === myUserId) return localSpeaking;
+    return speakingPeers.has(userId);
+  }
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-          <Volume2 className="w-4 h-4 text-indigo-500" />
-          Voice Chat
-        </p>
+    <div className="bg-gradient-to-b from-[#1a1d2e] to-[#141621] rounded-2xl p-4 shadow-xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-semibold text-white/80 uppercase tracking-wider">Voice Channel</span>
+        </div>
         {inVoice && (
-          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] text-emerald-400 font-medium bg-emerald-400/10 px-2 py-0.5 rounded-full">
             Connected
           </span>
         )}
       </div>
 
-      {/* Voice members list */}
-      {voiceMembers.length > 0 && (
-        <div className="space-y-2 mb-3">
-          {voiceMembers.map(m => (
-            <div key={m.userId} className="flex items-center justify-between py-1.5 px-2 bg-white rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold',
-                  m.userId === myUserId ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
-                )}>
+      {/* Members — vertical layout */}
+      <div className="flex flex-wrap justify-center gap-4 mb-5">
+        {voiceMembers.length === 0 && !inVoice && (
+          <p className="text-xs text-white/30 py-6">No one in voice. Be the first to join!</p>
+        )}
+        {voiceMembers.map(m => {
+          const speaking = isSpeaking(m.userId) && !m.isMutedByAdmin;
+          const isMe = m.userId === myUserId;
+          const isCreator = m.userId === creatorId;
+          const muted = m.isMutedByAdmin;
+
+          return (
+            <div key={m.userId} className="flex flex-col items-center gap-1.5 w-16 group relative">
+              {/* Avatar with speaking ring */}
+              <div className="relative">
+                <div
+                  className={cn(
+                    'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200',
+                    muted
+                      ? 'bg-red-500/20 text-red-400 ring-2 ring-red-500/40'
+                      : speaking
+                        ? 'bg-emerald-500/20 text-emerald-400 ring-[3px] ring-emerald-400 shadow-lg shadow-emerald-500/20'
+                        : isMe
+                          ? 'bg-indigo-500/20 text-indigo-400 ring-2 ring-indigo-500/30'
+                          : 'bg-white/10 text-white/60 ring-2 ring-white/10'
+                  )}
+                >
                   {(m.userName || '?')[0].toUpperCase()}
                 </div>
-                <span className="text-xs font-medium text-slate-700">
-                  {m.userId === myUserId ? 'You' : (m.userName || 'Anonymous')}
-                </span>
-                {m.isMutedByAdmin && (
-                  <span className="text-[10px] text-red-500 font-medium bg-red-50 px-1.5 py-0.5 rounded">Muted</span>
+
+                {/* Speaking animation bars */}
+                {speaking && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-end gap-[2px]">
+                    <span className="w-[3px] h-[8px] bg-emerald-400 rounded-full animate-[soundbar1_0.5s_ease-in-out_infinite]" />
+                    <span className="w-[3px] h-[12px] bg-emerald-400 rounded-full animate-[soundbar2_0.5s_ease-in-out_infinite_0.1s]" />
+                    <span className="w-[3px] h-[6px] bg-emerald-400 rounded-full animate-[soundbar3_0.5s_ease-in-out_infinite_0.2s]" />
+                  </div>
+                )}
+
+                {/* Muted icon overlay */}
+                {muted && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#1a1d2e]">
+                    <MicOff className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+
+                {/* Mic off (self-muted, not admin) */}
+                {!muted && isMe && !micOn && inVoice && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-600 rounded-full flex items-center justify-center border-2 border-[#1a1d2e]">
+                    <MicOff className="w-2.5 h-2.5 text-white/70" />
+                  </div>
+                )}
+
+                {/* Crown for room creator */}
+                {isCreator && (
+                  <div className="absolute -top-1.5 -right-1.5">
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                {m.isMutedByAdmin ? (
-                  <MicOff className="w-3.5 h-3.5 text-red-400" />
-                ) : (
-                  <Mic className="w-3.5 h-3.5 text-emerald-500" />
-                )}
-                {isRoomCreator && m.userId !== myUserId && (
-                  <button
-                    onClick={() => adminMute(m.userId, !m.isMutedByAdmin)}
-                    className={cn(
-                      'ml-1 p-1 rounded text-xs transition-colors',
-                      m.isMutedByAdmin
-                        ? 'text-emerald-600 hover:bg-emerald-50'
-                        : 'text-red-500 hover:bg-red-50'
-                    )}
-                    title={m.isMutedByAdmin ? 'Unmute' : 'Mute'}
-                  >
-                    {m.isMutedByAdmin ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-              </div>
+
+              {/* Name */}
+              <span className={cn(
+                'text-[10px] font-medium truncate w-full text-center leading-tight',
+                muted ? 'text-red-400/70' : isMe ? 'text-indigo-300/80' : 'text-white/50'
+              )}>
+                {isMe ? 'You' : (m.userName || 'Anon')}
+              </span>
+
+              {/* Admin mute button (hover) */}
+              {isRoomCreator && !isMe && inVoice && (
+                <button
+                  onClick={() => adminMute(m.userId, !m.isMutedByAdmin)}
+                  className={cn(
+                    'absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border',
+                    muted
+                      ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
+                      : 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30'
+                  )}
+                  title={muted ? 'Unmute' : 'Mute'}
+                >
+                  {muted ? <Volume2 className="w-2.5 h-2.5" /> : <VolumeX className="w-2.5 h-2.5" />}
+                </button>
+              )}
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Admin muted banner */}
+      {isMutedByAdmin && inVoice && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 mb-3 text-center">
+          <p className="text-xs text-red-400 font-medium">You have been muted by the room admin</p>
         </div>
       )}
 
@@ -340,7 +474,7 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
         {!inVoice ? (
           <button
             onClick={joinVoice}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors w-full justify-center"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-semibold hover:bg-emerald-400 transition-all w-full justify-center shadow-lg shadow-emerald-500/20"
           >
             <Phone className="w-4 h-4" />
             Join Voice
@@ -351,30 +485,26 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, members, onMembersU
               onClick={toggleMic}
               disabled={isMutedByAdmin}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center',
+                'flex items-center justify-center w-10 h-10 rounded-xl transition-all',
                 micOn && !isMutedByAdmin
-                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-red-500/20 text-red-400 hover:bg-red-500/30',
+                isMutedByAdmin && 'opacity-50 cursor-not-allowed'
               )}
-              title={isMutedByAdmin ? 'Muted by room admin' : (micOn ? 'Mute' : 'Unmute')}
+              title={isMutedByAdmin ? 'Muted by admin' : (micOn ? 'Mute' : 'Unmute')}
             >
               {micOn && !isMutedByAdmin ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              {isMutedByAdmin ? 'Admin Muted' : (micOn ? 'Mute' : 'Unmute')}
             </button>
             <button
               onClick={leaveVoice}
-              className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-500/20 text-red-400 rounded-xl text-sm font-semibold hover:bg-red-500/30 transition-all"
             >
               <PhoneOff className="w-4 h-4" />
-              Leave
+              Disconnect
             </button>
           </>
         )}
       </div>
-
-      {isMutedByAdmin && inVoice && (
-        <p className="text-xs text-red-500 mt-2 text-center">You have been muted by the room admin.</p>
-      )}
     </div>
   );
 }

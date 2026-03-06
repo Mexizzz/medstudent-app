@@ -290,6 +290,7 @@ export default function RoomPage({ params }: { params: Promise<{ roomId: string 
                 roomId={roomId}
                 myUserId={myUserId}
                 isRoomCreator={room.createdBy === myUserId}
+                creatorId={room.createdBy}
                 members={members.map(m => ({
                   userId: m.userId,
                   userName: m.userName,
