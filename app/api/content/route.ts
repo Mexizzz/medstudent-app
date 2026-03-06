@@ -4,6 +4,8 @@ import { contentSources, questions } from '@/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const { userId } = await requireAuth();
