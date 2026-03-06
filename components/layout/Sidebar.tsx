@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Flame, LogOut, User, Menu, X
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -22,6 +22,7 @@ const navItems = [
   { href: '/goals',          label: 'Goals',          icon: Target },
   { href: '/exam-lab',       label: 'Exam Lab',       icon: FlaskConical },
   { href: '/summaries',      label: 'Summaries',      icon: NotebookPen },
+  { href: '/study-rooms',    label: 'Study Rooms',    icon: Users },
 ];
 
 export function Sidebar() {

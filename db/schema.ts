@@ -207,6 +207,40 @@ export const summaries = sqliteTable('summaries', {
   updatedAt:   integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Study Rooms (collaborative) ──────────────────────
+export const studyRooms = sqliteTable('study_rooms', {
+  id:        text('id').primaryKey(),
+  name:      text('name').notNull(),
+  joinCode:  text('join_code').notNull().unique(),
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  isActive:  integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const roomMembers = sqliteTable('room_members', {
+  id:              text('id').primaryKey(),
+  roomId:          text('room_id').notNull().references(() => studyRooms.id, { onDelete: 'cascade' }),
+  userId:          text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userName:        text('user_name'),
+  isOnline:        integer('is_online', { mode: 'boolean' }).notNull().default(true),
+  timerRunning:    integer('timer_running', { mode: 'boolean' }).notNull().default(false),
+  timerStartedAt:  integer('timer_started_at', { mode: 'timestamp' }),
+  totalStudiedSecs:integer('total_studied_secs').notNull().default(0),
+  lastSeenAt:      integer('last_seen_at', { mode: 'timestamp' }).notNull(),
+  joinedAt:        integer('joined_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  roomUserUnique: uniqueIndex('room_user_unique').on(table.roomId, table.userId),
+}));
+
+export const roomMessages = sqliteTable('room_messages', {
+  id:        text('id').primaryKey(),
+  roomId:    text('room_id').notNull().references(() => studyRooms.id, { onDelete: 'cascade' }),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userName:  text('user_name'),
+  content:   text('content').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -230,3 +264,6 @@ export type SrCard = typeof srCards.$inferSelect;
 export type StudyGoal = typeof studyGoals.$inferSelect;
 export type UserXp = typeof userXp.$inferSelect;
 export type ExamProfile = typeof examProfiles.$inferSelect;
+export type StudyRoom = typeof studyRooms.$inferSelect;
+export type RoomMember = typeof roomMembers.$inferSelect;
+export type RoomMessage = typeof roomMessages.$inferSelect;
