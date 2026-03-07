@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
 import { generateMCQs, parseMcqPdf } from '@/lib/ai/generators';
 import { getSourceText } from '@/lib/content/source-text';
+import { ocrPdf } from '@/lib/content/pdf-ocr';
 
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
@@ -20,9 +21,18 @@ export async function POST(req: NextRequest) {
     const source = await db.query.contentSources.findFirst({
       where: (s, { eq: e, and: a }) => a(e(s.id, sourceId), e(s.userId, userId)),
     });
-    if (!source?.rawText) return NextResponse.json({ error: 'Source not found or has no text' }, { status: 404 });
+    if (!source) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
 
-    const text = await getSourceText(source, pageFrom, pageTo);
+    let text = await getSourceText(source, pageFrom, pageTo);
+
+    // If text extraction yielded very little content and we have a PDF file, use OCR
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    if (wordCount < 100 && source.filePath && (source.type === 'pdf' || source.type === 'mcq_pdf')) {
+      console.log(`Text extraction too sparse (${wordCount} words), falling back to OCR...`);
+      text = await ocrPdf(source.filePath);
+    }
+
+    if (!text.trim()) return NextResponse.json({ error: 'Could not extract text from source' }, { status: 400 });
 
     // MCQ PDFs: parse existing questions instead of generating new ones
     const generated = source.type === 'mcq_pdf'
