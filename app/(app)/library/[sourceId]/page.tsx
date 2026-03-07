@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, FileText, Youtube } from 'lucide-react';
 import Link from 'next/link';
 import { subjectColor, ACTIVITY_LABELS } from '@/lib/utils';
+import { DeleteQuestionButton } from '@/components/library/DeleteQuestionButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,7 +119,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                   <CardContent className="p-4 text-sm space-y-2">
                     <div className="flex items-start gap-2">
                       <span className="text-xs font-semibold text-muted-foreground mt-0.5 flex-shrink-0">#{i + 1}</span>
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1 space-y-2 min-w-0">
                         {/* MCQ */}
                         {type === 'mcq' && (
                           <>
@@ -178,6 +179,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
                           </>
                         )}
                       </div>
+                      <DeleteQuestionButton questionId={q.id} />
                     </div>
                   </CardContent>
                 </Card>
