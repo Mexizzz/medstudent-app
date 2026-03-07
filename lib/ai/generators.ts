@@ -19,7 +19,7 @@ async function callGroqJSON<T>(
     try {
       const response = await groq.chat.completions.create({
         model,
-        temperature: 0.4,
+        temperature: 0.2,
         max_tokens: 4096,
         response_format: { type: 'json_object' },
         messages: [
