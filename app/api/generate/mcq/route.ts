@@ -25,11 +25,16 @@ export async function POST(req: NextRequest) {
 
     let text = await getSourceText(source, pageFrom, pageTo);
 
-    // If text extraction yielded very little content and we have a PDF file, use OCR
+    // If text extraction yielded very little content and we have a PDF file, try OCR
     const wordCount = text.split(/\s+/).filter(Boolean).length;
     if (wordCount < 100 && source.filePath && (source.type === 'pdf' || source.type === 'mcq_pdf')) {
-      console.log(`Text extraction too sparse (${wordCount} words), falling back to OCR...`);
-      text = await ocrPdf(source.filePath);
+      try {
+        console.log(`Text extraction too sparse (${wordCount} words), falling back to OCR...`);
+        const ocrText = await ocrPdf(source.filePath);
+        if (ocrText.trim()) text = ocrText;
+      } catch (e) {
+        console.warn('OCR fallback failed, using original text:', e);
+      }
     }
 
     if (!text.trim()) return NextResponse.json({ error: 'Could not extract text from source' }, { status: 400 });
