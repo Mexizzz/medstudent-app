@@ -25,6 +25,9 @@ const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
   ],
 };
 
@@ -170,14 +173,28 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members,
     };
 
     pc.ontrack = (event) => {
+      const stream = event.streams[0];
+      if (!stream) return;
+
       let audio = audioElementsRef.current.get(remoteUserId);
       if (!audio) {
         audio = new Audio();
         audio.autoplay = true;
+        (audio as any).playsInline = true;
         audioElementsRef.current.set(remoteUserId, audio);
       }
-      audio.srcObject = event.streams[0];
-      remoteStreamsRef.current.set(remoteUserId, event.streams[0]);
+      audio.srcObject = stream;
+      remoteStreamsRef.current.set(remoteUserId, stream);
+
+      // Explicitly play — browsers may block autoplay
+      audio.play().catch(() => {
+        // Retry play on next user interaction
+        const resumeAudio = () => {
+          audio!.play().catch(() => {});
+          document.removeEventListener('click', resumeAudio);
+        };
+        document.addEventListener('click', resumeAudio, { once: true });
+      });
     };
 
     pc.onconnectionstatechange = () => {
@@ -198,6 +215,8 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members,
     return pc;
   }, [sendSignal]);
 
+  const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
+
   const handleSignals = useCallback(async () => {
     try {
       const res = await fetch(`/api/study-rooms/${roomId}/voice/signal?since=${lastSignalTime.current}`);
@@ -207,50 +226,85 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members,
 
       for (const signal of data.signals) {
         const { fromUserId, type, payload: rawPayload } = signal;
-        const payload = JSON.parse(rawPayload);
+        let payload;
+        try { payload = JSON.parse(rawPayload); } catch { continue; }
 
-        if (type === 'offer') {
-          const pc = createPeerConnection(fromUserId);
-          await pc.setRemoteDescription(new RTCSessionDescription(payload));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await sendSignal(fromUserId, 'answer', answer);
-        } else if (type === 'answer') {
-          const pc = peersRef.current.get(fromUserId);
-          if (pc && pc.signalingState === 'have-local-offer') {
+        try {
+          if (type === 'offer') {
+            const pc = createPeerConnection(fromUserId);
             await pc.setRemoteDescription(new RTCSessionDescription(payload));
+
+            // Apply any buffered ICE candidates
+            const buffered = pendingCandidatesRef.current.get(fromUserId) || [];
+            for (const c of buffered) {
+              await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+            }
+            pendingCandidatesRef.current.delete(fromUserId);
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            await sendSignal(fromUserId, 'answer', answer);
+          } else if (type === 'answer') {
+            const pc = peersRef.current.get(fromUserId);
+            if (pc && pc.signalingState === 'have-local-offer') {
+              await pc.setRemoteDescription(new RTCSessionDescription(payload));
+
+              // Apply any buffered ICE candidates
+              const buffered = pendingCandidatesRef.current.get(fromUserId) || [];
+              for (const c of buffered) {
+                await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+              }
+              pendingCandidatesRef.current.delete(fromUserId);
+            }
+          } else if (type === 'ice-candidate') {
+            const pc = peersRef.current.get(fromUserId);
+            if (pc && pc.remoteDescription) {
+              await pc.addIceCandidate(new RTCIceCandidate(payload));
+            } else {
+              // Buffer candidate until remote description is set
+              if (!pendingCandidatesRef.current.has(fromUserId)) {
+                pendingCandidatesRef.current.set(fromUserId, []);
+              }
+              pendingCandidatesRef.current.get(fromUserId)!.push(payload);
+            }
           }
-        } else if (type === 'ice-candidate') {
-          const pc = peersRef.current.get(fromUserId);
-          if (pc && pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(payload));
-          }
+        } catch (e) {
+          console.error('[VoiceChat] Signal handling error:', type, fromUserId, e);
         }
       }
-    } catch {}
+    } catch (e) {
+      console.error('[VoiceChat] Signal poll error:', e);
+    }
   }, [roomId, createPeerConnection, sendSignal]);
 
-  useEffect(() => {
-    if (!inVoice) return;
+  // Stringify online member IDs for stable dependency
+  const onlineMemberIds = onlineMembers.map(m => m.userId).sort().join(',');
 
-    for (const m of onlineMembers) {
-      if (!connectedPeersRef.current.has(m.userId) && !makingOfferRef.current.has(m.userId)) {
-        if (myUserId < m.userId) {
-          makingOfferRef.current.add(m.userId);
+  useEffect(() => {
+    if (!inVoice || !onlineMemberIds) return;
+
+    const ids = onlineMemberIds.split(',').filter(Boolean);
+
+    for (const peerId of ids) {
+      if (!connectedPeersRef.current.has(peerId) && !makingOfferRef.current.has(peerId)) {
+        if (myUserId < peerId) {
+          makingOfferRef.current.add(peerId);
           (async () => {
             try {
-              const pc = createPeerConnection(m.userId);
+              const pc = createPeerConnection(peerId);
               const offer = await pc.createOffer();
               await pc.setLocalDescription(offer);
-              await sendSignal(m.userId, 'offer', offer);
-            } catch {}
-            makingOfferRef.current.delete(m.userId);
+              await sendSignal(peerId, 'offer', offer);
+            } catch (e) {
+              console.error('[VoiceChat] Failed to create offer for', peerId, e);
+            }
+            makingOfferRef.current.delete(peerId);
           })();
         }
       }
     }
 
-    const onlineIds = new Set(onlineMembers.map(m => m.userId));
+    const onlineIds = new Set(ids);
     for (const [peerId, pc] of peersRef.current.entries()) {
       if (!onlineIds.has(peerId)) {
         pc.close();
@@ -261,7 +315,7 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members,
         remoteStreamsRef.current.delete(peerId);
       }
     }
-  }, [inVoice, onlineMembers, myUserId, createPeerConnection, sendSignal]);
+  }, [inVoice, onlineMemberIds, myUserId, createPeerConnection, sendSignal]);
 
   async function joinVoice() {
     try {
@@ -276,8 +330,21 @@ export function VoiceChat({ roomId, myUserId, isRoomCreator, creatorId, members,
         body: JSON.stringify({ isMicOn: true }),
       });
 
-      lastSignalTime.current = Date.now();
-      signalPollRef.current = setInterval(handleSignals, 1500);
+      // Fetch server time first, then start polling — avoids clock skew issues
+      try {
+        const res = await fetch(`/api/study-rooms/${roomId}/voice/signal?since=${Date.now() - 10000}`);
+        if (res.ok) {
+          const data = await res.json();
+          lastSignalTime.current = data.serverTime;
+        } else {
+          lastSignalTime.current = Date.now() - 5000;
+        }
+      } catch {
+        lastSignalTime.current = Date.now() - 5000;
+      }
+      // Poll fast initially for connection setup, then slow down
+      handleSignals();
+      signalPollRef.current = setInterval(handleSignals, 800);
     } catch {
       alert('Could not access microphone. Please allow microphone permissions.');
     }
