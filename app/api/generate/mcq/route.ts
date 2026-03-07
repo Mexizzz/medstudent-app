@@ -3,7 +3,6 @@ import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
 import { generateMCQs, parseMcqPdf } from '@/lib/ai/generators';
 import { getSourceText } from '@/lib/content/source-text';
-import { ocrPdf } from '@/lib/content/pdf-ocr';
 
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
@@ -30,6 +29,7 @@ export async function POST(req: NextRequest) {
     if (wordCount < 100 && source.filePath && (source.type === 'pdf' || source.type === 'mcq_pdf')) {
       try {
         console.log(`Text extraction too sparse (${wordCount} words), falling back to OCR...`);
+        const { ocrPdf } = await import('@/lib/content/pdf-ocr');
         const ocrText = await ocrPdf(source.filePath);
         if (ocrText.trim()) text = ocrText;
       } catch (e) {
