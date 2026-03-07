@@ -99,6 +99,7 @@ export function ContentCard({ source, onDelete }: ContentCardProps) {
           sourceId={source.id}
           sourceTitle={source.title}
           sourceType={source.type}
+          pageCount={source.pageCount ?? undefined}
           onSuccess={() => window.location.reload()}
         />
       </CardContent>

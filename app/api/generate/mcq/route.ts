@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
 import { generateMCQs, parseMcqPdf } from '@/lib/ai/generators';
+import { getSourceText } from '@/lib/content/source-text';
 
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
 
-    const { sourceId, count = 10, difficulty = 'medium', focusTopic } = await req.json();
+    const { sourceId, count = 10, difficulty = 'medium', focusTopic, pageFrom, pageTo } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
 
     const source = await db.query.contentSources.findFirst({
@@ -21,10 +22,12 @@ export async function POST(req: NextRequest) {
     });
     if (!source?.rawText) return NextResponse.json({ error: 'Source not found or has no text' }, { status: 404 });
 
+    const text = await getSourceText(source, pageFrom, pageTo);
+
     // MCQ PDFs: parse existing questions instead of generating new ones
     const generated = source.type === 'mcq_pdf'
-      ? await parseMcqPdf(source.rawText)
-      : await generateMCQs(source.rawText, count, source.subject ?? 'Medicine', source.topic ?? 'General', difficulty, focusTopic);
+      ? await parseMcqPdf(text)
+      : await generateMCQs(text, count, source.subject ?? 'Medicine', source.topic ?? 'General', difficulty, focusTopic);
 
     const now = new Date();
     const rows = generated.map(q => ({

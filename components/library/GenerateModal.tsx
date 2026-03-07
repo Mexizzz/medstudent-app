@@ -16,6 +16,7 @@ interface GenerateModalProps {
   sourceId: string;
   sourceTitle: string;
   sourceType: string;
+  pageCount?: number;
   onSuccess: () => void;
 }
 
@@ -27,11 +28,17 @@ const ACTIVITY_TYPES = [
   { id: 'clinical_case', label: 'Clinical Cases', defaultCount: 5 },
 ];
 
-export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: GenerateModalProps) {
+export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, onSuccess }: GenerateModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [difficulty, setDifficulty] = useState('medium');
   const [focusTopic, setFocusTopic] = useState('');
+  const [usePageRange, setUsePageRange] = useState(false);
+  const [pageFrom, setPageFrom] = useState(1);
+  const [pageTo, setPageTo] = useState(pageCount ?? 1);
+
+  const isPdf = sourceType === 'pdf' || sourceType === 'mcq_pdf';
+  const hasPages = isPdf && pageCount && pageCount > 1;
 
   // For each type, whether it's enabled and how many to generate
   const [selections, setSelections] = useState<Record<string, { enabled: boolean; count: number }>>(
@@ -68,6 +75,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
             count: isMcqPdf ? 9999 : selections[type.id].count,
             difficulty,
             ...(focusTopic.trim() && { focusTopic: focusTopic.trim() }),
+            ...(usePageRange && hasPages && { pageFrom, pageTo }),
           }),
         });
         const contentType = res.headers.get('content-type') ?? '';
@@ -136,6 +144,37 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, onSuccess }: 
                 className="mt-1 text-sm"
               />
               <p className="text-[11px] text-muted-foreground mt-1">Leave empty to generate from all topics</p>
+            </div>
+          )}
+
+          {hasPages && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Page Range</Label>
+                <Switch checked={usePageRange} onCheckedChange={v => { setUsePageRange(v); if (v && !pageTo) setPageTo(pageCount ?? 1); }} />
+              </div>
+              {usePageRange && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={pageCount}
+                    value={pageFrom}
+                    onChange={e => setPageFrom(Math.max(1, Math.min(Number(e.target.value) || 1, pageTo)))}
+                    className="w-20 text-sm text-center"
+                  />
+                  <span className="text-sm text-muted-foreground">to</span>
+                  <Input
+                    type="number"
+                    min={pageFrom}
+                    max={pageCount}
+                    value={pageTo}
+                    onChange={e => setPageTo(Math.max(pageFrom, Math.min(Number(e.target.value) || pageFrom, pageCount ?? 999)))}
+                    className="w-20 text-sm text-center"
+                  />
+                  <span className="text-xs text-muted-foreground">of {pageCount}</span>
+                </div>
+              )}
             </div>
           )}
 
