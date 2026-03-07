@@ -14,13 +14,14 @@ import {
 async function callGroqJSON<T>(
   system: string,
   userPrompt: string,
+  maxTokens = 4096,
 ): Promise<T> {
   for (const model of [MODEL, FALLBACK_MODEL]) {
     try {
       const response = await groq.chat.completions.create({
         model,
         temperature: 0.2,
-        max_tokens: 4096,
+        max_tokens: maxTokens,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: system },
@@ -272,7 +273,8 @@ function chunkMcqText(text: string, maxChars = 6000): string[] {
 }
 
 export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
-  const chunks = chunkMcqText(rawText, 6000);
+  // Smaller chunks (3000 chars) so each AI call handles fewer questions and doesn't hit token limits
+  const chunks = chunkMcqText(rawText, 3000);
 
   // Run all chunks in parallel — each chunk is an independent Groq call
   const results = await Promise.all(
@@ -280,7 +282,8 @@ export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
       try {
         const result = await callGroqJSON<{ questions: GeneratedMCQ[] }>(
           PARSE_MCQ_SYSTEM,
-          parseMcqUserPrompt(chunk)
+          parseMcqUserPrompt(chunk),
+          8192
         );
         return result.questions ?? [];
       } catch (e: unknown) {

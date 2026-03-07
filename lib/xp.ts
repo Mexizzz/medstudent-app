@@ -7,21 +7,40 @@ export interface Rank {
 }
 
 export const RANKS: Rank[] = [
-  { level: 1,  title: 'Pre-Med',        minXp: 0,     color: 'text-slate-500',   badge: '📖' },
-  { level: 2,  title: 'MS1',            minXp: 100,   color: 'text-slate-600',   badge: '🩺' },
-  { level: 3,  title: 'MS2',            minXp: 300,   color: 'text-blue-500',    badge: '🔬' },
-  { level: 4,  title: 'MS3',            minXp: 600,   color: 'text-blue-600',    badge: '🏥' },
-  { level: 5,  title: 'MS4',            minXp: 1000,  color: 'text-indigo-500',  badge: '🎓' },
-  { level: 6,  title: 'Intern',         minXp: 1500,  color: 'text-indigo-600',  badge: '⚕️' },
-  { level: 7,  title: 'PGY-1 Resident', minXp: 2500,  color: 'text-violet-500',  badge: '💊' },
-  { level: 8,  title: 'PGY-2 Resident', minXp: 4000,  color: 'text-violet-600',  badge: '🧬' },
-  { level: 9,  title: 'PGY-3 Resident', minXp: 6000,  color: 'text-purple-500',  badge: '🔭' },
-  { level: 10, title: 'Chief Resident', minXp: 9000,  color: 'text-purple-600',  badge: '👑' },
-  { level: 11, title: 'Fellow',         minXp: 13000, color: 'text-rose-500',    badge: '🏆' },
-  { level: 12, title: 'Attending',      minXp: 18000, color: 'text-rose-600',    badge: '🩻' },
-  { level: 13, title: 'Specialist',     minXp: 25000, color: 'text-amber-500',   badge: '⭐' },
-  { level: 14, title: 'Consultant',     minXp: 35000, color: 'text-amber-600',   badge: '🌟' },
-  { level: 15, title: 'Professor',      minXp: 50000, color: 'text-emerald-500', badge: '🎯' },
+  // Unranked
+  { level: 1,  title: 'Unranked',     minXp: 0,       color: 'text-slate-400',   badge: '⬜' },
+  // Iron 1–3
+  { level: 2,  title: 'Iron 1',       minXp: 100,     color: 'text-stone-400',   badge: '🪨' },
+  { level: 3,  title: 'Iron 2',       minXp: 250,     color: 'text-stone-500',   badge: '🪨' },
+  { level: 4,  title: 'Iron 3',       minXp: 450,     color: 'text-stone-600',   badge: '🪨' },
+  // Bronze 1–3
+  { level: 5,  title: 'Bronze 1',     minXp: 700,     color: 'text-amber-700',   badge: '🥉' },
+  { level: 6,  title: 'Bronze 2',     minXp: 1000,    color: 'text-amber-700',   badge: '🥉' },
+  { level: 7,  title: 'Bronze 3',     minXp: 1400,    color: 'text-amber-800',   badge: '🥉' },
+  // Silver 1–3
+  { level: 8,  title: 'Silver 1',     minXp: 1900,    color: 'text-slate-400',   badge: '🥈' },
+  { level: 9,  title: 'Silver 2',     minXp: 2500,    color: 'text-slate-400',   badge: '🥈' },
+  { level: 10, title: 'Silver 3',     minXp: 3200,    color: 'text-slate-500',   badge: '🥈' },
+  // Gold 1–3
+  { level: 11, title: 'Gold 1',       minXp: 4000,    color: 'text-yellow-500',  badge: '🥇' },
+  { level: 12, title: 'Gold 2',       minXp: 5000,    color: 'text-yellow-500',  badge: '🥇' },
+  { level: 13, title: 'Gold 3',       minXp: 6200,    color: 'text-yellow-600',  badge: '🥇' },
+  // Platinum 1–3
+  { level: 14, title: 'Platinum 1',   minXp: 7600,    color: 'text-cyan-400',    badge: '💎' },
+  { level: 15, title: 'Platinum 2',   minXp: 9200,    color: 'text-cyan-400',    badge: '💎' },
+  { level: 16, title: 'Platinum 3',   minXp: 11000,   color: 'text-cyan-500',    badge: '💎' },
+  // Diamond 1–3
+  { level: 17, title: 'Diamond 1',    minXp: 13500,   color: 'text-violet-400',  badge: '💠' },
+  { level: 18, title: 'Diamond 2',    minXp: 16500,   color: 'text-violet-400',  badge: '💠' },
+  { level: 19, title: 'Diamond 3',    minXp: 20000,   color: 'text-violet-500',  badge: '💠' },
+  // Immortal 1–3
+  { level: 20, title: 'Immortal 1',   minXp: 25000,   color: 'text-rose-400',    badge: '🔥' },
+  { level: 21, title: 'Immortal 2',   minXp: 32000,   color: 'text-rose-500',    badge: '🔥' },
+  { level: 22, title: 'Immortal 3',   minXp: 42000,   color: 'text-rose-600',    badge: '🔥' },
+  // Radiant
+  { level: 23, title: 'Radiant',      minXp: 55000,   color: 'text-amber-300',   badge: '✨' },
+  // Professor — the ultimate rank, extremely hard to reach
+  { level: 24, title: 'Professor',    minXp: 100000,  color: 'text-emerald-400', badge: '🎓' },
 ];
 
 export interface XpProgress {
