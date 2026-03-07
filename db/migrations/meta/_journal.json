@@ -85,6 +85,13 @@
       "when": 1773300000000,
       "tag": "0011_voice_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1773400000000,
+      "tag": "0012_doctor_pdfs",
+      "breakpoints": true
     }
   ]
 }

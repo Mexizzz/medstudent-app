@@ -8,8 +8,9 @@ import { toast } from 'sonner';
 import {
   Pen, Eraser, Trash2, Undo2, Save, Sparkles, Plus,
   Loader2, Type, BookOpen, ChevronRight, Star, ChevronLeft, ImagePlus, X, Lightbulb, Menu,
+  FileText, Upload, ExternalLink,
 } from 'lucide-react';
-import type { Summary } from '@/db/schema';
+import type { Summary, DoctorPdf } from '@/db/schema';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -201,6 +202,12 @@ export default function SummariesPage() {
   const [showPanel,  setShowPanel]  = useState(true);
   const [saving,     setSaving]     = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
+
+  // Doctor PDFs state
+  const [sidebarTab, setSidebarTab] = useState<'summaries' | 'pdfs'>('summaries');
+  const [doctorPdfsList, setDoctorPdfsList] = useState<DoctorPdf[]>([]);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   // ── Redraw entire canvas from vector data ─────────────────────────────────
 
@@ -397,7 +404,44 @@ export default function SummariesPage() {
     } catch { /* silent */ }
   }, []);
 
-  useEffect(() => { fetchList(); }, [fetchList]);
+  const fetchPdfs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/doctor-pdfs');
+      const data = await res.json();
+      setDoctorPdfsList(data);
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { fetchList(); fetchPdfs(); }, [fetchList, fetchPdfs]);
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPdf(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', file.name.replace(/\.pdf$/i, ''));
+      const res = await fetch('/api/doctor-pdfs', { method: 'POST', body: fd });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      toast.success('PDF uploaded!');
+      await fetchPdfs();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingPdf(false);
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
+    }
+  }
+
+  async function handleDeletePdf(id: string) {
+    if (!confirm('Delete this PDF?')) return;
+    try {
+      await fetch(`/api/doctor-pdfs/${id}`, { method: 'DELETE' });
+      toast.success('PDF deleted');
+      await fetchPdfs();
+    } catch { toast.error('Failed to delete'); }
+  }
 
   // ── Pointer position ──────────────────────────────────────────────────────
 
@@ -738,18 +782,49 @@ export default function SummariesPage() {
         'fixed inset-y-0 left-0 z-40 lg:relative lg:translate-x-0',
         showSidebar ? 'translate-x-0' : '-translate-x-full'
       )}>
-        <div className="px-4 py-3 sm:py-4 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-indigo-500" />
-            <p className="text-sm font-semibold text-foreground">My Summaries</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={handleNew} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
-              <Plus className="w-4 h-4" />
+        <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-1 flex-1">
+            <button
+              onClick={() => setSidebarTab('summaries')}
+              className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
+                sidebarTab === 'summaries' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
+            >
+              <BookOpen className="w-3.5 h-3.5" /> Summaries
             </button>
             <button
+              onClick={() => setSidebarTab('pdfs')}
+              className={cn('flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors',
+                sidebarTab === 'pdfs' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}
+            >
+              <FileText className="w-3.5 h-3.5" /> PDFs
+            </button>
+          </div>
+          <div className="flex items-center gap-1">
+            {sidebarTab === 'summaries' && (
+              <button onClick={handleNew} className="p-1 rounded-md hover:bg-card text-muted-foreground" title="New summary">
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+            {sidebarTab === 'pdfs' && (
+              <button
+                onClick={() => pdfInputRef.current?.click()}
+                className="p-1 rounded-md hover:bg-card text-muted-foreground"
+                title="Upload PDF"
+                disabled={uploadingPdf}
+              >
+                {uploadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              </button>
+            )}
+            <input
+              ref={pdfInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={handlePdfUpload}
+            />
+            <button
               onClick={() => setShowSidebar(false)}
-              className="p-1 rounded-md hover:bg-muted text-muted-foreground transition-colors lg:hidden"
+              className="p-1 rounded-md hover:bg-card text-muted-foreground transition-colors lg:hidden"
             >
               <X className="w-4 h-4" />
             </button>
@@ -757,6 +832,8 @@ export default function SummariesPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
+          {sidebarTab === 'summaries' ? (
+          <>
           {summariesList.length === 0 ? (
             <p className="text-[10px] text-muted-foreground px-4 py-3 text-center leading-relaxed">
               No summaries yet.<br />Start writing to save one.
@@ -791,6 +868,57 @@ export default function SummariesPage() {
               </button>
             </div>
           ))}
+          </>
+          ) : (
+          <>
+            {doctorPdfsList.length === 0 ? (
+              <div className="text-center px-4 py-6">
+                <FileText className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  No PDFs yet.<br />Upload doctor slides & notes.
+                </p>
+                <button
+                  onClick={() => pdfInputRef.current?.click()}
+                  className="mt-2 text-[10px] text-indigo-500 hover:text-indigo-600 font-medium"
+                >
+                  Upload PDF
+                </button>
+              </div>
+            ) : doctorPdfsList.map(pdf => (
+              <div
+                key={pdf.id}
+                className="group w-full text-left px-4 py-2.5 flex items-start gap-2 hover:bg-card transition-colors"
+              >
+                <FileText className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground truncate">{pdf.title}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {pdf.subject && <p className="text-[10px] text-muted-foreground truncate">{pdf.subject}</p>}
+                    <p className="text-[10px] text-muted-foreground">{(pdf.fileSize / 1024).toFixed(0)} KB</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5">
+                  <a
+                    href={`/api/doctor-pdfs/${pdf.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-0.5 text-muted-foreground hover:text-indigo-500"
+                    title="Open PDF"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => handleDeletePdf(pdf.id)}
+                    className="p-0.5 text-muted-foreground hover:text-red-400"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </>
+          )}
         </div>
       </aside>
 

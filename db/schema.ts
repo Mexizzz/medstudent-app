@@ -298,6 +298,18 @@ export const directMessages = sqliteTable('direct_messages', {
   createdAt:  integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Doctor PDFs (reference material) ─────────────────
+export const doctorPdfs = sqliteTable('doctor_pdfs', {
+  id:          text('id').primaryKey(),
+  userId:      text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title:       text('title').notNull(),
+  subject:     text('subject'),
+  fileName:    text('file_name').notNull(),
+  filePath:    text('file_path').notNull(),
+  fileSize:    integer('file_size').notNull(),
+  createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -315,6 +327,7 @@ export type SessionResponse = typeof sessionResponses.$inferSelect;
 export type NewSessionResponse = typeof sessionResponses.$inferInsert;
 export type StudyPlanItem = typeof studyPlanItems.$inferSelect;
 export type NewStudyPlanItem = typeof studyPlanItems.$inferInsert;
+export type DoctorPdf = typeof doctorPdfs.$inferSelect;
 export type StreakRecord = typeof streakRecords.$inferSelect;
 export type TopicPerformance = typeof topicPerformance.$inferSelect;
 export type SrCard = typeof srCards.$inferSelect;
