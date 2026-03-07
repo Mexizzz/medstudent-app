@@ -72,6 +72,12 @@ export default function FoldersPage() {
       const res = await fetch(`/api/folders/${folder.id}/questions`);
       const data = await res.json();
       setFolderQuestions(data);
+      // Sync the count in the folder list with actual question count
+      const actualCount = Array.isArray(data) ? data.length : 0;
+      if (folder.count !== actualCount) {
+        setFolders(prev => prev.map(f => f.id === folder.id ? { ...f, count: actualCount } : f));
+        setSelectedFolder(prev => prev ? { ...prev, count: actualCount } : null);
+      }
     } catch { toast.error('Failed to load questions'); }
     finally { setQuestionsLoading(false); }
   }
