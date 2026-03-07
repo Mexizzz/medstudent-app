@@ -310,6 +310,22 @@ export const doctorPdfs = sqliteTable('doctor_pdfs', {
   createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Question Folders ─────────────────────────────────
+export const questionFolders = sqliteTable('question_folders', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name:      text('name').notNull(),
+  color:     text('color').default('#6366f1'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const folderQuestions = sqliteTable('folder_questions', {
+  id:         text('id').primaryKey(),
+  folderId:   text('folder_id').notNull().references(() => questionFolders.id, { onDelete: 'cascade' }),
+  questionId: text('question_id').notNull().references(() => questions.id, { onDelete: 'cascade' }),
+  addedAt:    integer('added_at', { mode: 'timestamp' }).notNull(),
+});
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -332,6 +348,8 @@ export type StreakRecord = typeof streakRecords.$inferSelect;
 export type TopicPerformance = typeof topicPerformance.$inferSelect;
 export type SrCard = typeof srCards.$inferSelect;
 export type StudyGoal = typeof studyGoals.$inferSelect;
+export type QuestionFolder = typeof questionFolders.$inferSelect;
+export type FolderQuestion = typeof folderQuestions.$inferSelect;
 export type UserXp = typeof userXp.$inferSelect;
 export type ExamProfile = typeof examProfiles.$inferSelect;
 export type StudyRoom = typeof studyRooms.$inferSelect;

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, X, Loader2, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { AddToFolderButton } from '@/components/study/AddToFolderButton';
 import { cn, ACTIVITY_LABELS, subjectColor } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Question } from '@/db/schema';
@@ -216,6 +217,9 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
             {current.difficulty}
           </span>
         )}
+        <div className="ml-auto">
+          <AddToFolderButton questionId={current.id} />
+        </div>
       </div>
 
       {/* Question card */}
