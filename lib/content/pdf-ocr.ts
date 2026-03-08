@@ -1,43 +1,44 @@
 import fs from 'fs/promises';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import os from 'os';
 import { groq } from '../ai/client';
 
+const execFileAsync = promisify(execFile);
 const VISION_MODEL = 'llama-4-scout-17b-16e-instruct';
 
 /**
- * Convert PDF pages to PNG buffers using pdfjs-dist + canvas.
+ * Convert PDF pages to PNG files using pdftoppm (poppler-utils).
+ * Returns array of PNG file paths.
  */
-async function pdfToImages(filePath: string): Promise<Buffer[]> {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const data = new Uint8Array(await fs.readFile(filePath));
-  const doc = await pdfjs.getDocument({ data, useSystemFonts: true }).promise;
+async function pdfToImages(filePath: string): Promise<string[]> {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf-ocr-'));
+  const outputPrefix = path.join(tmpDir, 'page');
 
-  const { createCanvas } = await import('canvas');
-  const images: Buffer[] = [];
+  await execFileAsync('pdftoppm', [
+    '-png',
+    '-r', '200', // 200 DPI — good enough for OCR
+    filePath,
+    outputPrefix,
+  ]);
 
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const viewport = page.getViewport({ scale: 2.0 }); // 2x for better OCR
-    const canvas = createCanvas(viewport.width, viewport.height);
-    const ctx = canvas.getContext('2d');
+  // pdftoppm outputs page-01.png, page-02.png, etc.
+  const files = await fs.readdir(tmpDir);
+  const pngFiles = files
+    .filter(f => f.endsWith('.png'))
+    .sort()
+    .map(f => path.join(tmpDir, f));
 
-    // pdfjs render expects a specific context shape
-    await page.render({
-      canvasContext: ctx as unknown as CanvasRenderingContext2D,
-      viewport,
-    }).promise;
-
-    images.push(canvas.toBuffer('image/png'));
-  }
-
-  await doc.destroy();
-  return images;
+  return pngFiles;
 }
 
 /**
  * Use Groq vision to extract text from a PDF page image.
  */
-async function ocrImage(imageBuffer: Buffer): Promise<string> {
-  const base64 = imageBuffer.toString('base64');
+async function ocrImage(imagePath: string): Promise<string> {
+  const buffer = await fs.readFile(imagePath);
+  const base64 = buffer.toString('base64');
 
   const response = await groq.chat.completions.create({
     model: VISION_MODEL,
@@ -64,18 +65,23 @@ async function ocrImage(imageBuffer: Buffer): Promise<string> {
 }
 
 /**
- * OCR a full PDF: converts pages to images, then uses Groq vision to extract text.
- * Returns the concatenated text from all pages.
+ * OCR a full PDF: converts pages to images via pdftoppm, then uses Groq vision to extract text.
  */
 export async function ocrPdf(filePath: string): Promise<string> {
-  const images = await pdfToImages(filePath);
+  const imagePaths = await pdfToImages(filePath);
 
-  // Process pages sequentially to avoid rate limits
   const pages: string[] = [];
-  for (const img of images) {
-    const text = await ocrImage(img);
+  for (const imgPath of imagePaths) {
+    const text = await ocrImage(imgPath);
     if (text.trim()) pages.push(text.trim());
   }
+
+  // Cleanup temp files
+  for (const imgPath of imagePaths) {
+    await fs.unlink(imgPath).catch(() => {});
+  }
+  const tmpDir = path.dirname(imagePaths[0] ?? '');
+  if (tmpDir) await fs.rmdir(tmpDir).catch(() => {});
 
   return pages.join('\n\n');
 }
