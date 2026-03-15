@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, FolderOpen, Crown, HelpCircle, Gauge, Trophy, TrendingUp
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, FolderOpen, Crown, HelpCircle, Gauge, Trophy, TrendingUp, Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -75,6 +75,7 @@ export function Sidebar() {
   const [streak, setStreak] = useState<{ currentStreak: number; todayComplete: boolean } | null>(null);
   const [user, setUser] = useState<{ id: string; email: string; name?: string; subscriptionTier?: string } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -181,32 +182,47 @@ export function Sidebar() {
             </div>
           </Link>
         )}
-        <div className="space-y-0.5">
-          <p className="px-2 text-[9px] font-semibold uppercase tracking-wider text-sidebar-foreground/30">Theme</p>
-          <div className="grid grid-cols-3 gap-1">
-            {THEMES.map(t => {
-              const isLocked = t.maxOnly && user?.subscriptionTier !== 'max';
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => !isLocked && setTheme(t.id)}
-                  className={cn(
-                    'flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg text-[9px] transition-colors',
-                    theme === t.id ? 'bg-white/15 text-white' : 'text-sidebar-foreground/50 hover:bg-white/5 hover:text-white',
-                    isLocked && 'opacity-40 cursor-not-allowed'
-                  )}
-                  title={isLocked ? 'Max only' : t.label}
-                >
-                  <div className="flex gap-[2px]">
-                    {t.colors.map((c, i) => (
-                      <div key={i} className="w-2.5 h-2.5 rounded-full border border-white/10" style={{ background: c }} />
-                    ))}
-                  </div>
-                  <span className="truncate w-full text-center">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div>
+          <button
+            onClick={() => setThemeOpen(!themeOpen)}
+            className="flex items-center justify-between w-full px-2 py-1.5 rounded-lg text-sidebar-foreground/50 hover:bg-white/5 hover:text-white transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Palette className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{THEMES.find(t => t.id === theme)?.label || 'Theme'}</span>
+            </div>
+            <div className="flex gap-[2px]">
+              {(THEMES.find(t => t.id === theme)?.colors || []).map((c, i) => (
+                <div key={i} className="w-2 h-2 rounded-full border border-white/10" style={{ background: c }} />
+              ))}
+            </div>
+          </button>
+          {themeOpen && (
+            <div className="grid grid-cols-3 gap-1 mt-1 px-1">
+              {THEMES.map(t => {
+                const isLocked = t.maxOnly && user?.subscriptionTier !== 'max';
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => { if (!isLocked) { setTheme(t.id); setThemeOpen(false); } }}
+                    className={cn(
+                      'flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg text-[9px] transition-colors',
+                      theme === t.id ? 'bg-white/15 text-white' : 'text-sidebar-foreground/50 hover:bg-white/5 hover:text-white',
+                      isLocked && 'opacity-40 cursor-not-allowed'
+                    )}
+                    title={isLocked ? 'Max only' : t.label}
+                  >
+                    <div className="flex gap-[2px]">
+                      {t.colors.map((c, i) => (
+                        <div key={i} className="w-2.5 h-2.5 rounded-full border border-white/10" style={{ background: c }} />
+                      ))}
+                    </div>
+                    <span className="truncate w-full text-center">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
         {user && (
           <div className="flex items-center justify-between">
