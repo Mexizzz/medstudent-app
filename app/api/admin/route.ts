@@ -169,13 +169,30 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH — reset a user's password
+// PATCH — reset a user's password or change subscription tier
 export async function PATCH(req: NextRequest) {
   try {
-    const { adminPassword, userId, newPassword } = await req.json();
+    const body = await req.json();
+    const { adminPassword } = body;
     if (adminPassword !== ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
     }
+
+    // Change subscription tier
+    if (body.action === 'changeTier') {
+      const { userId, tier } = body;
+      if (!userId || !['free', 'pro', 'max'].includes(tier)) {
+        return NextResponse.json({ error: 'Valid userId and tier (free/pro/max) required' }, { status: 400 });
+      }
+      await db.update(users).set({
+        subscriptionTier: tier,
+        subscriptionStatus: tier === 'free' ? 'active' : 'active',
+      }).where(eq(users.id, userId));
+      return NextResponse.json({ success: true });
+    }
+
+    // Reset password (default)
+    const { userId, newPassword } = body;
     if (!userId || !newPassword || newPassword.length < 4) {
       return NextResponse.json({ error: 'User ID and new password (min 4 chars) required' }, { status: 400 });
     }
@@ -185,7 +202,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Admin reset password error:', error);
+    console.error('Admin PATCH error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

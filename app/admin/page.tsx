@@ -107,6 +107,32 @@ export default function AdminPage() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms'>('overview');
   const [showPasswords, setShowPasswords] = useState(false);
+  const [changingTier, setChangingTier] = useState<string | null>(null);
+
+  async function handleChangeTier(userId: string, tier: string) {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'changeTier', userId, tier }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error); return; }
+      toast.success(`Tier changed to ${tier.toUpperCase()}`);
+      // Update local data
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map(u => u.id === userId ? { ...u, subscriptionTier: tier } : u),
+          tierBreakdown: prev.tierBreakdown, // will be stale but acceptable until refresh
+        };
+      });
+      setChangingTier(null);
+    } catch {
+      toast.error('Failed to change tier');
+    }
+  }
 
   async function handleLogin() {
     if (!password.trim()) return;
@@ -489,7 +515,30 @@ export default function AdminPage() {
                               <p className="text-xs text-slate-500">{u.email}</p>
                             </button>
                           </td>
-                          <td className="px-4 py-3"><TierBadge tier={u.subscriptionTier} /></td>
+                          <td className="px-4 py-3">
+                            {changingTier === u.id ? (
+                              <div className="flex items-center gap-1">
+                                {(['free', 'pro', 'max'] as const).map(t => (
+                                  <button
+                                    key={t}
+                                    onClick={() => handleChangeTier(u.id, t)}
+                                    className={`px-2 py-0.5 rounded text-xs font-semibold transition-all ${
+                                      u.subscriptionTier === t
+                                        ? 'ring-2 ring-indigo-500 bg-indigo-600 text-white'
+                                        : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                                    }`}
+                                  >
+                                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                                  </button>
+                                ))}
+                                <button onClick={() => setChangingTier(null)} className="text-slate-500 hover:text-white text-xs ml-1">✕</button>
+                              </div>
+                            ) : (
+                              <button onClick={() => setChangingTier(u.id)} title="Click to change tier">
+                                <TierBadge tier={u.subscriptionTier} />
+                              </button>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-slate-300">{u.sessionCount}</td>
                           <td className="px-4 py-3 text-slate-300">{u.questionCount.toLocaleString()}</td>
                           <td className="px-4 py-3">
