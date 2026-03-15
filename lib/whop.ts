@@ -2,18 +2,23 @@ import crypto from 'crypto';
 
 const WHOP_API = 'https://api.whop.com/api/v1';
 
-export const WHOP_PLAN_IDS = {
-  pro_monthly: process.env.WHOP_PRO_MONTHLY_PLAN_ID || '',
-  pro_annual: process.env.WHOP_PRO_ANNUAL_PLAN_ID || '',
-  max_monthly: process.env.WHOP_MAX_MONTHLY_PLAN_ID || '',
-  max_annual: process.env.WHOP_MAX_ANNUAL_PLAN_ID || '',
-};
+export function getWhopPlanIds() {
+  return {
+    pro_monthly: process.env.WHOP_PRO_MONTHLY_PLAN_ID || '',
+    pro_annual: process.env.WHOP_PRO_ANNUAL_PLAN_ID || '',
+    max_monthly: process.env.WHOP_MAX_MONTHLY_PLAN_ID || '',
+    max_annual: process.env.WHOP_MAX_ANNUAL_PLAN_ID || '',
+  };
+}
+
+export type WhopPlanKey = 'pro_monthly' | 'pro_annual' | 'max_monthly' | 'max_annual';
 
 export function getPlanFromWhopPlanId(planId: string): { tier: 'pro' | 'max'; interval: 'monthly' | 'annual' } | null {
-  if (planId === WHOP_PLAN_IDS.pro_monthly) return { tier: 'pro', interval: 'monthly' };
-  if (planId === WHOP_PLAN_IDS.pro_annual) return { tier: 'pro', interval: 'annual' };
-  if (planId === WHOP_PLAN_IDS.max_monthly) return { tier: 'max', interval: 'monthly' };
-  if (planId === WHOP_PLAN_IDS.max_annual) return { tier: 'max', interval: 'annual' };
+  const ids = getWhopPlanIds();
+  if (planId === ids.pro_monthly) return { tier: 'pro', interval: 'monthly' };
+  if (planId === ids.pro_annual) return { tier: 'pro', interval: 'annual' };
+  if (planId === ids.max_monthly) return { tier: 'max', interval: 'monthly' };
+  if (planId === ids.max_annual) return { tier: 'max', interval: 'annual' };
   return null;
 }
 

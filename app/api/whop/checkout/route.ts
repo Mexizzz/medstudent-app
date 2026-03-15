@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, handleAuthError } from '@/lib/auth';
-import { createCheckout, WHOP_PLAN_IDS } from '@/lib/whop';
+import { createCheckout, getWhopPlanIds, type WhopPlanKey } from '@/lib/whop';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
@@ -8,10 +8,12 @@ export async function POST(req: NextRequest) {
     const { userId, email } = await requireAuth();
     const { plan, interval } = await req.json();
 
-    const planKey = `${plan}_${interval}` as keyof typeof WHOP_PLAN_IDS;
-    const planId = WHOP_PLAN_IDS[planKey];
+    const ids = getWhopPlanIds();
+    const planKey = `${plan}_${interval}` as WhopPlanKey;
+    const planId = ids[planKey];
 
     if (!planId) {
+      console.error('Whop plan not found:', { planKey, plan, interval, ids });
       return NextResponse.json({ error: 'Invalid plan or interval' }, { status: 400 });
     }
 
