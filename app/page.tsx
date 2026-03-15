@@ -2,7 +2,8 @@ import Link from 'next/link';
 import {
   Stethoscope, Brain, BookOpen, Users, BarChart2, GraduationCap,
   Mic, Zap, ArrowRight, CheckCircle2, MessageCircle, Target,
-  FlaskConical, XCircle, Lightbulb, CalendarDays, UserPlus, Heart, Sparkles
+  FlaskConical, XCircle, Lightbulb, CalendarDays, UserPlus, Heart, Sparkles,
+  Crown, Check, X
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -16,9 +17,12 @@ export default function LandingPage() {
               <Stethoscope className="w-5 h-5 text-blue-600" />
             </div>
             <span className="font-bold text-xl text-foreground">MedStudy</span>
-            <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold uppercase rounded-full tracking-wider">Beta</span>
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+              Pricing
+            </Link>
             <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
               Log in
             </Link>
@@ -35,7 +39,7 @@ export default function LandingPage() {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold mb-6 border border-emerald-200">
             <Sparkles className="w-4 h-4" />
-            Free during Beta — No limits, no credit card
+            Start free — Upgrade anytime
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.1] max-w-4xl mx-auto">
             Your AI Study Partner for <span className="text-blue-600">Medical School</span>
@@ -60,8 +64,8 @@ export default function LandingPage() {
 
           {/* Trust signals */}
           <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> 100% Free</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free plan available</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Your data stays yours</span>
           </div>
@@ -203,40 +207,130 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Beta Banner */}
-      <section className="py-16 sm:py-20">
+      {/* Pricing */}
+      <section className="py-16 sm:py-24" id="pricing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 sm:p-12 text-white overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-card/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-card/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-            <div className="relative max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-card/15 rounded-full text-sm font-semibold mb-4">
-                <Zap className="w-3.5 h-3.5" />
-                Beta Program
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-semibold mb-4 border border-blue-200">
+              <Crown className="w-3.5 h-3.5" />
+              Simple Pricing
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Choose Your Plan</h2>
+            <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+              Start free and upgrade as you need more power. Every plan includes core AI study features.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Free */}
+            <div className="bg-card rounded-2xl border border-border p-6 flex flex-col">
+              <h3 className="text-lg font-bold text-foreground">Free</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-foreground">$0</span>
+                <span className="text-muted-foreground ml-1">/month</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
-                We&apos;re in Beta — And That Means <span className="text-amber-300">Completely Free</span>
-              </h2>
-              <p className="mt-4 text-lg text-blue-100 leading-relaxed">
-                MedStudy is in active development, and we&apos;re giving early users full access to every feature at no cost. No trials, no paywalls, no limits. Use everything while we perfect the platform.
-              </p>
-              <div className="mt-6 space-y-3">
+              <p className="text-sm text-muted-foreground mb-6">Perfect for getting started and trying out MedStudy.</p>
+              <ul className="space-y-3 text-sm flex-1">
                 {[
-                  'All features unlocked — AI questions, tutor, analytics, study rooms, voice chat',
-                  'Unlimited content uploads and question generation',
-                  'Your feedback directly shapes what we build next',
-                ].map(text => (
-                  <div key={text} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-300 mt-0.5 flex-shrink-0" />
-                    <span className="text-blue-50">{text}</span>
-                  </div>
+                  { text: '50 AI questions/day', included: true },
+                  { text: '10 tutor messages/day', included: true },
+                  { text: '5 content sources', included: true },
+                  { text: 'MCQs & Flashcards', included: true },
+                  { text: 'Basic analytics', included: true },
+                  { text: 'Fill-in-the-blank', included: false },
+                  { text: 'Clinical cases', included: false },
+                  { text: 'Exam simulation', included: false },
+                ].map(item => (
+                  <li key={item.text} className="flex items-center gap-2">
+                    {item.included
+                      ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      : <X className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />}
+                    <span className={item.included ? 'text-foreground' : 'text-muted-foreground/60'}>{item.text}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
               <Link
                 href="/signup"
-                className="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-card text-blue-700 rounded-xl text-base font-bold hover:bg-blue-50 transition-colors shadow-lg"
+                className="mt-6 block text-center px-6 py-2.5 border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
-                Join the Beta <ArrowRight className="w-4 h-4" />
+                Get Started Free
+              </Link>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-card rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                Most Popular
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Pro</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-foreground">$7.99</span>
+                <span className="text-muted-foreground ml-1">/month</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">or $4.99/mo billed annually</p>
+              <p className="text-sm text-muted-foreground mb-6">For serious students who want the full toolkit.</p>
+              <ul className="space-y-3 text-sm flex-1">
+                {[
+                  { text: '250 AI questions/day', included: true },
+                  { text: '100 tutor messages/day', included: true },
+                  { text: '50 content sources', included: true },
+                  { text: 'All question types', included: true },
+                  { text: 'AI lessons & summaries', included: true },
+                  { text: 'Fill-in-the-blank & Short answer', included: true },
+                  { text: 'Study rooms (create & join)', included: true },
+                  { text: 'Clinical cases', included: false },
+                  { text: 'Exam simulation', included: false },
+                ].map(item => (
+                  <li key={item.text} className="flex items-center gap-2">
+                    {item.included
+                      ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      : <X className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />}
+                    <span className={item.included ? 'text-foreground' : 'text-muted-foreground/60'}>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/signup"
+                className="mt-6 block text-center px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                Start Pro Trial
+              </Link>
+            </div>
+
+            {/* Max */}
+            <div className="bg-card rounded-2xl border border-border p-6 flex flex-col relative">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">
+                Unlimited
+              </div>
+              <h3 className="text-lg font-bold text-foreground">Max</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-foreground">$14.99</span>
+                <span className="text-muted-foreground ml-1">/month</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">or $9.99/mo billed annually</p>
+              <p className="text-sm text-muted-foreground mb-6">No limits. Every feature. Total peace of mind.</p>
+              <ul className="space-y-3 text-sm flex-1">
+                {[
+                  'Unlimited questions/day',
+                  'Unlimited tutor messages',
+                  'Unlimited sources',
+                  'All question types',
+                  'AI lessons & summaries',
+                  'Clinical case generation',
+                  'Full exam simulation lab',
+                  'Priority support',
+                ].map(text => (
+                  <li key={text} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span className="text-foreground">{text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/signup"
+                className="mt-6 block text-center px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-semibold hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm"
+              >
+                Go Max
               </Link>
             </div>
           </div>
@@ -306,7 +400,7 @@ export default function LandingPage() {
             <span className="text-blue-600">Let AI Do It in Seconds.</span>
           </h2>
           <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto">
-            Join the beta and get full access to every feature — completely free. Your exams won&apos;t wait, and neither should you.
+            Sign up free and start generating questions in seconds. Your exams won&apos;t wait, and neither should you.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -323,7 +417,7 @@ export default function LandingPage() {
             </Link>
           </div>
           <p className="mt-5 text-sm text-muted-foreground">
-            Free during beta. No credit card. No limits. No catch.
+            Free plan available. No credit card required. Upgrade anytime.
           </p>
         </div>
       </section>
@@ -334,7 +428,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4 text-blue-600" />
             <span className="font-semibold text-foreground">MedStudy</span>
-            <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold uppercase rounded tracking-wider">Beta</span>
+            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded tracking-wider">AI</span>
           </div>
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} MedStudy. Built with care for medical students everywhere.
