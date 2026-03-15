@@ -13,8 +13,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 rounded-lg">
-              <Stethoscope className="w-5 h-5 text-blue-600" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+              M
             </div>
             <span className="font-bold text-xl text-foreground">MedStudy</span>
             <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
@@ -426,7 +426,9 @@ export default function LandingPage() {
       <footer className="border-t border-border py-8 bg-muted">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Stethoscope className="w-4 h-4 text-blue-600" />
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-xs" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+              M
+            </div>
             <span className="font-semibold text-foreground">MedStudy</span>
             <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded tracking-wider">AI</span>
           </div>

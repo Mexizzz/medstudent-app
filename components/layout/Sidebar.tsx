@@ -98,8 +98,8 @@ export function Sidebar() {
       {/* Logo + streak */}
       <div className="flex items-center justify-between px-5 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-500/20 rounded-lg">
-            <Stethoscope className="w-5 h-5 text-blue-300" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+            M
           </div>
           <span className="font-semibold text-white text-lg tracking-tight">MedStudy</span>
         </div>
@@ -237,7 +237,9 @@ export function Sidebar() {
           <Menu className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex items-center gap-2">
-          <Stethoscope className="w-4 h-4 text-primary" />
+          <div className="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-xs" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+            M
+          </div>
           <span className="font-semibold text-foreground">MedStudy</span>
         </div>
         {streak && (
