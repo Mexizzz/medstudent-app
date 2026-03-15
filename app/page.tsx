@@ -264,10 +264,10 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-bold text-foreground">Pro</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">$7.99</span>
+                <span className="text-4xl font-extrabold text-foreground">£7.99</span>
                 <span className="text-muted-foreground ml-1">/month</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-1">or $4.99/mo billed annually</p>
+              <p className="text-xs text-muted-foreground mb-1">or £4.99/mo billed annually</p>
               <p className="text-sm text-muted-foreground mb-6">For serious students who want the full toolkit.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
@@ -304,10 +304,10 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-bold text-foreground">Max</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">$14.99</span>
+                <span className="text-4xl font-extrabold text-foreground">£14.99</span>
                 <span className="text-muted-foreground ml-1">/month</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-1">or $9.99/mo billed annually</p>
+              <p className="text-xs text-muted-foreground mb-1">or £9.99/mo billed annually</p>
               <p className="text-sm text-muted-foreground mb-6">No limits. Every feature. Total peace of mind.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[

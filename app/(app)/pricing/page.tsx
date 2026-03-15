@@ -271,10 +271,10 @@ export default function PricingPage() {
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
 
                 <div className="mb-5">
-                  <span className="text-4xl font-bold text-foreground">${price.toFixed(2)}</span>
+                  <span className="text-4xl font-bold text-foreground">£{price.toFixed(2)}</span>
                   {price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
                   {interval === 'annual' && price > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Billed ${(price * 12).toFixed(2)}/year</p>
+                    <p className="text-xs text-muted-foreground mt-1">Billed £{(price * 12).toFixed(2)}/year</p>
                   )}
                 </div>
 
