@@ -226,7 +226,7 @@ export default function LandingPage() {
             <div className="bg-card rounded-2xl border border-border p-6 flex flex-col">
               <h3 className="text-lg font-bold text-foreground">Free</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">$0</span>
+                <span className="text-4xl font-extrabold text-foreground">£0</span>
                 <span className="text-muted-foreground ml-1">/month</span>
               </div>
               <p className="text-sm text-muted-foreground mb-6">Perfect for getting started and trying out MedStudy.</p>
