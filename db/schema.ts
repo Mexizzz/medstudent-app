@@ -343,6 +343,25 @@ export const usageTracking = sqliteTable('usage_tracking', {
   userActionDateUnique: uniqueIndex('usage_user_action_date').on(table.userId, table.action, table.date),
 }));
 
+// ── Support Tickets ───────────────────────────────────
+export const supportTickets = sqliteTable('support_tickets', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  subject:   text('subject').notNull(),
+  status:    text('status').notNull().default('open'), // 'open' | 'replied' | 'closed'
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const supportMessages = sqliteTable('support_messages', {
+  id:        text('id').primaryKey(),
+  ticketId:  text('ticket_id').notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
+  senderId:  text('sender_id').notNull(), // user id or 'admin'
+  isAdmin:   integer('is_admin', { mode: 'boolean' }).notNull().default(false),
+  message:   text('message').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -373,3 +392,5 @@ export type StudyRoom = typeof studyRooms.$inferSelect;
 export type RoomMember = typeof roomMembers.$inferSelect;
 export type RoomMessage = typeof roomMessages.$inferSelect;
 export type UsageTracking = typeof usageTracking.$inferSelect;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type SupportMessage = typeof supportMessages.$inferSelect;

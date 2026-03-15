@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs } from '@/db/schema';
+import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 export const dynamic = 'force-dynamic';
@@ -138,6 +138,26 @@ export async function POST(req: NextRequest) {
       .from(contentSources)
       .groupBy(contentSources.type);
 
+    // Support tickets
+    const allTickets = await db
+      .select({
+        id: supportTickets.id,
+        userId: supportTickets.userId,
+        userEmail: sql<string>`(SELECT email FROM users WHERE id = ${supportTickets.userId})`,
+        userName: sql<string>`(SELECT name FROM users WHERE id = ${supportTickets.userId})`,
+        subject: supportTickets.subject,
+        status: supportTickets.status,
+        createdAt: supportTickets.createdAt,
+        updatedAt: supportTickets.updatedAt,
+        messageCount: sql<number>`(SELECT count(*) FROM support_messages WHERE ticket_id = ${supportTickets.id})`,
+        lastMessage: sql<string>`(SELECT message FROM support_messages WHERE ticket_id = ${supportTickets.id} ORDER BY created_at DESC LIMIT 1)`,
+      })
+      .from(supportTickets)
+      .orderBy(desc(supportTickets.updatedAt));
+
+    const [ticketCount] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets);
+    const [openTicketCount] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets).where(eq(supportTickets.status, 'open'));
+
     return NextResponse.json({
       stats: {
         users: userCount.count,
@@ -151,6 +171,8 @@ export async function POST(req: NextRequest) {
         folders: folderCount.count,
         friendships: friendshipCount.count,
         doctorPdfs: doctorPdfCount.count,
+        tickets: ticketCount.count,
+        openTickets: openTicketCount.count,
       },
       tierBreakdown,
       statusBreakdown,
@@ -162,6 +184,7 @@ export async function POST(req: NextRequest) {
       users: allUsers,
       recentSessions,
       rooms,
+      tickets: allTickets,
     });
   } catch (error) {
     console.error('Admin API error:', error);
@@ -203,6 +226,65 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Admin PATCH error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PUT — admin support actions (reply, close, get messages)
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    if (body.adminPassword !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+
+    // Get ticket messages
+    if (body.action === 'getMessages') {
+      const messages = await db
+        .select()
+        .from(supportMessages)
+        .where(eq(supportMessages.ticketId, body.ticketId))
+        .orderBy(supportMessages.createdAt);
+      return NextResponse.json({ messages });
+    }
+
+    // Reply to ticket
+    if (body.action === 'reply') {
+      if (!body.ticketId || !body.message?.trim()) {
+        return NextResponse.json({ error: 'Ticket ID and message required' }, { status: 400 });
+      }
+      const now = new Date();
+      const messageId = `msg_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+
+      await db.insert(supportMessages).values({
+        id: messageId,
+        ticketId: body.ticketId,
+        senderId: 'admin',
+        isAdmin: true,
+        message: body.message.trim(),
+        createdAt: now,
+      });
+
+      await db.update(supportTickets).set({
+        status: 'replied',
+        updatedAt: now,
+      }).where(eq(supportTickets.id, body.ticketId));
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Close ticket
+    if (body.action === 'closeTicket') {
+      await db.update(supportTickets).set({
+        status: 'closed',
+        updatedAt: new Date(),
+      }).where(eq(supportTickets.id, body.ticketId));
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (error) {
+    console.error('Admin PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

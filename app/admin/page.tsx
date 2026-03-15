@@ -8,6 +8,7 @@ import {
   Lock, Users, BookOpen, HelpCircle, Activity, MessageSquare, LogOut, KeyRound,
   Crown, TrendingUp, Zap, FileText, FolderOpen, UserPlus, Stethoscope,
   Search, ChevronDown, ChevronUp, BarChart2, Calendar, Eye, EyeOff,
+  Send, CheckCircle2, Clock, XCircle, ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ interface AdminData {
     users: number; sources: number; questions: number; sessions: number;
     responses: number; rooms: number; lessons: number; summaries: number;
     folders: number; friendships: number; doctorPdfs: number;
+    tickets: number; openTickets: number;
   };
   tierBreakdown: { tier: string; count: number }[];
   statusBreakdown: { status: string; count: number }[];
@@ -39,6 +41,11 @@ interface AdminData {
   rooms: {
     id: string; name: string; joinCode: string; createdAt: string;
     creatorEmail: string; memberCount: number;
+  }[];
+  tickets: {
+    id: string; userId: string; userEmail: string; userName: string | null;
+    subject: string; status: string; createdAt: string; updatedAt: string;
+    messageCount: number; lastMessage: string | null;
   }[];
 }
 
@@ -105,9 +112,14 @@ export default function AdminPage() {
   const [sortBy, setSortBy] = useState<'date' | 'sessions' | 'questions' | 'score'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms' | 'support'>('overview');
   const [showPasswords, setShowPasswords] = useState(false);
   const [changingTier, setChangingTier] = useState<string | null>(null);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
+  const [adminReply, setAdminReply] = useState('');
+  const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'replied' | 'closed'>('all');
+  const [sendingReply, setSendingReply] = useState(false);
 
   async function handleChangeTier(userId: string, tier: string) {
     try {
@@ -131,6 +143,69 @@ export default function AdminPage() {
       setChangingTier(null);
     } catch {
       toast.error('Failed to change tier');
+    }
+  }
+
+  async function loadTicketMessages(ticketId: string) {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'getMessages', ticketId }),
+      });
+      const json = await res.json();
+      setTicketMessages(json.messages || []);
+      setActiveTicketId(ticketId);
+    } catch {
+      toast.error('Failed to load messages');
+    }
+  }
+
+  async function handleAdminReply() {
+    if (!adminReply.trim() || !activeTicketId) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'reply', ticketId: activeTicketId, message: adminReply }),
+      });
+      if (res.ok) {
+        setAdminReply('');
+        loadTicketMessages(activeTicketId);
+        // Update ticket status locally
+        setData(prev => prev ? {
+          ...prev,
+          tickets: prev.tickets.map(t => t.id === activeTicketId ? { ...t, status: 'replied' } : t),
+        } : prev);
+      } else {
+        toast.error('Failed to send reply');
+      }
+    } catch {
+      toast.error('Failed to send reply');
+    } finally {
+      setSendingReply(false);
+    }
+  }
+
+  async function handleCloseTicket(ticketId: string) {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'closeTicket', ticketId }),
+      });
+      if (res.ok) {
+        toast.success('Ticket closed');
+        setData(prev => prev ? {
+          ...prev,
+          tickets: prev.tickets.map(t => t.id === ticketId ? { ...t, status: 'closed' } : t),
+          stats: { ...prev.stats, openTickets: Math.max(0, prev.stats.openTickets - 1) },
+        } : prev);
+        if (activeTicketId === ticketId) setActiveTicketId(null);
+      }
+    } catch {
+      toast.error('Failed to close ticket');
     }
   }
 
@@ -204,7 +279,7 @@ export default function AdminPage() {
     );
   }
 
-  const { stats, tierBreakdown, todayUsage, avgScore, completedSessions, sourceTypes, users: allUsers, recentSessions, rooms, signupsPerDay } = data;
+  const { stats, tierBreakdown, todayUsage, avgScore, completedSessions, sourceTypes, users: allUsers, recentSessions, rooms, signupsPerDay, tickets: allTickets } = data;
 
   // Tier counts
   const tierCounts: Record<string, number> = { free: 0, pro: 0, max: 0 };
@@ -244,6 +319,7 @@ export default function AdminPage() {
     { id: 'users' as const, label: 'Users', icon: Users },
     { id: 'sessions' as const, label: 'Sessions', icon: Activity },
     { id: 'rooms' as const, label: 'Rooms', icon: MessageSquare },
+    { id: 'support' as const, label: 'Support', icon: HelpCircle, badge: stats.openTickets },
   ];
 
   return (
@@ -285,6 +361,9 @@ export default function AdminPage() {
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
+              {'badge' in tab && tab.badge ? (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">{tab.badge}</span>
+              ) : null}
             </button>
           ))}
         </div>
@@ -674,6 +753,137 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ── SUPPORT TAB ── */}
+        {activeTab === 'support' && (
+          <div className="space-y-4">
+            {activeTicketId ? (() => {
+              const ticket = data.tickets.find(t => t.id === activeTicketId);
+              const TICKET_STATUS: Record<string, { bg: string; text: string; icon: typeof Clock }> = {
+                open: { bg: 'bg-amber-500/20', text: 'text-amber-400', icon: Clock },
+                replied: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: CheckCircle2 },
+                closed: { bg: 'bg-slate-500/20', text: 'text-slate-400', icon: XCircle },
+              };
+              const st = TICKET_STATUS[ticket?.status || 'open'] || TICKET_STATUS.open;
+              const StIcon = st.icon;
+              return (
+                <div className="space-y-4">
+                  <button onClick={() => setActiveTicketId(null)} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white">
+                    <ArrowLeft className="w-4 h-4" /> Back to tickets
+                  </button>
+                  <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                    <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                      <div>
+                        <h2 className="font-semibold text-white">{ticket?.subject}</h2>
+                        <p className="text-xs text-slate-500 mt-0.5">{ticket?.userEmail} &middot; {ticket?.userName}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
+                          <StIcon className="w-3 h-3" />
+                          {ticket?.status}
+                        </span>
+                        {ticket?.status !== 'closed' && (
+                          <Button size="sm" variant="outline" className="text-xs text-slate-400 border-slate-700 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30" onClick={() => handleCloseTicket(activeTicketId)}>
+                            <XCircle className="w-3 h-3 mr-1" /> Close
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-3 max-h-[50vh] overflow-y-auto">
+                      {ticketMessages.map(msg => (
+                        <div key={msg.id} className={`flex ${msg.isAdmin ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                            msg.isAdmin
+                              ? 'bg-indigo-600 text-white rounded-br-md'
+                              : 'bg-slate-800 text-slate-200 rounded-bl-md'
+                          }`}>
+                            <p className="text-xs font-medium mb-1 opacity-70">{msg.isAdmin ? 'You (Admin)' : ticket?.userEmail}</p>
+                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                            <p className="text-[10px] opacity-50 mt-1">{timeAgo(msg.createdAt)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {ticketMessages.length === 0 && <p className="text-center text-slate-500 py-8">No messages</p>}
+                    </div>
+                    {ticket?.status !== 'closed' && (
+                      <div className="p-3 border-t border-slate-800 flex gap-2">
+                        <Input
+                          value={adminReply}
+                          onChange={e => setAdminReply(e.target.value)}
+                          placeholder="Type your reply..."
+                          className="flex-1 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleAdminReply()}
+                        />
+                        <Button onClick={handleAdminReply} size="icon" disabled={!adminReply.trim() || sendingReply} className="bg-indigo-600 hover:bg-indigo-700">
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })() : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="font-semibold text-white flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-indigo-400" /> Support Tickets
+                    {stats.openTickets > 0 && <span className="px-2 py-0.5 rounded-full text-xs bg-red-500/20 text-red-400 font-semibold">{stats.openTickets} open</span>}
+                  </h2>
+                  <div className="flex gap-1">
+                    {(['all', 'open', 'replied', 'closed'] as const).map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setTicketFilter(f)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          ticketFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                  <div className="divide-y divide-slate-800/50">
+                    {data.tickets
+                      .filter(t => ticketFilter === 'all' || t.status === ticketFilter)
+                      .map(ticket => {
+                        const TICKET_STATUS: Record<string, { bg: string; text: string }> = {
+                          open: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
+                          replied: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+                          closed: { bg: 'bg-slate-500/20', text: 'text-slate-400' },
+                        };
+                        const st = TICKET_STATUS[ticket.status] || TICKET_STATUS.open;
+                        return (
+                          <button
+                            key={ticket.id}
+                            onClick={() => loadTicketMessages(ticket.id)}
+                            className="w-full text-left px-4 py-3.5 hover:bg-slate-800/30 transition-colors flex items-start gap-4"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-white text-sm truncate">{ticket.subject}</h3>
+                                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium ${st.bg} ${st.text}`}>{ticket.status}</span>
+                              </div>
+                              <p className="text-xs text-slate-500 mt-0.5">{ticket.userEmail} {ticket.userName ? `(${ticket.userName})` : ''}</p>
+                              {ticket.lastMessage && <p className="text-xs text-slate-600 mt-1 truncate">{ticket.lastMessage}</p>}
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <span className="text-[11px] text-slate-500">{timeAgo(ticket.updatedAt)}</span>
+                              <span className="text-[11px] text-slate-600">{ticket.messageCount} msgs</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    {data.tickets.filter(t => ticketFilter === 'all' || t.status === ticketFilter).length === 0 && (
+                      <div className="px-4 py-12 text-center text-slate-500">No {ticketFilter === 'all' ? '' : ticketFilter} tickets</div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
