@@ -5,6 +5,7 @@ import { groq, MODEL } from '@/lib/ai/client';
 import { fetchMedicalDiagram } from '@/lib/ai/diagrams';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
@@ -45,6 +46,16 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
 
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'lesson_generate')) {
+      return NextResponse.json({ error: 'AI Lesson Generator is available on Pro and Max plans', upgradeRequired: true, requiredTier: 'pro' }, { status: 403 });
+    }
+
+    const { allowed, used, limit } = await checkUsageLimit(userId, 'lesson_generate', tier);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Daily lesson generation limit reached', upgradeRequired: true, used, limit, tier }, { status: 429 });
+    }
+
     const { topic } = await req.json();
     if (!topic?.trim()) {
       return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
@@ -79,6 +90,8 @@ export async function POST(req: NextRequest) {
 
     const id = nanoid();
     const now = new Date();
+
+    await incrementUsage(userId, 'lesson_generate');
 
     await db.insert(lessons).values({
       id,

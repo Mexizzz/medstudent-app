@@ -9,6 +9,11 @@ export const users = sqliteTable('users', {
   username:     text('username').unique(),
   bio:          text('bio'),
   avatarUrl:    text('avatar_url'),
+  subscriptionTier:    text('subscription_tier').notNull().default('free'), // 'free' | 'pro' | 'max'
+  stripeCustomerId:    text('stripe_customer_id'),
+  stripeSubscriptionId:text('stripe_subscription_id'),
+  subscriptionStatus:  text('subscription_status').default('active'), // 'active' | 'canceled' | 'past_due'
+  subscriptionEndsAt:  integer('subscription_ends_at', { mode: 'timestamp' }),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -326,6 +331,18 @@ export const folderQuestions = sqliteTable('folder_questions', {
   addedAt:    integer('added_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Usage Tracking (subscription limits) ─────────────
+export const usageTracking = sqliteTable('usage_tracking', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  action:    text('action').notNull(), // 'question_generate' | 'tutor_message' | 'lesson_generate' | 'summary_evaluate' | 'exam_analyze' | 'exam_generate'
+  count:     integer('count').notNull().default(0),
+  date:      text('date').notNull(), // 'YYYY-MM-DD'
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  userActionDateUnique: uniqueIndex('usage_user_action_date').on(table.userId, table.action, table.date),
+}));
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -355,3 +372,4 @@ export type ExamProfile = typeof examProfiles.$inferSelect;
 export type StudyRoom = typeof studyRooms.$inferSelect;
 export type RoomMember = typeof roomMembers.$inferSelect;
 export type RoomMessage = typeof roomMessages.$inferSelect;
+export type UsageTracking = typeof usageTracking.$inferSelect;

@@ -6,11 +6,20 @@ import { savePdfFile, extractPdfText } from '@/lib/content/pdf-extractor';
 import { nanoid } from 'nanoid';
 import path from 'path';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { getUserTier, STATIC_LIMITS } from '@/lib/subscription';
+import { eq } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    const limits = STATIC_LIMITS[tier];
+    const existing = await db.query.contentSources.findMany({ where: eq(contentSources.userId, userId), columns: { id: true } });
+    if (existing.length >= limits.maxContentSources) {
+      return NextResponse.json({ error: `Upload limit reached (${limits.maxContentSources} sources on ${tier} plan)`, upgradeRequired: true, tier }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

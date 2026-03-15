@@ -12,6 +12,7 @@ import { extractPdfText, savePdfFile } from '@/lib/content/pdf-extractor';
 import path from 'path';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
@@ -88,6 +89,16 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
 
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'exam_lab')) {
+      return NextResponse.json({ error: 'Exam Lab is available on the Max plan', upgradeRequired: true, requiredTier: 'max' }, { status: 403 });
+    }
+
+    const { allowed, used, limit } = await checkUsageLimit(userId, 'exam_generate', tier);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Daily exam generation limit reached', upgradeRequired: true, used, limit, tier }, { status: 429 });
+    }
+
     const formData = await req.formData();
     const profileId = formData.get('profileId') as string | null;
     const count = parseInt((formData.get('count') as string | null) ?? '20', 10);
@@ -124,6 +135,7 @@ export async function POST(req: NextRequest) {
     const truncated = material.slice(0, 8000);
 
     const questions = await callGroqGenerate(styleAnalysis, truncated, count, subject, mode);
+    await incrementUsage(userId, 'exam_generate');
 
     return NextResponse.json({ questions });
   } catch (error) {

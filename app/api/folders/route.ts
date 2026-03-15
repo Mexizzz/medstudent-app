@@ -4,6 +4,7 @@ import { questionFolders, folderQuestions } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { getUserTier, STATIC_LIMITS } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 // GET — list folders with question count
@@ -35,6 +36,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    const limits = STATIC_LIMITS[tier];
+    const existing = await db.query.questionFolders.findMany({ where: eq(questionFolders.userId, userId), columns: { id: true } });
+    if (existing.length >= limits.maxFolders) {
+      return NextResponse.json({ error: `Folder limit reached (${limits.maxFolders} on ${tier} plan)`, upgradeRequired: true, tier }, { status: 429 });
+    }
+
     const { name, color } = await req.json();
 
     if (!name?.trim()) {

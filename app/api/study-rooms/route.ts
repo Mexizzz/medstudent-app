@@ -4,6 +4,7 @@ import { studyRooms, roomMembers, users } from '@/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, AuthError } from '@/lib/auth';
+import { getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 function generateJoinCode(): string {
@@ -45,6 +46,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { userId, email } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'create_rooms')) {
+      return NextResponse.json({ error: 'Creating study rooms is available on Pro and Max plans', upgradeRequired: true, requiredTier: 'pro' }, { status: 403 });
+    }
+
     const userRow = await db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
     const userName = userRow[0]?.name || email;
     const { name } = await req.json();

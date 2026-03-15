@@ -4,11 +4,24 @@ import { contentSources } from '@/db/schema';
 import { extractYoutubeTranscript } from '@/lib/content/youtube-extractor';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { getUserTier, hasFeature, STATIC_LIMITS } from '@/lib/subscription';
+import { eq } from 'drizzle-orm';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'youtube_import')) {
+      return NextResponse.json({ error: 'YouTube import is available on Pro and Max plans', upgradeRequired: true, requiredTier: 'pro' }, { status: 403 });
+    }
+
+    const limits = STATIC_LIMITS[tier];
+    const existing = await db.query.contentSources.findMany({ where: eq(contentSources.userId, userId), columns: { id: true } });
+    if (existing.length >= limits.maxContentSources) {
+      return NextResponse.json({ error: `Upload limit reached (${limits.maxContentSources} sources on ${tier} plan)`, upgradeRequired: true, tier }, { status: 429 });
+    }
 
     const body = await req.json();
     const { url, title, subject, topic, manualText } = body;

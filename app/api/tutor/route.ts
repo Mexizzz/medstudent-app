@@ -4,6 +4,7 @@ import { topicPerformance, sessionResponses, questions, contentSources } from '@
 import { groq } from '@/lib/ai/client';
 import { sql, eq, and, inArray } from 'drizzle-orm';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 // Use a fast model with a higher daily token limit for interactive chat
@@ -14,6 +15,14 @@ export const maxDuration = 120;
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const { allowed, used, limit, tier } = await checkUsageLimit(userId, 'tutor_message');
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Daily tutor message limit reached', upgradeRequired: true, used, limit, tier }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const { messages } = await req.json();
 
@@ -136,6 +145,8 @@ STYLE RULES:
         ...conversationMessages,
       ],
     });
+
+    await incrementUsage(userId, 'tutor_message');
 
     const stream = new ReadableStream({
       async start(controller) {

@@ -4,6 +4,7 @@ import { summaries } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
@@ -16,6 +17,16 @@ const VISION_MODELS = [
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'summary_evaluate')) {
+      return NextResponse.json({ error: 'Summary AI Evaluation is available on Pro and Max plans', upgradeRequired: true, requiredTier: 'pro' }, { status: 403 });
+    }
+
+    const { allowed, used, limit } = await checkUsageLimit(userId, 'summary_evaluate', tier);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Daily summary evaluation limit reached', upgradeRequired: true, used, limit, tier }, { status: 429 });
+    }
 
     const { id } = await params;
     const { topic, textContent, canvasData } = await req.json();
@@ -125,6 +136,7 @@ writingTips.memoryTrick is the first-letter acronym of the step labels, e.g. "Wâ
           .set({ aiScore: data.score, aiFeedback: JSON.stringify(data), updatedAt: new Date() })
           .where(and(eq(summaries.id, id), eq(summaries.userId, userId)));
 
+        await incrementUsage(userId, 'summary_evaluate');
         return NextResponse.json(data);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

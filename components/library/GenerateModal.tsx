@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { ACTIVITY_LABELS } from '@/lib/utils';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 interface GenerateModalProps {
   sourceId: string;
@@ -43,6 +44,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
   const [selections, setSelections] = useState<Record<string, { enabled: boolean; count: number }>>(
     Object.fromEntries(ACTIVITY_TYPES.map(t => [t.id, { enabled: t.id === 'mcq', count: t.defaultCount }]))
   );
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
 
   const isMcqPdf = sourceType === 'mcq_pdf';
 
@@ -82,7 +84,19 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           throw new Error(`Server error (${res.status}). Try again.`);
         }
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
+        if (!res.ok) {
+          if (data.upgradeRequired) {
+            setUpgradeModal({
+              open: true,
+              feature: type.label,
+              requiredTier: data.requiredTier || 'pro',
+              limitReached: res.status === 429,
+              used: data.used,
+              limit: data.limit,
+            });
+          }
+          throw new Error(data.error);
+        }
         return { label: type.label, generated: data.generated ?? 0 };
       })
     );
@@ -232,6 +246,16 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           </Button>
         </div>
       </DialogContent>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false })}
+        feature={upgradeModal.feature}
+        requiredTier={upgradeModal.requiredTier}
+        limitReached={upgradeModal.limitReached}
+        used={upgradeModal.used}
+        limit={upgradeModal.limit}
+      />
     </Dialog>
   );
 }

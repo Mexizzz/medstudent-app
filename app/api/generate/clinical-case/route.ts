@@ -7,11 +7,22 @@ import { getSourceText } from '@/lib/content/source-text';
 export const maxDuration = 120;
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'clinical_case')) {
+      return NextResponse.json({ error: 'Clinical Cases is available on the Max plan', upgradeRequired: true, requiredTier: 'max' }, { status: 403 });
+    }
+
+    const { allowed, used, limit } = await checkUsageLimit(userId, 'question_generate', tier);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Daily question generation limit reached', upgradeRequired: true, used, limit, tier }, { status: 429 });
+    }
 
     const { sourceId, count = 5, focusTopic, pageFrom, pageTo } = await req.json();
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
@@ -45,7 +56,10 @@ export async function POST(req: NextRequest) {
       createdAt: now,
     }));
 
-    if (rows.length > 0) await db.insert(questions).values(rows);
+    if (rows.length > 0) {
+      await db.insert(questions).values(rows);
+      await incrementUsage(userId, 'question_generate', rows.length);
+    }
     return NextResponse.json({ generated: rows.length });
   } catch (error) {
     const authErr = handleAuthError(error);

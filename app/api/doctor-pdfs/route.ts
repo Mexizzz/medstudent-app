@@ -4,6 +4,7 @@ import { doctorPdfs } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { getUserTier, hasFeature, STATIC_LIMITS } from '@/lib/subscription';
 import path from 'path';
 import fs from 'fs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,17 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'doctor_pdfs')) {
+      return NextResponse.json({ error: 'Doctor PDFs is available on Pro and Max plans', upgradeRequired: true, requiredTier: 'pro' }, { status: 403 });
+    }
+
+    const limits = STATIC_LIMITS[tier];
+    const existing = await db.select({ id: doctorPdfs.id }).from(doctorPdfs).where(eq(doctorPdfs.userId, userId));
+    if (existing.length >= limits.maxDoctorPdfs) {
+      return NextResponse.json({ error: `Doctor PDF limit reached (${limits.maxDoctorPdfs} on ${tier} plan)`, upgradeRequired: true, tier }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

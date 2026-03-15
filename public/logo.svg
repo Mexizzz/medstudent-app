@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#0f172a"/>
+  <circle cx="256" cy="256" r="240" fill="url(#grad)" opacity="0.9"/>
+
+  <!-- Gradient -->
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#38bdf8"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Book shape (open book) -->
+  <path d="M140 160 C140 160 195 150 256 170 L256 340 C195 320 140 330 140 330 Z" fill="white" opacity="0.95"/>
+  <path d="M372 160 C372 160 317 150 256 170 L256 340 C317 320 372 330 372 330 Z" fill="white" opacity="0.85"/>
+
+  <!-- Medical cross on left page -->
+  <rect x="180" y="215" width="40" height="12" rx="3" fill="#6366f1"/>
+  <rect x="194" y="201" width="12" height="40" rx="3" fill="#6366f1"/>
+
+  <!-- AI sparkle on right page -->
+  <path d="M310 210 L314 222 L326 226 L314 230 L310 242 L306 230 L294 226 L306 222 Z" fill="#8b5cf6"/>
+  <path d="M335 200 L337 206 L343 208 L337 210 L335 216 L333 210 L327 208 L333 206 Z" fill="#a78bfa" opacity="0.7"/>
+
+  <!-- Brain outline on top -->
+  <path d="M230 120 C210 120 195 135 195 150 C185 148 175 158 175 170 C175 182 185 192 197 190 C200 200 215 208 230 205 C240 212 255 212 265 208 C275 212 290 210 300 200 C315 198 325 185 322 172 C330 165 330 152 320 145 C320 132 308 122 295 125 C285 115 268 112 256 118 C248 114 238 116 230 120 Z" fill="none" stroke="white" stroke-width="5" opacity="0.9"/>
+
+  <!-- Neural dots on brain -->
+  <circle cx="220" cy="150" r="4" fill="#38bdf8"/>
+  <circle cx="250" cy="140" r="4" fill="#38bdf8"/>
+  <circle cx="280" cy="148" r="4" fill="#38bdf8"/>
+  <circle cx="240" cy="170" r="3" fill="#38bdf8" opacity="0.7"/>
+  <circle cx="270" cy="168" r="3" fill="#38bdf8" opacity="0.7"/>
+  <circle cx="300" cy="165" r="3" fill="#38bdf8" opacity="0.6"/>
+  <circle cx="210" cy="172" r="3" fill="#38bdf8" opacity="0.6"/>
+
+  <!-- Neural connections -->
+  <line x1="220" y1="150" x2="250" y2="140" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+  <line x1="250" y1="140" x2="280" y2="148" stroke="#38bdf8" stroke-width="1.5" opacity="0.5"/>
+  <line x1="220" y1="150" x2="240" y2="170" stroke="#38bdf8" stroke-width="1.5" opacity="0.4"/>
+  <line x1="280" y1="148" x2="270" y2="168" stroke="#38bdf8" stroke-width="1.5" opacity="0.4"/>
+  <line x1="240" y1="170" x2="270" y2="168" stroke="#38bdf8" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Text: MedStudy -->
+  <text x="256" y="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="58" fill="white" letter-spacing="2">MedStudy</text>
+  <text x="256" y="430" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="20" fill="white" opacity="0.6" letter-spacing="6">AI POWERED</text>
+</svg>

@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid';
 import path from 'path';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
@@ -39,6 +40,16 @@ async function callGroqAnalyze(text: string): Promise<ExamStyleAnalysis> {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    if (!hasFeature(tier, 'exam_lab')) {
+      return NextResponse.json({ error: 'Exam Lab is available on the Max plan', upgradeRequired: true, requiredTier: 'max' }, { status: 403 });
+    }
+
+    const { allowed, used, limit } = await checkUsageLimit(userId, 'exam_analyze', tier);
+    if (!allowed) {
+      return NextResponse.json({ error: 'Daily exam analysis limit reached', upgradeRequired: true, used, limit, tier }, { status: 429 });
+    }
 
     const formData = await req.formData();
     const name = (formData.get('name') as string | null)?.trim();
@@ -79,6 +90,7 @@ export async function POST(req: NextRequest) {
     };
 
     await db.insert(examProfiles).values(profile);
+    await incrementUsage(userId, 'exam_analyze');
 
     return NextResponse.json({
       profile: { ...profile, styleAnalysis },

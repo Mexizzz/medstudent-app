@@ -4,6 +4,7 @@ import { friendRequests, friendships, users } from '@/db/schema';
 import { eq, and, or, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
+import { getUserTier, STATIC_LIMITS } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 // GET — list friends + pending requests
@@ -82,6 +83,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await requireAuth();
+
+    const tier = await getUserTier(userId);
+    const limits = STATIC_LIMITS[tier];
+    const existingFriends = await db.select({ id: friendships.id }).from(friendships).where(eq(friendships.userId, userId));
+    if (existingFriends.length >= limits.maxFriends) {
+      return NextResponse.json({ error: `Friend limit reached (${limits.maxFriends} on ${tier} plan)`, upgradeRequired: true, tier }, { status: 429 });
+    }
+
     const { username } = await req.json();
 
     if (!username) {
