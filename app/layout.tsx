@@ -76,44 +76,95 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/manifest.json",
   verification: {
     google: "sUerWaKDwdRHIZGr4nrgKimZQuQzi4KUKSwO-uNxbLs",
   },
 };
 
 // JSON-LD structured data
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "MedStudy",
-  url: SITE_URL,
-  description:
-    "AI-powered medical study platform. Generate MCQs, flashcards, and clinical cases from your notes. Features study rooms, AI tutor, analytics, and spaced repetition.",
-  applicationCategory: "EducationalApplication",
-  operatingSystem: "Web",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "MedStudy",
+    url: SITE_URL,
+    description:
+      "AI-powered medical study platform. Generate MCQs, flashcards, and clinical cases from your notes. Features study rooms, AI tutor, analytics, and spaced repetition.",
+    applicationCategory: "EducationalApplication",
+    operatingSystem: "Web",
+    offers: [
+      { "@type": "Offer", price: "0", priceCurrency: "USD", name: "Free" },
+      { "@type": "Offer", price: "7.99", priceCurrency: "USD", name: "Pro", billingIncrement: "P1M" },
+      { "@type": "Offer", price: "14.99", priceCurrency: "USD", name: "Max", billingIncrement: "P1M" },
+    ],
+    featureList: [
+      "AI-generated MCQs and flashcards",
+      "Clinical case generation",
+      "Personalized AI tutor",
+      "Study analytics and progress tracking",
+      "Collaborative study rooms with voice chat",
+      "Spaced repetition system",
+      "Wrong answers review",
+      "Exam simulation mode",
+      "Timed exam mode",
+      "AI answer explanations",
+      "Weekly study insights",
+      "PDF & notes export",
+    ],
+    audience: {
+      "@type": "EducationalAudience",
+      educationalRole: "student",
+      audienceType: "Medical Students",
+    },
+    screenshot: `${SITE_URL}/og-image.png`,
   },
-  featureList: [
-    "AI-generated MCQs and flashcards",
-    "Clinical case generation",
-    "Personalized AI tutor",
-    "Study analytics and progress tracking",
-    "Collaborative study rooms with voice chat",
-    "Spaced repetition system",
-    "Wrong answers review",
-    "Exam simulation mode",
-  ],
-  audience: {
-    "@type": "EducationalAudience",
-    educationalRole: "student",
-    audienceType: "Medical Students",
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "MedStudy",
+    url: SITE_URL,
+    logo: `${SITE_URL}/icon-512.png`,
+    sameAs: [],
   },
-};
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What is MedStudy?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "MedStudy is a free AI-powered study platform for medical students. Upload your notes and it generates MCQs, flashcards, and clinical cases. It also features an AI tutor, collaborative study rooms, analytics, and spaced repetition.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Is MedStudy free to use?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes! MedStudy offers a generous free tier with 50 questions/day, AI tutor access, study sessions, and analytics. Pro ($7.99/mo) and Max ($14.99/mo) plans unlock additional features like unlimited generation, exam mode, custom themes, and more.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What types of questions can MedStudy generate?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "MedStudy generates multiple choice questions (MCQs), flashcards, fill-in-the-blank, short answer questions, and clinical case scenarios — all powered by AI from your own study materials.",
+        },
+      },
+    ],
+  },
+];
 
 export default function RootLayout({
   children,
@@ -123,10 +174,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+        {jsonLd.map((ld, i) => (
+          <script
+            key={i}
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+          />
+        ))}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script

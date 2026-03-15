@@ -1,0 +1,25 @@
+{
+  "name": "MedStudy — AI-Powered Medical Study App",
+  "short_name": "MedStudy",
+  "description": "Generate AI-powered MCQs, flashcards & clinical cases from your notes. Study smarter with analytics, study rooms, and AI tutoring.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["education", "medical"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
