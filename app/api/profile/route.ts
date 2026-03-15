@@ -18,6 +18,7 @@ export async function GET() {
         bio: users.bio,
         avatarUrl: users.avatarUrl,
         createdAt: users.createdAt,
+        subscriptionTier: users.subscriptionTier,
       })
       .from(users)
       .where(eq(users.id, userId))

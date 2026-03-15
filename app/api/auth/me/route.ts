@@ -17,6 +17,7 @@ export async function GET() {
     email: users.email,
     name: users.name,
     username: users.username,
+    subscriptionTier: users.subscriptionTier,
   }).from(users).where(eq(users.id, auth.userId)).get();
 
   return NextResponse.json({ user: user || null });

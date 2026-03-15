@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { studyPlanItems, srCards, studyGoals, userXp } from '@/db/schema';
+import { studyPlanItems, srCards, studyGoals, userXp, users } from '@/db/schema';
 import { getStreakInfo } from '@/lib/streak';
 import { getAuthUser } from '@/lib/auth';
 import { StreakWidget } from '@/components/dashboard/StreakWidget';
@@ -13,6 +13,7 @@ import { todayString } from '@/lib/utils';
 import { todayStr } from '@/lib/sr';
 import { getXpProgress } from '@/lib/xp';
 import { eq } from 'drizzle-orm';
+import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,10 @@ export default async function DashboardPage() {
   const auth = await getAuthUser();
   const userId = auth?.userId ?? '';
   const today = todayStr();
+  const userRow = db.select({ name: users.name, tier: users.subscriptionTier }).from(users).where(eq(users.id, userId)).get();
+  const userName = userRow?.name || '';
+  const userTier = userRow?.tier || 'free';
+
   const [streakInfo, todayPlans, allSrCards, goals, xpRows] = await Promise.all([
     getStreakInfo(userId).catch(() => ({
       currentStreak: 0, longestStreak: 0, totalStudyDays: 0,
@@ -56,7 +61,12 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground">
+            {userName ? `Welcome back, ${userName}` : 'Dashboard'}
+          </h1>
+          <TierBadge tier={userTier} size="md" />
+        </div>
         <p className="text-muted-foreground text-sm mt-1">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
@@ -68,7 +78,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Med Rank / XP Widget */}
-      <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50">
+      <TierGlow tier={userTier}>
+      <Card className={`border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 ${userTier === 'max' ? 'ring-1 ring-amber-400/30' : userTier === 'pro' ? 'ring-1 ring-blue-400/20' : ''}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
@@ -103,6 +114,7 @@ export default async function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      </TierGlow>
 
       {/* SR + Goals row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

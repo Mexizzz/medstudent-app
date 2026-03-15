@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
 import { useTheme } from '@/components/ThemeProvider';
+import { TierBadge } from '@/components/ui/TierBadge';
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
 type NavSection = { title?: string; items: NavItem[] };
@@ -67,7 +68,7 @@ export function Sidebar() {
   const router = useRouter();
   const [xp, setXp] = useState<XpProgress | null>(null);
   const [streak, setStreak] = useState<{ currentStreak: number; todayComplete: boolean } | null>(null);
-  const [user, setUser] = useState<{ id: string; email: string; name?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string; name?: string; subscriptionTier?: string } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
 
@@ -181,6 +182,9 @@ export function Sidebar() {
             <Link href="/profile" className="flex items-center gap-2 min-w-0 group">
               <User className="w-3.5 h-3.5 text-sidebar-foreground/50 flex-shrink-0 group-hover:text-white" />
               <span className="text-xs text-sidebar-foreground/60 truncate group-hover:text-white transition-colors">{user.name || user.email}</span>
+              {user.subscriptionTier && user.subscriptionTier !== 'free' && (
+                <TierBadge tier={user.subscriptionTier} size="sm" showLabel={false} />
+              )}
             </Link>
             <button onClick={handleLogout} className="p-1 rounded hover:bg-white/10 text-sidebar-foreground/40 hover:text-white transition-colors" title="Log out">
               <LogOut className="w-3.5 h-3.5" />

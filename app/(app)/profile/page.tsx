@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User, Save, Loader2 } from 'lucide-react';
 import { getRankFromXp, getXpProgress, RANKS } from '@/lib/xp';
+import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
 
 interface Profile {
   id: string;
@@ -13,6 +14,7 @@ interface Profile {
   avatarUrl: string | null;
   totalXp: number;
   createdAt: string;
+  subscriptionTier?: string;
 }
 
 export default function ProfilePage() {
@@ -68,11 +70,17 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold text-foreground">Profile</h1>
 
       {/* Rank Card */}
-      <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl p-6 text-white">
+      <TierGlow tier={profile.subscriptionTier || 'free'}>
+      <div className={`bg-gradient-to-br from-violet-500 to-indigo-600 rounded-2xl p-6 text-white ${
+        profile.subscriptionTier === 'max' ? 'ring-2 ring-amber-400/50' : profile.subscriptionTier === 'pro' ? 'ring-2 ring-blue-400/40' : ''
+      }`}>
         <div className="flex items-center gap-4 mb-4">
           <span className="text-5xl">{rank.badge}</span>
           <div>
-            <p className="text-2xl font-bold">{rank.title}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-2xl font-bold">{rank.title}</p>
+              <TierBadge tier={profile.subscriptionTier || 'free'} size="md" />
+            </div>
             <p className="text-white/70">Level {rank.level} · {xp.totalXp.toLocaleString()} XP</p>
           </div>
         </div>
@@ -91,6 +99,7 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+      </TierGlow>
 
       {/* Edit Profile */}
       <div className="bg-card rounded-xl border border-border p-6 space-y-5">
