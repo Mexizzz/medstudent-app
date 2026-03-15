@@ -30,7 +30,7 @@ interface AdminData {
     stripeCustomerId: string | null; subscriptionEndsAt: string | null;
     createdAt: string; sessionCount: number; responseCount: number;
     sourceCount: number; questionCount: number; avgScore: number | null;
-    lastActive: string | null;
+    lastActive: string | number | null;
   }[];
   recentSessions: {
     id: string; userId: string; userEmail: string; status: string;
@@ -65,20 +65,21 @@ function TierBadge({ tier }: { tier: string }) {
   );
 }
 
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return 'Never';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) {
-    // might be a unix timestamp number
-    const ts = Number(dateStr);
-    if (!isNaN(ts)) {
-      const diff = Date.now() - ts * 1000;
-      return formatDiff(diff);
-    }
-    return 'Unknown';
+function timeAgo(val: string | number | null | undefined): string {
+  if (val == null) return 'Never';
+  // If it's a number or numeric string, treat as unix timestamp (seconds)
+  const num = Number(val);
+  if (!isNaN(num) && num > 0) {
+    // Distinguish seconds vs milliseconds: if < 1e12, it's seconds
+    const ms = num < 1e12 ? num * 1000 : num;
+    return formatDiff(Date.now() - ms);
   }
-  const diff = Date.now() - d.getTime();
-  return formatDiff(diff);
+  // Try as date string
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    return formatDiff(Date.now() - d.getTime());
+  }
+  return 'Unknown';
 }
 
 function formatDiff(ms: number): string {
