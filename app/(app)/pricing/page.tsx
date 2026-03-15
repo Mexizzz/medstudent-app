@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, X, Sparkles, Crown, Zap } from 'lucide-react';
+import { Check, X, Sparkles, Crown, Zap, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Tier = 'free' | 'pro' | 'max';
@@ -116,6 +116,7 @@ export default function PricingPage() {
   const [interval, setInterval] = useState<Interval>('monthly');
   const [subData, setSubData] = useState<SubData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [paymentPicker, setPaymentPicker] = useState<Tier | null>(null);
 
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setSubData).catch(() => {});
@@ -123,12 +124,14 @@ export default function PricingPage() {
 
   const currentTier = subData?.tier ?? 'free';
 
-  async function handleUpgrade(plan: Tier) {
+  async function handleUpgrade(plan: Tier, method: 'stripe' | 'paypal') {
     if (plan === 'free' || plan === currentTier) return;
 
     setLoading(plan);
+    setPaymentPicker(null);
     try {
-      const res = await fetch('/api/stripe/checkout', {
+      const endpoint = method === 'paypal' ? '/api/paypal/create-subscription' : '/api/stripe/checkout';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, interval }),
@@ -248,9 +251,35 @@ export default function PricingPage() {
                   ) : (
                     <div className="mb-6" />
                   )
+                ) : paymentPicker === plan.id ? (
+                  <div className="mb-6 space-y-2">
+                    <p className="text-xs text-slate-400 text-center mb-2">Choose payment method</p>
+                    <button
+                      onClick={() => handleUpgrade(plan.id, 'stripe')}
+                      disabled={loading === plan.id}
+                      className="w-full py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {loading === plan.id ? 'Loading...' : 'Pay with Card'}
+                    </button>
+                    <button
+                      onClick={() => handleUpgrade(plan.id, 'paypal')}
+                      disabled={loading === plan.id}
+                      className="w-full py-2.5 rounded-lg bg-[#0070ba] text-white font-medium hover:bg-[#005ea6] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 2.83A.77.77 0 0 1 5.704 2.2h6.865c2.14 0 3.643.575 4.465 1.71.385.53.634 1.107.744 1.715.115.636.108 1.396-.024 2.262l-.01.061v.551l.43.244a3.3 3.3 0 0 1 .852.644c.37.427.61.96.706 1.583.1.643.067 1.39-.095 2.222-.186.955-.49 1.788-.9 2.47-.378.63-.862 1.152-1.438 1.55a5.36 5.36 0 0 1-1.87.885c-.684.2-1.46.301-2.306.301H13.3a.939.939 0 0 0-.929.8l-.036.21-.607 3.845-.028.152a.939.939 0 0 1-.928.799H7.076z"/></svg>
+                      {loading === plan.id ? 'Loading...' : 'Pay with PayPal'}
+                    </button>
+                    <button
+                      onClick={() => setPaymentPicker(null)}
+                      className="w-full py-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 ) : (
                   <button
-                    onClick={() => handleUpgrade(plan.id)}
+                    onClick={() => setPaymentPicker(plan.id)}
                     disabled={loading === plan.id}
                     className={`w-full py-2.5 rounded-lg font-medium mb-6 transition-colors disabled:opacity-50 ${
                       plan.popular
@@ -258,7 +287,7 @@ export default function PricingPage() {
                         : 'bg-violet-600 text-white hover:bg-violet-700'
                     }`}
                   >
-                    {loading === plan.id ? 'Loading...' : `Upgrade to ${plan.name}`}
+                    {`Upgrade to ${plan.name}`}
                   </button>
                 )}
 
