@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages } from '@/db/schema';
+import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages, featureRequests } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 export const dynamic = 'force-dynamic';
@@ -158,6 +158,27 @@ export async function POST(req: NextRequest) {
     const [ticketCount] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets);
     const [openTicketCount] = await db.select({ count: sql<number>`count(*)` }).from(supportTickets).where(eq(supportTickets.status, 'open'));
 
+    // Feature requests
+    const allRequests = await db
+      .select({
+        id: featureRequests.id,
+        userId: featureRequests.userId,
+        userEmail: sql<string>`(SELECT email FROM users WHERE id = ${featureRequests.userId})`,
+        userName: sql<string>`(SELECT coalesce(name, email) FROM users WHERE id = ${featureRequests.userId})`,
+        title: featureRequests.title,
+        description: featureRequests.description,
+        category: featureRequests.category,
+        status: featureRequests.status,
+        adminNote: featureRequests.adminNote,
+        upvoteCount: featureRequests.upvoteCount,
+        createdAt: featureRequests.createdAt,
+      })
+      .from(featureRequests)
+      .orderBy(desc(featureRequests.upvoteCount), desc(featureRequests.createdAt));
+
+    const [requestCount] = await db.select({ count: sql<number>`count(*)` }).from(featureRequests);
+    const [openRequestCount] = await db.select({ count: sql<number>`count(*)` }).from(featureRequests).where(eq(featureRequests.status, 'open'));
+
     return NextResponse.json({
       stats: {
         users: userCount.count,
@@ -173,6 +194,8 @@ export async function POST(req: NextRequest) {
         doctorPdfs: doctorPdfCount.count,
         tickets: ticketCount.count,
         openTickets: openTicketCount.count,
+        requests: requestCount.count,
+        openRequests: openRequestCount.count,
       },
       tierBreakdown,
       statusBreakdown,
@@ -185,6 +208,7 @@ export async function POST(req: NextRequest) {
       recentSessions,
       rooms,
       tickets: allTickets,
+      featureRequests: allRequests,
     });
   } catch (error) {
     console.error('Admin API error:', error);
@@ -279,6 +303,24 @@ export async function PUT(req: NextRequest) {
         status: 'closed',
         updatedAt: new Date(),
       }).where(eq(supportTickets.id, body.ticketId));
+      return NextResponse.json({ success: true });
+    }
+
+    // Update feature request status
+    if (body.action === 'updateRequest') {
+      const updates: Record<string, string> = {};
+      if (body.status) updates.status = body.status;
+      if (body.adminNote !== undefined) updates.adminNote = body.adminNote;
+      if (Object.keys(updates).length === 0) {
+        return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
+      }
+      await db.update(featureRequests).set(updates).where(eq(featureRequests.id, body.requestId));
+      return NextResponse.json({ success: true });
+    }
+
+    // Delete feature request
+    if (body.action === 'deleteRequest') {
+      await db.delete(featureRequests).where(eq(featureRequests.id, body.requestId));
       return NextResponse.json({ success: true });
     }
 

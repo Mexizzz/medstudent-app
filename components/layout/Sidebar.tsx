@@ -61,6 +61,7 @@ const navSections: NavSection[] = [
   {
     items: [
       { href: '/usage',          label: 'Usage & Limits',  icon: Gauge },
+      { href: '/requests',     label: 'Requests',       icon: Lightbulb },
       { href: '/support',       label: 'Support',        icon: HelpCircle },
       { href: '/pricing',       label: 'Upgrade Plan',   icon: Crown },
     ],

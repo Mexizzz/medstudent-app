@@ -8,7 +8,7 @@ import {
   Lock, Users, BookOpen, HelpCircle, Activity, MessageSquare, LogOut, KeyRound,
   Crown, TrendingUp, Zap, FileText, FolderOpen, UserPlus, Stethoscope,
   Search, ChevronDown, ChevronUp, BarChart2, Calendar, Eye, EyeOff,
-  Send, CheckCircle2, Clock, XCircle, ArrowLeft,
+  Send, CheckCircle2, Clock, XCircle, ArrowLeft, Lightbulb, Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ interface AdminData {
     responses: number; rooms: number; lessons: number; summaries: number;
     folders: number; friendships: number; doctorPdfs: number;
     tickets: number; openTickets: number;
+    requests: number; openRequests: number;
   };
   tierBreakdown: { tier: string; count: number }[];
   statusBreakdown: { status: string; count: number }[];
@@ -46,6 +47,11 @@ interface AdminData {
     id: string; userId: string; userEmail: string; userName: string | null;
     subject: string; status: string; createdAt: string; updatedAt: string;
     messageCount: number; lastMessage: string | null;
+  }[];
+  featureRequests: {
+    id: string; userId: string; userEmail: string; userName: string;
+    title: string; description: string; category: string; status: string;
+    adminNote: string | null; upvoteCount: number; createdAt: string;
   }[];
 }
 
@@ -112,7 +118,7 @@ export default function AdminPage() {
   const [sortBy, setSortBy] = useState<'date' | 'sessions' | 'questions' | 'score'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms' | 'support'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms' | 'support' | 'requests'>('overview');
   const [showPasswords, setShowPasswords] = useState(false);
   const [changingTier, setChangingTier] = useState<string | null>(null);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
@@ -120,6 +126,9 @@ export default function AdminPage() {
   const [adminReply, setAdminReply] = useState('');
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'replied' | 'closed'>('all');
   const [sendingReply, setSendingReply] = useState(false);
+  const [requestFilter, setRequestFilter] = useState<'all' | 'open' | 'planned' | 'in_progress' | 'done' | 'declined'>('all');
+  const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
+  const [requestNote, setRequestNote] = useState('');
 
   async function handleChangeTier(userId: string, tier: string) {
     try {
@@ -320,6 +329,7 @@ export default function AdminPage() {
     { id: 'sessions' as const, label: 'Sessions', icon: Activity },
     { id: 'rooms' as const, label: 'Rooms', icon: MessageSquare },
     { id: 'support' as const, label: 'Support', icon: HelpCircle, badge: stats.openTickets },
+    { id: 'requests' as const, label: 'Requests', icon: Lightbulb, badge: stats.openRequests },
   ];
 
   return (
@@ -924,6 +934,185 @@ export default function AdminPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+        {/* ── REQUESTS TAB ── */}
+        {activeTab === 'requests' && (
+          <div className="space-y-4">
+            {/* Request filters */}
+            <div className="flex gap-1 bg-slate-900 rounded-xl p-1 w-fit">
+              {(['all', 'open', 'planned', 'in_progress', 'done', 'declined'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setRequestFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    requestFilter === f ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {f === 'all' ? 'All' : f === 'in_progress' ? 'In Progress' : f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <h2 className="font-semibold text-white flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-400" /> Feature Requests
+                </h2>
+                <span className="text-xs text-slate-500">{data.featureRequests.length} total · {stats.openRequests} open</span>
+              </div>
+              <div className="divide-y divide-slate-800/50">
+                {data.featureRequests
+                  .filter(r => requestFilter === 'all' || r.status === requestFilter)
+                  .map(req => (
+                  <div key={req.id} className="p-4 hover:bg-slate-800/30 transition-colors">
+                    <div className="flex items-start gap-4">
+                      {/* Vote count */}
+                      <div className="flex flex-col items-center bg-slate-800 rounded-lg px-3 py-2 min-w-[50px]">
+                        <span className="text-lg font-bold text-white">{req.upvoteCount}</span>
+                        <span className="text-[10px] text-slate-500">votes</span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-white text-sm">{req.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            req.category === 'bug' ? 'bg-red-500/20 text-red-400' :
+                            req.category === 'improvement' ? 'bg-teal-500/20 text-teal-400' :
+                            'bg-indigo-500/20 text-indigo-400'
+                          }`}>{req.category}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            req.status === 'open' ? 'bg-blue-500/20 text-blue-400' :
+                            req.status === 'planned' ? 'bg-purple-500/20 text-purple-400' :
+                            req.status === 'in_progress' ? 'bg-amber-500/20 text-amber-400' :
+                            req.status === 'done' ? 'bg-emerald-500/20 text-emerald-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>{req.status.replace('_', ' ')}</span>
+                        </div>
+                        <p className="text-xs text-slate-400 mb-2">{req.description}</p>
+                        <div className="flex items-center gap-3 text-[11px] text-slate-500">
+                          <span>by {req.userName} ({req.userEmail})</span>
+                          <span>{timeAgo(req.createdAt)}</span>
+                        </div>
+
+                        {req.adminNote && (
+                          <div className="mt-2 p-2 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+                            <p className="text-[11px] font-medium text-indigo-400">Admin Note</p>
+                            <p className="text-xs text-slate-300 mt-0.5">{req.adminNote}</p>
+                          </div>
+                        )}
+
+                        {/* Admin actions */}
+                        <div className="flex items-center gap-2 mt-3">
+                          {/* Status change */}
+                          <select
+                            value={req.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              try {
+                                const res = await fetch('/api/admin', {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ adminPassword: password, action: 'updateRequest', requestId: req.id, status: newStatus }),
+                                });
+                                if (!res.ok) throw new Error();
+                                toast.success(`Status changed to ${newStatus}`);
+                                setData(prev => prev ? {
+                                  ...prev,
+                                  featureRequests: prev.featureRequests.map(r => r.id === req.id ? { ...r, status: newStatus } : r),
+                                } : prev);
+                              } catch { toast.error('Failed to update status'); }
+                            }}
+                            className="bg-slate-800 text-slate-300 text-xs border border-slate-700 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          >
+                            <option value="open">Open</option>
+                            <option value="planned">Planned</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="done">Done</option>
+                            <option value="declined">Declined</option>
+                          </select>
+
+                          {/* Add/edit note */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 h-7"
+                            onClick={() => {
+                              setEditingRequestId(editingRequestId === req.id ? null : req.id);
+                              setRequestNote(req.adminNote || '');
+                            }}
+                          >
+                            {req.adminNote ? 'Edit Note' : 'Add Note'}
+                          </Button>
+
+                          {/* Delete */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs border-red-800/50 text-red-400 hover:text-white hover:bg-red-900/50 h-7"
+                            onClick={async () => {
+                              if (!confirm('Delete this request?')) return;
+                              try {
+                                const res = await fetch('/api/admin', {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ adminPassword: password, action: 'deleteRequest', requestId: req.id }),
+                                });
+                                if (!res.ok) throw new Error();
+                                toast.success('Request deleted');
+                                setData(prev => prev ? {
+                                  ...prev,
+                                  featureRequests: prev.featureRequests.filter(r => r.id !== req.id),
+                                } : prev);
+                              } catch { toast.error('Failed to delete'); }
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+
+                        {/* Note editor */}
+                        {editingRequestId === req.id && (
+                          <div className="mt-2 flex gap-2">
+                            <Input
+                              value={requestNote}
+                              onChange={e => setRequestNote(e.target.value)}
+                              placeholder="Admin note (visible to users)..."
+                              className="bg-slate-800 border-slate-700 text-slate-200 text-xs h-8"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-8 bg-indigo-600 hover:bg-indigo-700 text-xs"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch('/api/admin', {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ adminPassword: password, action: 'updateRequest', requestId: req.id, adminNote: requestNote }),
+                                  });
+                                  if (!res.ok) throw new Error();
+                                  toast.success('Note saved');
+                                  setData(prev => prev ? {
+                                    ...prev,
+                                    featureRequests: prev.featureRequests.map(r => r.id === req.id ? { ...r, adminNote: requestNote } : r),
+                                  } : prev);
+                                  setEditingRequestId(null);
+                                } catch { toast.error('Failed to save note'); }
+                              }}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {data.featureRequests.filter(r => requestFilter === 'all' || r.status === requestFilter).length === 0 && (
+                  <div className="px-4 py-12 text-center text-slate-500">No requests found</div>
+                )}
+              </div>
             </div>
           </div>
         )}

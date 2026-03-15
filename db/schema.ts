@@ -362,6 +362,28 @@ export const supportMessages = sqliteTable('support_messages', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+// ── Feature Requests ──────────────────────────────────
+export const featureRequests = sqliteTable('feature_requests', {
+  id:          text('id').primaryKey(),
+  userId:      text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title:       text('title').notNull(),
+  description: text('description').notNull(),
+  category:    text('category').notNull().default('feature'), // 'feature' | 'improvement' | 'bug'
+  status:      text('status').notNull().default('open'), // 'open' | 'planned' | 'in_progress' | 'done' | 'declined'
+  adminNote:   text('admin_note'),
+  upvoteCount: integer('upvote_count').notNull().default(0),
+  createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const featureVotes = sqliteTable('feature_votes', {
+  id:        text('id').primaryKey(),
+  requestId: text('request_id').notNull().references(() => featureRequests.id, { onDelete: 'cascade' }),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  uniqueVote: uniqueIndex('vote_request_user_unique').on(table.requestId, table.userId),
+}));
+
 // ── Type exports ───────────────────────────────────────
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
