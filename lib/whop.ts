@@ -55,6 +55,24 @@ export async function createCheckout(planId: string, userId: string, userEmail: 
   return `https://whop.com${purchaseUrl}`;
 }
 
+export async function cancelSubscription(membershipId: string, immediate = false): Promise<void> {
+  const res = await fetch(`${WHOP_API}/memberships/${membershipId}/cancel`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getApiKey()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      cancellation_mode: immediate ? 'immediate' : 'at_period_end',
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Whop cancel failed: ${text}`);
+  }
+}
+
 export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
   const secret = process.env.WHOP_WEBHOOK_SECRET;
   if (!secret) throw new Error('WHOP_WEBHOOK_SECRET is not set');

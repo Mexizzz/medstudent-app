@@ -116,6 +116,7 @@ export default function PricingPage() {
   const [interval, setInterval] = useState<Interval>('monthly');
   const [subData, setSubData] = useState<SubData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setSubData).catch(() => {});
@@ -146,15 +147,17 @@ export default function PricingPage() {
     }
   }
 
-  async function handleManageBilling() {
-    setLoading('manage');
+  async function handleCancel() {
+    setLoading('cancel');
     try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' });
+      const res = await fetch('/api/whop/cancel', { method: 'POST' });
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.success) {
+        toast.success('Subscription cancelled. You\'ll keep access until the end of your billing period.');
+        setShowCancelConfirm(false);
+        setSubData(prev => prev ? { ...prev, tier: 'free' } : prev);
       } else {
-        toast.error(data.error || 'Failed to open billing portal');
+        toast.error(data.error || 'Failed to cancel subscription');
       }
     } catch {
       toast.error('Something went wrong');
@@ -239,11 +242,10 @@ export default function PricingPage() {
                 ) : plan.id === 'free' ? (
                   currentTier !== 'free' ? (
                     <button
-                      onClick={handleManageBilling}
-                      disabled={loading === 'manage'}
-                      className="w-full py-2.5 rounded-lg bg-slate-700 text-white font-medium mb-6 hover:bg-slate-600 transition-colors disabled:opacity-50"
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="w-full py-2.5 rounded-lg bg-slate-700 text-white font-medium mb-6 hover:bg-slate-600 transition-colors"
                     >
-                      {loading === 'manage' ? 'Loading...' : 'Manage Billing'}
+                      Downgrade to Free
                     </button>
                   ) : (
                     <div className="mb-6" />
@@ -284,16 +286,44 @@ export default function PricingPage() {
           })}
         </div>
 
-        {/* Manage billing for paid users */}
+        {/* Cancel confirmation */}
         {currentTier !== 'free' && (
           <div className="text-center">
             <button
-              onClick={handleManageBilling}
-              disabled={loading === 'manage'}
-              className="text-sm text-indigo-400 hover:text-indigo-300 underline disabled:opacity-50"
+              onClick={() => setShowCancelConfirm(true)}
+              className="text-sm text-slate-500 hover:text-slate-300 underline"
             >
-              Manage Billing & Subscription
+              Cancel Subscription
             </button>
+          </div>
+        )}
+
+        {showCancelConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="text-lg font-bold text-white mb-2">Cancel Subscription?</h3>
+              <p className="text-sm text-slate-400 mb-1">
+                You&apos;ll keep your <span className="font-semibold text-white capitalize">{currentTier}</span> access until the end of your current billing period.
+              </p>
+              <p className="text-sm text-slate-400 mb-6">
+                After that, you&apos;ll be downgraded to the Free plan.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  className="flex-1 py-2.5 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
+                >
+                  Keep Plan
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={loading === 'cancel'}
+                  className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {loading === 'cancel' ? 'Cancelling...' : 'Cancel Plan'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
