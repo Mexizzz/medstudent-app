@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { UserPlus, Check, X, MessageCircle, Loader2, Search, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { TierBadge } from '@/components/ui/TierBadge';
 
 interface Friend {
   id: string;
@@ -10,6 +11,7 @@ interface Friend {
   username: string | null;
   bio: string | null;
   avatarUrl: string | null;
+  subscriptionTier?: string;
 }
 
 interface IncomingRequest {
@@ -167,9 +169,12 @@ export default function FriendsPage() {
           {friends.map(friend => (
             <div key={friend.id} className="flex items-center justify-between p-4">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {friend.name || friend.username || 'Unknown'}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {friend.name || friend.username || 'Unknown'}
+                  </p>
+                  {friend.subscriptionTier && <TierBadge tier={friend.subscriptionTier} size="sm" showLabel={false} />}
+                </div>
                 {friend.username && (
                   <p className="text-xs text-muted-foreground">@{friend.username}</p>
                 )}

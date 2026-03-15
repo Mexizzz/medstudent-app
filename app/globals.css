@@ -118,6 +118,126 @@
   --sidebar-ring: #6366f1;
 }
 
+/* Ocean Blue Theme */
+.theme-ocean {
+  --background: #0c1929;
+  --foreground: #d6e4f0;
+  --card: #0f2236;
+  --card-foreground: #d6e4f0;
+  --popover: #0f2236;
+  --popover-foreground: #d6e4f0;
+  --primary: #29b6f6;
+  --primary-foreground: #0c1929;
+  --secondary: #132f4c;
+  --secondary-foreground: #90caf9;
+  --muted: #132f4c;
+  --muted-foreground: #6a8fac;
+  --accent: #163a5c;
+  --accent-foreground: #bbdefb;
+  --destructive: #ef5350;
+  --border: #1a3650;
+  --input: #1a3650;
+  --ring: #29b6f6;
+  --sidebar: #091420;
+  --sidebar-foreground: #a0c4e0;
+  --sidebar-primary: #29b6f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #132f4c;
+  --sidebar-accent-foreground: #bbdefb;
+  --sidebar-border: #1a3650;
+  --sidebar-ring: #29b6f6;
+}
+
+/* Forest Green Theme */
+.theme-forest {
+  --background: #0d1f12;
+  --foreground: #d4e6d8;
+  --card: #132c1a;
+  --card-foreground: #d4e6d8;
+  --popover: #132c1a;
+  --popover-foreground: #d4e6d8;
+  --primary: #4caf50;
+  --primary-foreground: #0d1f12;
+  --secondary: #1a3a22;
+  --secondary-foreground: #a5d6a7;
+  --muted: #1a3a22;
+  --muted-foreground: #6d9a72;
+  --accent: #1e4528;
+  --accent-foreground: #c8e6c9;
+  --destructive: #ef5350;
+  --border: #1e4528;
+  --input: #1e4528;
+  --ring: #4caf50;
+  --sidebar: #091410;
+  --sidebar-foreground: #a0c4a4;
+  --sidebar-primary: #4caf50;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a3a22;
+  --sidebar-accent-foreground: #c8e6c9;
+  --sidebar-border: #1e4528;
+  --sidebar-ring: #4caf50;
+}
+
+/* Sunset Warm Theme */
+.theme-sunset {
+  --background: #1a1209;
+  --foreground: #f0e4d4;
+  --card: #2d1f0e;
+  --card-foreground: #f0e4d4;
+  --popover: #2d1f0e;
+  --popover-foreground: #f0e4d4;
+  --primary: #f59e0b;
+  --primary-foreground: #1a1209;
+  --secondary: #3d2a12;
+  --secondary-foreground: #fcd34d;
+  --muted: #3d2a12;
+  --muted-foreground: #a08060;
+  --accent: #4a3318;
+  --accent-foreground: #fde68a;
+  --destructive: #ef5350;
+  --border: #3d2a12;
+  --input: #3d2a12;
+  --ring: #f59e0b;
+  --sidebar: #120c06;
+  --sidebar-foreground: #c4a880;
+  --sidebar-primary: #f59e0b;
+  --sidebar-primary-foreground: #1a1209;
+  --sidebar-accent: #3d2a12;
+  --sidebar-accent-foreground: #fde68a;
+  --sidebar-border: #3d2a12;
+  --sidebar-ring: #f59e0b;
+}
+
+/* Midnight Purple Theme */
+.theme-midnight {
+  --background: #110c24;
+  --foreground: #e0d8f0;
+  --card: #1e1541;
+  --card-foreground: #e0d8f0;
+  --popover: #1e1541;
+  --popover-foreground: #e0d8f0;
+  --primary: #a78bfa;
+  --primary-foreground: #110c24;
+  --secondary: #251b50;
+  --secondary-foreground: #c4b5fd;
+  --muted: #251b50;
+  --muted-foreground: #8070a0;
+  --accent: #2d2060;
+  --accent-foreground: #ddd6fe;
+  --destructive: #ef5350;
+  --border: #2d2060;
+  --input: #2d2060;
+  --ring: #a78bfa;
+  --sidebar: #0d091a;
+  --sidebar-foreground: #b0a4c4;
+  --sidebar-primary: #a78bfa;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #251b50;
+  --sidebar-accent-foreground: #ddd6fe;
+  --sidebar-border: #2d2060;
+  --sidebar-ring: #a78bfa;
+}
+
 /* Neon glow effects for dark theme */
 .dark .neon-glow {
   box-shadow: 0 0 15px rgba(99, 102, 241, 0.15), 0 0 30px rgba(99, 102, 241, 0.05);

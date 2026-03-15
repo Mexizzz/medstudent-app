@@ -28,7 +28,14 @@ export type Feature =
   | 'create_rooms'
   | 'voice_chat'
   | 'analytics_full'
-  | 'analytics_export';
+  | 'analytics_export'
+  | 'timed_exam'
+  | 'ai_explanations'
+  | 'weak_auto_quiz'
+  | 'pdf_export'
+  | 'room_challenges'
+  | 'custom_themes'
+  | 'study_insights';
 
 export const FEATURE_ACCESS: Record<Feature, SubscriptionTier[]> = {
   fill_blank:       ['pro', 'max'],
@@ -44,6 +51,13 @@ export const FEATURE_ACCESS: Record<Feature, SubscriptionTier[]> = {
   voice_chat:       ['max'],
   analytics_full:   ['pro', 'max'],
   analytics_export: ['max'],
+  timed_exam:       ['pro', 'max'],
+  ai_explanations:  ['pro', 'max'],
+  weak_auto_quiz:   ['max'],
+  pdf_export:       ['max'],
+  room_challenges:  ['pro', 'max'],
+  custom_themes:    ['max'],
+  study_insights:   ['pro', 'max'],
 };
 
 // ── Daily usage limits ────────────────────────────────

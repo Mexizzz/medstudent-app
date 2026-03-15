@@ -22,7 +22,7 @@ export async function GET() {
       .where(eq(friendships.userId, userId));
 
     const friendIds = myFriendships.map(f => f.friendId);
-    let friends: { id: string; name: string | null; username: string | null; bio: string | null; avatarUrl: string | null }[] = [];
+    let friends: { id: string; name: string | null; username: string | null; bio: string | null; avatarUrl: string | null; subscriptionTier: string }[] = [];
     if (friendIds.length > 0) {
       friends = await db
         .select({
@@ -31,6 +31,7 @@ export async function GET() {
           username: users.username,
           bio: users.bio,
           avatarUrl: users.avatarUrl,
+          subscriptionTier: users.subscriptionTier,
         })
         .from(users)
         .where(sql`${users.id} IN (${sql.join(friendIds.map(id => sql`${id}`), sql`, `)})`);

@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, Sun, Moon, FolderOpen, Crown, HelpCircle
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, Stethoscope, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, FolderOpen, Crown, HelpCircle, Gauge, Trophy, TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme, THEMES } from '@/components/ThemeProvider';
+import type { Theme } from '@/components/ThemeProvider';
 import { TierBadge } from '@/components/ui/TierBadge';
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
@@ -45,6 +46,8 @@ const navSections: NavSection[] = [
       { href: '/analytics',     label: 'Analytics',      icon: BarChart2 },
       { href: '/study-plan',    label: 'Study Plan',     icon: CalendarDays },
       { href: '/goals',         label: 'Goals',          icon: Target },
+      { href: '/insights',      label: 'Weekly Insights', icon: TrendingUp },
+      { href: '/leaderboard',   label: 'Leaderboard',    icon: Trophy },
     ],
   },
   {
@@ -57,6 +60,7 @@ const navSections: NavSection[] = [
   },
   {
     items: [
+      { href: '/usage',          label: 'Usage & Limits',  icon: Gauge },
       { href: '/support',       label: 'Support',        icon: HelpCircle },
       { href: '/pricing',       label: 'Upgrade Plan',   icon: Crown },
     ],
@@ -169,14 +173,33 @@ export function Sidebar() {
             </div>
           </Link>
         )}
-        <button
-          onClick={() => setTheme(theme === 'light' ? 'dark-neon' : 'light')}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-sidebar-foreground/60 hover:bg-white/10 hover:text-white transition-colors"
-          title={theme === 'light' ? 'Switch to Dark Neon' : 'Switch to Light'}
-        >
-          {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-          {theme === 'light' ? 'Dark Neon' : 'Light Mode'}
-        </button>
+        <div className="space-y-0.5">
+          <p className="px-2 text-[9px] font-semibold uppercase tracking-wider text-sidebar-foreground/30">Theme</p>
+          <div className="grid grid-cols-3 gap-1">
+            {THEMES.map(t => {
+              const isLocked = t.maxOnly && user?.subscriptionTier !== 'max';
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => !isLocked && setTheme(t.id)}
+                  className={cn(
+                    'flex flex-col items-center gap-1 px-1 py-1.5 rounded-lg text-[9px] transition-colors',
+                    theme === t.id ? 'bg-white/15 text-white' : 'text-sidebar-foreground/50 hover:bg-white/5 hover:text-white',
+                    isLocked && 'opacity-40 cursor-not-allowed'
+                  )}
+                  title={isLocked ? 'Max only' : t.label}
+                >
+                  <div className="flex gap-[2px]">
+                    {t.colors.map((c, i) => (
+                      <div key={i} className="w-2.5 h-2.5 rounded-full border border-white/10" style={{ background: c }} />
+                    ))}
+                  </div>
+                  <span className="truncate w-full text-center">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         {user && (
           <div className="flex items-center justify-between">
             <Link href="/profile" className="flex items-center gap-2 min-w-0 group">

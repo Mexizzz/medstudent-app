@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { XCircle, RefreshCw, Trash2, Loader2, RotateCcw } from 'lucide-react';
 import { cn, subjectColor } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ExportPdfButton } from '@/components/ui/ExportPdfButton';
 
 interface WrongItem {
   questionId: string;
@@ -66,6 +67,7 @@ export default function WrongAnswersPage() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [tier, setTier] = useState('free');
 
   async function load() {
     setLoading(true);
@@ -80,7 +82,10 @@ export default function WrongAnswersPage() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch('/api/subscription').then(r => r.json()).then(d => setTier(d.tier || 'free')).catch(() => {});
+  }, []);
 
   async function handleQuiz() {
     if (items.length === 0) return;
@@ -147,6 +152,7 @@ export default function WrongAnswersPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportPdfButton tier={tier} contentId="wrong-answers" label="Export" />
           <Button variant="outline" size="sm" onClick={load} className="gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh

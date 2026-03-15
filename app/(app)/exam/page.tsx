@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, GraduationCap, Timer, Flag, CheckCircle2, XCircle, ChevronRight, RotateCcw } from 'lucide-react';
+import { Loader2, GraduationCap, Timer, Flag, CheckCircle2, XCircle, ChevronRight, RotateCcw, Sparkles, Lock, Clock } from 'lucide-react';
 import { cn, subjectColor } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Question } from '@/db/schema';
+import { TierBadge } from '@/components/ui/TierBadge';
 
 const EXAM_TYPES = [
   { id: 'usmle1', label: 'USMLE Step 1', questions: 40, minutes: 60 },
@@ -82,12 +83,24 @@ export default function ExamPage() {
   const [reviewIndex, setReviewIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
+  // Tier & features
+  const [tier, setTier] = useState<string>('free');
+  const [perQuestionTimer, setPerQuestionTimer] = useState(false);
+  const [perQuestionSecs, setPerQuestionSecs] = useState(90);
+  const [questionTimeLeft, setQuestionTimeLeft] = useState(90);
+  const [aiExplanations, setAiExplanations] = useState<Record<string, string>>({});
+  const [loadingExplanation, setLoadingExplanation] = useState<string | null>(null);
+
   useEffect(() => {
     fetch('/api/content')
       .then(r => r.json())
       .then(setSources)
       .catch(() => {})
       .finally(() => setLoadingSources(false));
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(d => setTier(d.tier || 'free'))
+      .catch(() => {});
   }, []);
 
   const examType = EXAM_TYPES.find(e => e.id === examTypeId) ?? EXAM_TYPES[0];
@@ -98,8 +111,50 @@ export default function ExamPage() {
     () => handleSubmit(true)
   );
 
+  // Per-question timer
+  useEffect(() => {
+    if (phase !== 'exam' || !perQuestionTimer) return;
+    setQuestionTimeLeft(perQuestionSecs);
+    const id = setInterval(() => {
+      setQuestionTimeLeft(s => {
+        if (s <= 1) {
+          clearInterval(id);
+          // Auto-advance or submit
+          if (currentIndex < questions.length - 1) {
+            setSelectedOption(answers[questions[currentIndex + 1]?.id] ?? null);
+            setCurrentIndex(i => i + 1);
+          }
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [phase, perQuestionTimer, currentIndex, perQuestionSecs]);
+
   const current = questions[currentIndex];
   const totalQ = questions.length;
+
+  async function loadAiExplanation(questionId: string) {
+    if (aiExplanations[questionId] || loadingExplanation) return;
+    setLoadingExplanation(questionId);
+    try {
+      const res = await fetch(`/api/questions/${questionId}/explain`, { method: 'POST' });
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('No stream');
+      const decoder = new TextDecoder();
+      let text = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+        setAiExplanations(prev => ({ ...prev, [questionId]: text }));
+      }
+    } catch {
+      toast.error('Failed to get AI explanation');
+    }
+    setLoadingExplanation(null);
+  }
 
   async function handleStart() {
     if (!selectedSources.length) { toast.error('Select at least one source'); return; }
@@ -221,6 +276,43 @@ export default function ExamPage() {
           </CardContent>
         </Card>
 
+        {/* Per-question timer (Pro+) */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-violet-500" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Per-Question Timer</p>
+                  <p className="text-xs text-muted-foreground">Countdown for each question individually</p>
+                </div>
+              </div>
+              {tier === 'free' ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Lock className="w-3 h-3" /> <TierBadge tier="pro" size="sm" />
+                </span>
+              ) : (
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked={perQuestionTimer} onChange={e => setPerQuestionTimer(e.target.checked)} className="sr-only peer" />
+                  <div className="w-9 h-5 bg-muted rounded-full peer-checked:bg-violet-600 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
+                </label>
+              )}
+            </div>
+            {perQuestionTimer && tier !== 'free' && (
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">Seconds per question:</span>
+                <select value={perQuestionSecs} onChange={e => setPerQuestionSecs(Number(e.target.value))}
+                  className="text-sm border border-border rounded-lg px-2 py-1 bg-background">
+                  <option value={60}>60s</option>
+                  <option value={90}>90s</option>
+                  <option value={120}>120s</option>
+                  <option value={180}>180s</option>
+                </select>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Source selection */}
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-base">Content Sources</CardTitle></CardHeader>
@@ -332,6 +424,34 @@ export default function ExamPage() {
                   <p className="text-xs text-blue-700 leading-relaxed">{reviewQ.explanation}</p>
                 </div>
               )}
+
+              {/* AI Explanation (Pro+) */}
+              {tier !== 'free' ? (
+                aiExplanations[reviewQ.id] ? (
+                  <div className="p-3 bg-violet-50 rounded-lg border border-violet-200">
+                    <p className="text-xs font-semibold text-violet-700 mb-1 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> AI Explanation
+                    </p>
+                    <p className="text-xs text-violet-700 leading-relaxed whitespace-pre-wrap">{aiExplanations[reviewQ.id]}</p>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 text-violet-600 border-violet-200 hover:bg-violet-50"
+                    onClick={() => loadAiExplanation(reviewQ.id)}
+                    disabled={loadingExplanation === reviewQ.id}
+                  >
+                    {loadingExplanation === reviewQ.id
+                      ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...</>
+                      : <><Sparkles className="w-3.5 h-3.5" /> AI Explain This Answer</>}
+                  </Button>
+                )
+              ) : (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground py-2">
+                  <Lock className="w-3 h-3" /> AI Explanations available with <TierBadge tier="pro" size="sm" />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -370,6 +490,15 @@ export default function ExamPage() {
           <Progress value={(currentIndex / totalQ) * 100} className="h-2" />
         </div>
         <span className="text-xs text-muted-foreground">{currentIndex + 1}/{totalQ}</span>
+        {perQuestionTimer && (
+          <div className={cn(
+            'flex items-center gap-1.5 text-sm font-mono font-medium px-3 py-1 rounded-full',
+            questionTimeLeft < 15 ? 'bg-red-100 text-red-600 animate-pulse' : questionTimeLeft < 30 ? 'bg-amber-100 text-amber-600' : 'bg-violet-100 text-violet-600'
+          )}>
+            <Clock className="w-3.5 h-3.5" />
+            {questionTimeLeft}s
+          </div>
+        )}
         <div className={cn(
           'flex items-center gap-1.5 text-sm font-mono font-medium px-3 py-1 rounded-full',
           secsLeft < 300 ? 'bg-red-100 text-red-600' : 'bg-muted text-muted-foreground'

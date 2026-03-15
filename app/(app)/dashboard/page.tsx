@@ -14,6 +14,7 @@ import { todayStr } from '@/lib/sr';
 import { getXpProgress } from '@/lib/xp';
 import { eq } from 'drizzle-orm';
 import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
+import { WeakAutoQuizCard } from '@/components/dashboard/WeakAutoQuizCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -182,6 +183,9 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Weak Auto-Quiz */}
+      <WeakAutoQuizCard tier={userTier} />
 
       {/* Quick actions */}
       <div>
