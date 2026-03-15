@@ -133,6 +133,13 @@ export function Sidebar() {
             )}
             <div className="space-y-0.5">
               {section.items.map(({ href, label, icon: Icon }) => {
+                // Hide "Upgrade Plan" for max users, show "Manage Plan" for paid users
+                const isUpgradeLink = href === '/pricing';
+                const userTier = user?.subscriptionTier || 'free';
+                let displayLabel = label;
+                if (isUpgradeLink && userTier !== 'free') {
+                  displayLabel = 'Manage Plan';
+                }
                 const active = pathname.startsWith(href);
                 return (
                   <Link
@@ -146,7 +153,7 @@ export function Sidebar() {
                     )}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />
-                    {label}
+                    {displayLabel}
                   </Link>
                 );
               })}

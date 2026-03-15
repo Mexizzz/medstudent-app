@@ -3,7 +3,7 @@ import { requireAuth, handleAuthError } from '@/lib/auth';
 import { getUserTier, getUsageSummary, STATIC_LIMITS, FEATURE_ACCESS, hasFeature } from '@/lib/subscription';
 import type { Feature } from '@/lib/subscription';
 import { db } from '@/db';
-import { contentSources, questionFolders, friendships, doctorPdfs } from '@/db/schema';
+import { users, contentSources, questionFolders, friendships, doctorPdfs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -29,8 +29,16 @@ export async function GET() {
       features[feature] = hasFeature(tier, feature);
     }
 
+    // Get subscription details
+    const userRow = db.select({
+      subscriptionStatus: users.subscriptionStatus,
+      subscriptionEndsAt: users.subscriptionEndsAt,
+    }).from(users).where(eq(users.id, userId)).get();
+
     return NextResponse.json({
       tier,
+      subscriptionStatus: userRow?.subscriptionStatus || null,
+      subscriptionEndsAt: userRow?.subscriptionEndsAt ? new Date(userRow.subscriptionEndsAt).toISOString() : null,
       usage,
       features,
       resources: {

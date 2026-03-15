@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, X, Sparkles, Crown, Zap } from 'lucide-react';
+import { Check, X, Sparkles, Crown, Zap, CalendarDays, Shield, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Tier = 'free' | 'pro' | 'max';
@@ -9,6 +9,8 @@ type Interval = 'monthly' | 'annual';
 
 interface SubData {
   tier: Tier;
+  subscriptionStatus: string | null;
+  subscriptionEndsAt: string | null;
   usage: Record<string, { used: number; limit: number }>;
   features: Record<string, boolean>;
   resources: Record<string, { used: number; limit: number }>;
@@ -164,9 +166,58 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
+        {/* Current Plan Summary for paid users */}
+        {currentTier !== 'free' && subData && (
+          <div className={`rounded-2xl border p-6 mb-8 ${
+            currentTier === 'max' ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5' :
+            'border-blue-500/30 bg-gradient-to-r from-blue-500/5 to-indigo-500/5'
+          }`}>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${
+                  currentTier === 'max' ? 'bg-amber-500/15' : 'bg-blue-500/15'
+                }`}>
+                  {currentTier === 'max' ? <Crown className="w-6 h-6 text-amber-500" /> : <Sparkles className="w-6 h-6 text-blue-500" />}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    {currentTier === 'max' ? 'Max' : 'Pro'} Plan
+                  </h2>
+                  <div className="flex items-center gap-4 mt-1">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>Status: <span className={`font-medium ${
+                        subData.subscriptionStatus === 'active' ? 'text-emerald-500' :
+                        subData.subscriptionStatus === 'canceled' ? 'text-red-400' :
+                        'text-amber-500'
+                      }`}>{subData.subscriptionStatus === 'active' ? 'Active' : subData.subscriptionStatus === 'canceled' ? 'Canceled' : subData.subscriptionStatus || 'Active'}</span></span>
+                    </div>
+                    {subData.subscriptionEndsAt && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <CalendarDays className="w-3.5 h-3.5" />
+                        <span>{subData.subscriptionStatus === 'canceled' ? 'Access until' : 'Renews'}: <span className="font-medium text-foreground">{new Date(subData.subscriptionEndsAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  Cancel Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">Choose Your Plan</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            {currentTier !== 'free' ? 'Manage Your Plan' : 'Choose Your Plan'}
+          </h1>
           <p className="text-muted-foreground text-lg">Study smarter with the right tools for your journey</p>
 
           {/* Interval Toggle */}
