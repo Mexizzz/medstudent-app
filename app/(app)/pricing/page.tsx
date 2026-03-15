@@ -128,7 +128,7 @@ export default function PricingPage() {
 
     setLoading(plan);
     try {
-      const res = await fetch('/api/lemonsqueezy/checkout', {
+      const res = await fetch('/api/whop/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, interval }),
