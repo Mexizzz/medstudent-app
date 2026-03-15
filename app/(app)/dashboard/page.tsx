@@ -80,7 +80,7 @@ export default async function DashboardPage() {
 
       {/* Med Rank / XP Widget */}
       <TierGlow tier={userTier}>
-      <Card className={`border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 ${userTier === 'max' ? 'ring-1 ring-amber-400/30' : userTier === 'pro' ? 'ring-1 ring-blue-400/20' : ''}`}>
+      <Card className={`border-primary/20 bg-card ${userTier === 'max' ? 'ring-1 ring-amber-400/30' : userTier === 'pro' ? 'ring-1 ring-blue-400/20' : ''}`}>
         <CardContent className="p-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-foreground text-base">{xpProgress.rank.title}</span>
-                  <span className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
                     Level {xpProgress.rank.level}
                   </span>
                 </div>
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
                   {xpProgress.totalXp.toLocaleString()} XP total
                 </p>
                 <div className="mt-2 space-y-1">
-                  <Progress value={xpProgress.percent} className="h-2 bg-violet-100" />
+                  <Progress value={xpProgress.percent} className="h-2 bg-muted" />
                   {xpProgress.nextRank ? (
                     <p className="text-[10px] text-muted-foreground">
                       {xpProgress.xpInLevel.toLocaleString()} / {xpProgress.xpForNext.toLocaleString()} XP → {xpProgress.nextRank.title}
@@ -120,11 +120,11 @@ export default async function DashboardPage() {
       {/* SR + Goals row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Spaced Repetition Widget */}
-        <Card className={dueCount > 0 ? 'border-amber-200 bg-amber-50/40' : ''}>
+        <Card className={dueCount > 0 ? 'border-amber-500/20' : ''}>
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-amber-100 rounded-xl">
-                <Layers className="w-5 h-5 text-amber-600" />
+              <div className="p-2 bg-amber-500/10 rounded-xl">
+                <Layers className="w-5 h-5 text-amber-500" />
               </div>
               <div>
                 <p className="font-semibold text-foreground text-sm">Spaced Repetition</p>
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
             {totalSrCards === 0 ? (
               <p className="text-xs text-muted-foreground mb-3">Complete a study session to start building your SR deck.</p>
             ) : dueCount > 0 ? (
-              <p className="text-sm font-medium text-amber-700 mb-3">
+              <p className="text-sm font-medium text-amber-500 mb-3">
                 <span className="text-2xl font-bold">{dueCount}</span> card{dueCount !== 1 ? 's' : ''} due for review today
               </p>
             ) : (
@@ -151,11 +151,11 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Study Goals Widget */}
-        <Card className={goal ? 'border-blue-200 bg-blue-50/40' : ''}>
+        <Card className={goal ? 'border-blue-500/20' : ''}>
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-100 rounded-xl">
-                <Target className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-blue-500/10 rounded-xl">
+                <Target className="w-5 h-5 text-blue-500" />
               </div>
               <div>
                 <p className="font-semibold text-foreground text-sm">Study Goals</p>
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
               <div className="space-y-2">
                 {daysUntilExam !== null && (
                   <p className="text-sm text-foreground">
-                    <span className="text-2xl font-bold text-blue-600">{daysUntilExam}</span>{' '}
+                    <span className="text-2xl font-bold text-blue-500">{daysUntilExam}</span>{' '}
                     day{daysUntilExam !== 1 ? 's' : ''} until exam
                   </p>
                 )}
@@ -195,8 +195,8 @@ export default async function DashboardPage() {
             <Link key={href} href={href}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer group h-full">
                 <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                  <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
-                    <Icon className="w-5 h-5 text-blue-600" />
+                  <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/15 transition-colors">
+                    <Icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-semibold text-sm">{label}</p>
