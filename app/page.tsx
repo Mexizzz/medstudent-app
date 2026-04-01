@@ -42,10 +42,10 @@ export default function LandingPage() {
             Start free — Upgrade anytime
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.1] max-w-4xl mx-auto">
-            Your AI Study Partner for <span className="text-blue-600">Medical School</span>
+            The AI Study App for <span className="text-blue-600">Medical Students</span>
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly creates questions, flashcards, and study plans personalized to <em>your</em> material. Study smarter, track your progress, and connect with classmates.
+            Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly generates MCQs, flashcards, and clinical cases tailored to <em>your</em> material. Built for USMLE, PLAB, UKMLA, and any medical curriculum.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link

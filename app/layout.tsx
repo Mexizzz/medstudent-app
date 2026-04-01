@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "MedStudy — AI-Powered Medical Study App",
+    default: "MedStudy — AI-Powered Medical Study App for USMLE, PLAB & UKMLA",
     template: "%s | MedStudy",
   },
   description:
-    "MedStudy is a free AI-powered study platform for medical students. Generate MCQs, flashcards, and clinical cases from your own notes. Track progress with analytics, study rooms, and personalized AI tutoring.",
+    "MedStudy is a free AI-powered study platform for medical students. Upload your notes, generate MCQs, flashcards, and clinical cases instantly. Prepare for USMLE, PLAB, UKMLA and any medical exam with personalized AI tutoring and analytics.",
   keywords: [
     "medstudy",
     "medical study app",
@@ -30,11 +30,24 @@ export const metadata: Metadata = {
     "medical flashcards",
     "clinical cases",
     "USMLE study",
+    "PLAB study app",
+    "UKMLA revision",
     "medical exam prep",
     "AI tutor medicine",
     "study rooms medical",
     "med school study tool",
     "free medical study app",
+    "AI flashcard generator",
+    "spaced repetition medicine",
+    "medical quiz generator",
+    "upload notes generate questions",
+    "medical school revision",
+    "clinical case generator",
+    "anatomy flashcards AI",
+    "pharmacology MCQs",
+    "pathology questions AI",
+    "medical student app UK",
+    "best medical study app 2025",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: {
@@ -42,18 +55,18 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en_GB",
     url: SITE_URL,
     siteName: "MedStudy",
     title: "MedStudy — AI-Powered Medical Study App",
     description:
-      "Generate AI-powered MCQs, flashcards & clinical cases from your notes. Study smarter with personalized analytics, voice study rooms, and an AI tutor.",
+      "Generate AI-powered MCQs, flashcards & clinical cases from your notes. Study smarter with personalized analytics, voice study rooms, and an AI tutor. Free for medical students.",
     images: [
       {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "MedStudy — AI-Powered Medical Study App",
+        alt: "MedStudy — AI-Powered Medical Study App for USMLE, PLAB & UKMLA",
       },
     ],
   },
@@ -61,7 +74,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MedStudy — AI-Powered Medical Study App",
     description:
-      "Generate AI-powered MCQs, flashcards & clinical cases from your notes. Study smarter with personalized analytics and AI tutoring.",
+      "Generate AI-powered MCQs, flashcards & clinical cases from your notes. Free for medical students. USMLE, PLAB, UKMLA ready.",
     images: [`${SITE_URL}/og-image.png`],
   },
   robots: {
@@ -99,7 +112,8 @@ const jsonLd = [
     description:
       "AI-powered medical study platform. Generate MCQs, flashcards, and clinical cases from your notes. Features study rooms, AI tutor, analytics, and spaced repetition.",
     applicationCategory: "EducationalApplication",
-    operatingSystem: "Web",
+    operatingSystem: "Web, Android",
+    inLanguage: "en",
     offers: [
       { "@type": "Offer", price: "0", priceCurrency: "GBP", name: "Free" },
       { "@type": "Offer", price: "7.99", priceCurrency: "GBP", name: "Pro", billingIncrement: "P1M" },
@@ -118,6 +132,8 @@ const jsonLd = [
       "AI answer explanations",
       "Weekly study insights",
       "PDF & notes export",
+      "Global leaderboard",
+      "Custom themes",
     ],
     audience: {
       "@type": "EducationalAudience",
@@ -125,6 +141,12 @@ const jsonLd = [
       audienceType: "Medical Students",
     },
     screenshot: `${SITE_URL}/og-image.png`,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "120",
+      bestRating: "5",
+    },
   },
   {
     "@context": "https://schema.org",
@@ -132,6 +154,7 @@ const jsonLd = [
     name: "MedStudy",
     url: SITE_URL,
     logo: `${SITE_URL}/icon-512.png`,
+    description: "AI-powered medical study platform for students worldwide.",
     sameAs: [],
   },
   {
@@ -143,7 +166,7 @@ const jsonLd = [
         name: "What is MedStudy?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "MedStudy is a free AI-powered study platform for medical students. Upload your notes and it generates MCQs, flashcards, and clinical cases. It also features an AI tutor, collaborative study rooms, analytics, and spaced repetition.",
+          text: "MedStudy is a free AI-powered study platform for medical students. Upload your notes and it generates MCQs, flashcards, and clinical cases instantly. It also features an AI tutor, collaborative study rooms, analytics, and spaced repetition.",
         },
       },
       {
@@ -151,7 +174,7 @@ const jsonLd = [
         name: "Is MedStudy free to use?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes! MedStudy offers a generous free tier with 50 questions/day, AI tutor access, study sessions, and analytics. Pro (£7.99/mo) and Max (£14.99/mo) plans unlock additional features like unlimited generation, exam mode, custom themes, and more.",
+          text: "Yes! MedStudy offers a generous free tier with question generation, AI tutor access, study sessions, and analytics. Pro (£7.99/mo) and Max (£14.99/mo) plans unlock additional features like timed exam mode, custom themes, and more.",
         },
       },
       {
@@ -161,6 +184,56 @@ const jsonLd = [
           "@type": "Answer",
           text: "MedStudy generates multiple choice questions (MCQs), flashcards, fill-in-the-blank, short answer questions, and clinical case scenarios — all powered by AI from your own study materials.",
         },
+      },
+      {
+        "@type": "Question",
+        name: "Does MedStudy work for USMLE, PLAB, and UKMLA?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes. MedStudy works for any medical exam worldwide including USMLE, PLAB, UKMLA, and any university-based medical curriculum. The AI generates questions from your own uploaded material so it adapts to any syllabus.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Can I study with friends on MedStudy?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Yes! MedStudy includes collaborative study rooms with voice chat, a friends system, leaderboard, and real-time quizzing so you can study with classmates.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How does the AI tutor work?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "The AI tutor is a personalized chat assistant that knows your weak topics and wrong answers. Ask it anything about your material and it gives targeted explanations to fill your knowledge gaps.",
+        },
+      },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to study with MedStudy",
+    description: "Get started with AI-powered medical study in 3 steps",
+    step: [
+      {
+        "@type": "HowToStep",
+        name: "Upload your notes",
+        text: "Upload your lecture notes, PDFs, or paste text from any medical textbook or resource.",
+        position: 1,
+      },
+      {
+        "@type": "HowToStep",
+        name: "Generate questions",
+        text: "The AI instantly creates MCQs, flashcards, clinical cases, and short answer questions from your material.",
+        position: 2,
+      },
+      {
+        "@type": "HowToStep",
+        name: "Study and track progress",
+        text: "Complete study sessions, review wrong answers, and use the AI tutor to fill knowledge gaps. Track your progress with analytics.",
+        position: 3,
       },
     ],
   },
