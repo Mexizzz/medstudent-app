@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "MedStudy — AI-Powered Medical Study App for USMLE, PLAB & UKMLA",
+    default: "MedStudy — AI-Powered Medical Study App for Medical Students Worldwide",
     template: "%s | MedStudy",
   },
   description:
-    "MedStudy is a free AI-powered study platform for medical students. Upload your notes, generate MCQs, flashcards, and clinical cases instantly. Prepare for USMLE, PLAB, UKMLA and any medical exam with personalized AI tutoring and analytics.",
+    "MedStudy is a free AI-powered study platform for medical students worldwide. Upload your notes and instantly generate MCQs, flashcards, and clinical cases. Prepare for USMLE, PLAB, UKMLA, AMC, MCCQE or any medical exam with personalized AI tutoring and analytics.",
   keywords: [
     "medstudy",
     "medical study app",
@@ -46,8 +46,14 @@ export const metadata: Metadata = {
     "anatomy flashcards AI",
     "pharmacology MCQs",
     "pathology questions AI",
-    "medical student app UK",
+    "medical student app",
     "best medical study app 2025",
+    "USMLE Step 1 study app",
+    "USMLE Step 2 study app",
+    "AMC exam preparation",
+    "MCCQE study app",
+    "medical student app worldwide",
+    "free AI study tool doctors",
   ],
   metadataBase: new URL(SITE_URL),
   alternates: {
@@ -55,7 +61,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    locale: "en_GB",
+    locale: "en_US",
     url: SITE_URL,
     siteName: "MedStudy",
     title: "MedStudy — AI-Powered Medical Study App",
@@ -66,7 +72,7 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "MedStudy — AI-Powered Medical Study App for USMLE, PLAB & UKMLA",
+        alt: "MedStudy — AI-Powered Medical Study App for Medical Students Worldwide",
       },
     ],
   },
