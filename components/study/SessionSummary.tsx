@@ -42,9 +42,21 @@ function getTier(score: number): Tier {
       "Your brain just filed a patent.",
       "The textbook is asking YOU for answers now.",
       "Med school? You don't need it. You ARE med school.",
-      "100%. I'm framing this.",
+      "100%. I'm framing this on the wall.",
       "Skelly is weeping tears of joy. Actual tears.",
       "Your future patients don't know how lucky they are.",
+      "This is not human. I'm calling someone.",
+      "Clean sheet. Absolute clean sheet.",
+      "The professor just submitted your score as a case study.",
+      "Not a single question survived.",
+      "You just broke the marking scheme.",
+      "Skelly retired. You don't need him anymore.",
+      "100/100. Even the wrong answers feel judged right now.",
+      "Legend status: confirmed.",
+      "Gray's Anatomy wants to cite you.",
+      "The curve? You ARE the curve.",
+      "Every question answered correctly. Every. Single. One.",
+      "I have no words. Only confetti.",
     ],
   };
   if (score >= 90) return {
@@ -62,6 +74,19 @@ function getTier(score: number): Tier {
       "Elite. Absolute elite.",
       "Skelly is doing the death dance in your honour.",
       "This score cures diseases.",
+      "One wrong answer. ONE. You live with that.",
+      "Residency is calling. Pick up.",
+      "Top of the class energy right here.",
+      "Your study sessions are hitting different lately.",
+      "The textbook nodded. That means something.",
+      "Brain cells fully activated. All of them.",
+      "That score could've been a surgery. Clean.",
+      "You're making the curve cry.",
+      "Skelly gives this a standing ovation.",
+      "Future attending physician behavior detected.",
+      "That's more green than a hospital cafeteria salad.",
+      "Almost flawless. We don't talk about the one.",
+      "You just made Skelly put in extra effort at the gym.",
     ],
   };
   if (score >= 75) return {
@@ -79,6 +104,19 @@ function getTier(score: number): Tier {
       "That's the stuff. More of that.",
       "Good session. Don't ruin it by not reviewing.",
       "You passed the vibe check.",
+      "Above average and proud of it.",
+      "The wrong answers are already regretting themselves.",
+      "B+ energy. Respectable.",
+      "You studied. It shows. Keep going.",
+      "Not fire but definitely warm.",
+      "Skelly gives a firm thumbs up. That's rare.",
+      "Your brain is in good shape today.",
+      "One more session and you're unstoppable.",
+      "Strong performance. Weak excuses going forward.",
+      "That's the kind of score that sleeps well at night.",
+      "Good stuff. Now do it again tomorrow.",
+      "You're trending upward. Don't stop now.",
+      "Solid groundwork. Build on it.",
     ],
   };
   if (score >= 60) return {
@@ -96,6 +134,19 @@ function getTier(score: number): Tier {
       "Halfway there. The other half is crying in the library.",
       "Not fire. Not ice. Just... lukewarm.",
       "Your study group is looking at you differently now.",
+      "Could've been worse. Could've been better. Was neither.",
+      "You're not failing. You're also not passing comfortably.",
+      "The bell curve called. You're exactly in the middle.",
+      "Mediocrity has been achieved. Aim higher.",
+      "60% of the time, you get it right. Every time.",
+      "A score that says 'I tried but also didn't'. Classic.",
+      "Skelly expected more. Won't say it again. This time.",
+      "The textbook is... not disappointed. Just concerned.",
+      "Average today, excellent tomorrow. Maybe. Hopefully.",
+      "This score is like a hospital cafeteria meal. Gets the job done.",
+      "You knew some of it. The rest? Improvised.",
+      "Potential: visible. Execution: room to grow.",
+      "Skelly is doing that slow clap. You know the one.",
     ],
   };
   if (score >= 40) return {
@@ -113,6 +164,19 @@ function getTier(score: number): Tier {
       "This is fixable. Please fix it.",
       "Your future patients switched doctors preemptively.",
       "Skelly believes in you. Barely. But it counts.",
+      "What happened in there? Actually don't tell me.",
+      "You walked in with confidence. The questions disrespected it.",
+      "This score is giving 'first week of med school' energy.",
+      "The wrong answers outvoted the right ones. Democracy failed you.",
+      "It's not about how you start. It IS about how you score though.",
+      "Someone call Skelly. He needs to hear this.",
+      "The textbook is organizing an intervention.",
+      "More sessions. Fewer excuses. Let's go.",
+      "You gave it a shot. The shot grazed the wall.",
+      "The silver lining: it can only go up from here. Theoretically.",
+      "Skelly has seen worse. He's trying to remember when.",
+      "This is a character development moment. Lean in.",
+      "The questions were not kind. You were also not prepared.",
     ],
   };
   return {
@@ -131,8 +195,49 @@ function getTier(score: number): Tier {
       "Your textbook cried last night. Again.",
       "Zero patients were harmed in this session... because zero were seen.",
       "Rock bottom? No. This is the basement beneath the basement.",
+      "The questions were not hard. This makes it worse.",
+      "Skelly is filing for emotional damages.",
+      "Even guessing randomly would've done better. Statistically.",
+      "Your future self is writing you a strongly worded letter right now.",
+      "The wrong answers said thank you. That's concerning.",
+      "Gray's Anatomy has disowned this performance.",
+      "This score needs a referral. To someone. Anyone.",
+      "Not a single question was safe from you today.",
+      "The curve looked at your score and walked away.",
+      "You came. You saw. You did not conquer.",
+      "The textbook has you blocked on all platforms.",
+      "Skelly considered retiring just to avoid seeing this again.",
     ],
   };
+}
+
+// ── Anti-repeat quote picker (localStorage-backed shuffle) ────────────────────
+function pickQuote(tier: Tier): string {
+  const key = `skelly_quotes_${tier.label}`;
+  let remaining: number[] = [];
+  try {
+    const stored = localStorage.getItem(key);
+    remaining = stored ? JSON.parse(stored) : [];
+  } catch { /* ignore */ }
+
+  // Filter to valid indices only (handles pool size changes)
+  remaining = remaining.filter(i => i >= 0 && i < tier.quotes.length);
+
+  // If pool exhausted, refill with all indices
+  if (remaining.length === 0) {
+    remaining = tier.quotes.map((_, i) => i);
+  }
+
+  // Pick a random index from remaining
+  const pick = Math.floor(Math.random() * remaining.length);
+  const quoteIndex = remaining[pick];
+  remaining.splice(pick, 1);
+
+  try {
+    localStorage.setItem(key, JSON.stringify(remaining));
+  } catch { /* ignore */ }
+
+  return tier.quotes[quoteIndex];
 }
 
 // ── Confetti ──────────────────────────────────────────────────────────────────
@@ -236,7 +341,7 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
   const wrongCount = totalAnswered - correctCount;
   const wrongAnswers = result.responses.filter(r => !r.isCorrect);
   const tier = getTier(score);
-  const [quote] = useState(() => tier.quotes[Math.floor(Math.random() * tier.quotes.length)]);
+  const [quote] = useState(() => pickQuote(tier));
 
   useConfetti(score);
 
