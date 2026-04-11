@@ -7,8 +7,8 @@ import { TrendingUp, TrendingDown, BarChart2, Target, Activity } from 'lucide-re
 import { scoreBg, scoreColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { db } from '@/db';
-import { topicPerformance, studySessions } from '@/db/schema';
-import { sql, desc, eq, and } from 'drizzle-orm';
+import { topicPerformance, studySessions, streakRecords } from '@/db/schema';
+import { sql, desc, eq, and, gte } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
 
@@ -72,6 +72,22 @@ async function getAnalytics() {
       ? topics.reduce((s, t) => s + (t.avgScore ?? 0) * (t.totalAttempts ?? 0), 0) / totalAttempts
       : 0;
 
+    // Study heatmap — last 365 days
+    const yearAgo = new Date(); yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+    const yearAgoStr = yearAgo.toISOString().slice(0, 10);
+    const studyDays = await db
+      .select({ studyDate: streakRecords.studyDate, sessions: streakRecords.sessionsCount, minutes: streakRecords.totalMinutes })
+      .from(streakRecords)
+      .where(and(eq(streakRecords.userId, userId), gte(streakRecords.studyDate, yearAgoStr)));
+    const studyDayMap: Record<string, { sessions: number; minutes: number }> = {};
+    for (const d of studyDays) studyDayMap[d.studyDate] = { sessions: d.sessions ?? 0, minutes: d.minutes ?? 0 };
+
+    // Predicted exam score (weighted avg factoring confidence)
+    const confidentTopics = withConfidence.filter(t => (t.totalAttempts ?? 0) >= 5);
+    const predictedScore = confidentTopics.length >= 3
+      ? Math.round(confidentTopics.reduce((s, t) => s + t.confidence, 0) / confidentTopics.length)
+      : null;
+
     return {
       bySubject,
       byTopic: topics,
@@ -82,9 +98,11 @@ async function getAnalytics() {
       totalSessions: recentSessions.length,
       totalAttempts,
       overallScore,
+      studyDayMap,
+      predictedScore,
     };
   } catch {
-    return { bySubject: [], byTopic: [], overTime: [], weakTopics: [], remediationTopics: [], strongTopics: [], totalSessions: 0, totalAttempts: 0, overallScore: 0 };
+    return { bySubject: [], byTopic: [], overTime: [], weakTopics: [], remediationTopics: [], strongTopics: [], totalSessions: 0, totalAttempts: 0, overallScore: 0, studyDayMap: {}, predictedScore: null };
   }
 }
 
@@ -121,8 +139,65 @@ function TopicRow({ topic, showBar = true }: { topic: { topic: string | null; su
   );
 }
 
+// ── Study heatmap ─────────────────────────────────────────────────────────────
+function StudyHeatmap({ studyDayMap }: { studyDayMap: Record<string, { sessions: number; minutes: number }> }) {
+  // Build last 53 weeks of dates
+  const today = new Date();
+  const cells: { date: string; sessions: number; minutes: number }[] = [];
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    cells.push({ date: key, ...(studyDayMap[key] ?? { sessions: 0, minutes: 0 }) });
+  }
+
+  // Pad to start on Sunday
+  const startDay = new Date(cells[0].date).getDay(); // 0=Sun
+  const padded = [...Array(startDay).fill(null), ...cells];
+  const weeks: (typeof cells[0] | null)[][] = [];
+  for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7));
+
+  function cellColor(sessions: number) {
+    if (sessions === 0) return 'bg-muted';
+    if (sessions === 1) return 'bg-emerald-200 dark:bg-emerald-800';
+    if (sessions === 2) return 'bg-emerald-400 dark:bg-emerald-600';
+    return 'bg-emerald-600 dark:bg-emerald-400';
+  }
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex gap-[3px] min-w-max">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-[3px]">
+            {week.map((cell, di) =>
+              cell ? (
+                <div
+                  key={di}
+                  title={`${cell.date}: ${cell.sessions} session${cell.sessions !== 1 ? 's' : ''}, ${cell.minutes} min`}
+                  className={cn('w-3 h-3 rounded-sm transition-colors', cellColor(cell.sessions))}
+                />
+              ) : (
+                <div key={di} className="w-3 h-3" />
+              )
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+        <span>Less</span>
+        {['bg-muted','bg-emerald-200 dark:bg-emerald-800','bg-emerald-400 dark:bg-emerald-600','bg-emerald-600 dark:bg-emerald-400'].map((c,i) => (
+          <div key={i} className={cn('w-3 h-3 rounded-sm', c)} />
+        ))}
+        <span>More</span>
+      </div>
+    </div>
+  );
+}
+
 export default async function AnalyticsPage() {
-  const { bySubject, byTopic, overTime, weakTopics, remediationTopics, strongTopics, totalSessions, totalAttempts, overallScore } = await getAnalytics();
+  const { bySubject, byTopic, overTime, weakTopics, remediationTopics, strongTopics, totalSessions, totalAttempts, overallScore, studyDayMap, predictedScore } = await getAnalytics();
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
@@ -238,6 +313,59 @@ export default async function AnalyticsPage() {
               <TopicBreakdownBar data={byTopic} />
             </CardContent>
           </Card>
+
+          {/* Study Heatmap */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-500" />
+                Study Activity — Last Year
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StudyHeatmap studyDayMap={studyDayMap} />
+            </CardContent>
+          </Card>
+
+          {/* Predicted Exam Score */}
+          {predictedScore !== null && (
+            <Card className={cn(
+              'border-2',
+              predictedScore >= 70 ? 'border-emerald-200 dark:border-emerald-500/30' :
+              predictedScore >= 50 ? 'border-amber-200 dark:border-amber-500/30' :
+              'border-red-200 dark:border-red-500/30'
+            )}>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    'p-3 rounded-xl text-3xl',
+                    predictedScore >= 70 ? 'bg-emerald-50 dark:bg-emerald-500/10' :
+                    predictedScore >= 50 ? 'bg-amber-50 dark:bg-amber-500/10' :
+                    'bg-red-50 dark:bg-red-500/10'
+                  )}>
+                    🎯
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-end gap-2">
+                      <span className={cn(
+                        'text-4xl font-black',
+                        predictedScore >= 70 ? 'text-emerald-600' : predictedScore >= 50 ? 'text-amber-600' : 'text-red-600'
+                      )}>
+                        {predictedScore}%
+                      </span>
+                      <span className="text-sm text-muted-foreground mb-1">predicted exam score</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Based on your performance across {byTopic.filter(t => (t.totalAttempts ?? 0) >= 5).length} well-practiced topics.
+                      {predictedScore >= 70 ? ' Looking strong — keep it up.' :
+                       predictedScore >= 50 ? ' Getting there — focus on weak topics.' :
+                       ' Needs work — review your weakest topics daily.'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>

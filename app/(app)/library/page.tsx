@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { ContentCard } from '@/components/library/ContentCard';
 import { UploadModal } from '@/components/library/UploadModal';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Source {
   id: string;
@@ -47,7 +48,20 @@ export default function LibraryPage() {
           <h1 className="text-2xl font-bold text-foreground">Library</h1>
           <p className="text-muted-foreground text-sm mt-1">{sources.length} content source{sources.length !== 1 ? 's' : ''}</p>
         </div>
-        <UploadModal onSuccess={fetchSources} />
+        <div className="flex items-center gap-2">
+          {sources.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={() => window.open('/api/export/anki?type=all', '_blank')}
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export to Anki
+            </Button>
+          )}
+          <UploadModal onSuccess={fetchSources} />
+        </div>
       </div>
 
       {loading ? (

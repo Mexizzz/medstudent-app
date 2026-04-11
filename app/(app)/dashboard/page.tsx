@@ -7,7 +7,7 @@ import { TodayPlanCard } from '@/components/dashboard/TodayPlanCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target, ArrowRight, Zap } from 'lucide-react';
+import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target, ArrowRight, Zap, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import { todayString } from '@/lib/utils';
 import { todayStr } from '@/lib/sr';
@@ -24,6 +24,7 @@ const quickActions = [
   { href: '/study', icon: Brain, label: 'Study', desc: 'Practice questions', color: 'text-blue-500', bg: 'bg-blue-50 group-hover:bg-blue-100 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20' },
   { href: '/analytics', icon: BarChart2, label: 'Analytics', desc: 'View performance', color: 'text-emerald-500', bg: 'bg-emerald-50 group-hover:bg-emerald-100 dark:bg-emerald-500/10 dark:group-hover:bg-emerald-500/20' },
   { href: '/study-plan', icon: CalendarDays, label: 'Plan', desc: 'Manage schedule', color: 'text-orange-500', bg: 'bg-orange-50 group-hover:bg-orange-100 dark:bg-orange-500/10 dark:group-hover:bg-orange-500/20' },
+  { href: '/daily-challenge', icon: Trophy, label: 'Daily Challenge', desc: 'Question of the day', color: 'text-amber-500', bg: 'bg-amber-50 group-hover:bg-amber-100 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20' },
 ];
 
 export default async function DashboardPage() {
@@ -235,7 +236,7 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Quick Access</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {quickActions.map(({ href, icon: Icon, label, desc, color, bg }) => (
             <Link key={href} href={href} prefetch>
               <Card className="hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group h-full border-transparent hover:border-border">

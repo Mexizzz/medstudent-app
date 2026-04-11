@@ -11,6 +11,8 @@ import { ArrowLeft, FileText, Youtube } from 'lucide-react';
 import Link from 'next/link';
 import { subjectColor, ACTIVITY_LABELS } from '@/lib/utils';
 import { DeleteQuestionButton } from '@/components/library/DeleteQuestionButton';
+import { AiSummaryPanel } from '@/components/library/AiSummaryPanel';
+import { users } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +32,9 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
   });
 
   if (!source) notFound();
+
+  const userRow = await db.select({ tier: users.subscriptionTier }).from(users).where(eq(users.id, userId)).get();
+  const isPro = userRow?.tier === 'pro' || userRow?.tier === 'max';
 
   const allQuestions = await db.select().from(questions).where(eq(questions.sourceId, sourceId));
 
@@ -82,6 +87,9 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
           )}
         </div>
       </div>
+
+      {/* AI Summary */}
+      {source.rawText && <AiSummaryPanel sourceId={sourceId} isPro={isPro} />}
 
       {/* Questions summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { User, Save, Loader2 } from 'lucide-react';
 import { getRankFromXp, getXpProgress, RANKS } from '@/lib/xp';
 import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
+import { StudyReminderCard } from '@/components/profile/StudyReminderCard';
 
 interface Profile {
   id: string;
@@ -197,6 +198,9 @@ export default function ProfilePage() {
           ))}
         </div>
       </div>
+
+      {/* Notifications */}
+      <StudyReminderCard />
     </div>
   );
 }

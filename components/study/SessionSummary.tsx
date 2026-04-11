@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock, RotateCcw, Home, BookOpen } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, RotateCcw, Home, BookOpen, ChevronDown, ChevronUp, List } from 'lucide-react';
 import Link from 'next/link';
 import { cn, durationLabel } from '@/lib/utils';
 
@@ -342,6 +342,7 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
   const wrongAnswers = result.responses.filter(r => !r.isCorrect);
   const tier = getTier(score);
   const [quote] = useState(() => pickQuote(tier));
+  const [showReplay, setShowReplay] = useState(false);
 
   useConfetti(score);
 
@@ -397,25 +398,57 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
         </Card>
       </div>
 
-      {/* Wrong answers review */}
-      {wrongAnswers.length > 0 && (
+      {/* Session Replay */}
+      {result.responses.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold">Review these {wrongAnswers.length} questions</h3>
-          </div>
-          <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-            {wrongAnswers.map((r, i) => (
-              <div key={i} className="flex items-start gap-2.5 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-xl p-3">
-                <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <span className="text-[10px] font-semibold text-red-500/80 uppercase tracking-wide">
-                    {r.type.replace('_', ' ')}
+          <button
+            onClick={() => setShowReplay(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-muted/40 hover:bg-muted transition-colors"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              <List className="w-4 h-4 text-primary" />
+              Session Replay
+              <span className="text-xs font-normal text-muted-foreground">({result.responses.length} questions)</span>
+            </span>
+            {showReplay ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+
+          {showReplay && (
+            <div className="mt-2 space-y-2 max-h-[500px] overflow-y-auto pr-1">
+              {result.responses.map((r, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex items-start gap-3 rounded-xl border p-3.5',
+                    r.isCorrect
+                      ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20'
+                      : 'bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20'
+                  )}
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {r.isCorrect
+                      ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      : <XCircle className="w-4 h-4 text-red-400" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        Q{i + 1}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{r.type.replace('_', ' ')}</span>
+                    </div>
+                    <p className="text-sm text-foreground leading-snug">{r.question}</p>
+                  </div>
+                  <span className={cn(
+                    'text-xs font-bold shrink-0',
+                    r.isCorrect ? 'text-emerald-600' : 'text-red-500'
+                  )}>
+                    {r.isCorrect ? '✓' : '✗'}
                   </span>
-                  <p className="text-sm text-foreground line-clamp-2 mt-0.5">{r.question}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
