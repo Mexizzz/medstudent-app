@@ -66,6 +66,7 @@ export default function LandingPage() {
             <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/blog" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Blog</Link>
             <Link href="#pricing" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Pricing</Link>
             <Link href="#faq" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>FAQ</Link>
             <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Log in</Link>
