@@ -15,6 +15,7 @@ import { getXpProgress } from '@/lib/xp';
 import { eq } from 'drizzle-orm';
 import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
 import { WeakAutoQuizCard } from '@/components/dashboard/WeakAutoQuizCard';
+import { SkellyWidget } from '@/components/dashboard/SkellyWidget';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +89,12 @@ export default async function DashboardPage() {
               <p className="text-2xl font-bold">{xpProgress.totalXp.toLocaleString()}</p>
               <p className="text-white/60 text-xs">total XP</p>
             </div>
+            <div className="w-px h-10 bg-white/20" />
+            <SkellyWidget
+              streak={streakInfo.currentStreak}
+              todayComplete={streakInfo.todayComplete}
+              userName={userName}
+            />
           </div>
         </div>
       </div>
