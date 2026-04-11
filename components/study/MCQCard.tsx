@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Question } from '@/db/schema';
@@ -33,24 +32,39 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-3">
-        <Badge variant="outline" className="shrink-0 mt-0.5">MCQ</Badge>
+      {/* Question */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground bg-muted px-2 py-1 rounded-md">MCQ</span>
+          {question.difficulty && (
+            <span className={cn(
+              'text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md',
+              question.difficulty === 'hard' ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' :
+              question.difficulty === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
+              'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
+            )}>
+              {question.difficulty}
+            </span>
+          )}
+        </div>
         <p className="text-base font-medium leading-relaxed">{question.question}</p>
       </div>
 
+      {/* Options */}
       <div className="space-y-2.5">
         {options.map(({ key, text }) => {
           const isCorrectOption = question.correctAnswer === key;
           const isSelectedOption = selected === key;
-          let variant = '';
+
+          let containerClass = '';
           if (submitted) {
-            if (isCorrectOption) variant = 'bg-emerald-50 border-emerald-400 text-emerald-800';
-            else if (isSelectedOption && !isCorrectOption) variant = 'bg-red-50 border-red-400 text-red-800';
-            else variant = 'bg-card border-border text-muted-foreground';
+            if (isCorrectOption) containerClass = 'bg-emerald-50 border-emerald-400 text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/50 dark:text-emerald-300';
+            else if (isSelectedOption && !isCorrectOption) containerClass = 'bg-red-50 border-red-400 text-red-800 dark:bg-red-500/10 dark:border-red-500/50 dark:text-red-300';
+            else containerClass = 'bg-card border-border text-muted-foreground opacity-60';
           } else {
-            variant = isSelectedOption
-              ? 'bg-blue-50 border-blue-500 text-blue-800'
-              : 'bg-card border-border hover:border-blue-300 hover:bg-blue-50/30 cursor-pointer';
+            containerClass = isSelectedOption
+              ? 'bg-primary/5 border-primary text-foreground shadow-sm'
+              : 'bg-card border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer';
           }
 
           return (
@@ -59,22 +73,22 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
               disabled={submitted}
               onClick={() => !submitted && setSelected(key)}
               className={cn(
-                'w-full flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all text-sm',
-                variant
+                'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all duration-150 text-sm group',
+                containerClass
               )}
             >
               <span className={cn(
-                'flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border',
-                submitted && isCorrectOption ? 'bg-emerald-500 text-white border-emerald-500' :
-                submitted && isSelectedOption && !isCorrectOption ? 'bg-red-500 text-white border-red-500' :
-                isSelectedOption ? 'bg-blue-500 text-white border-blue-500' :
-                'bg-muted text-muted-foreground border-border'
+                'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all',
+                submitted && isCorrectOption ? 'bg-emerald-500 text-white' :
+                submitted && isSelectedOption && !isCorrectOption ? 'bg-red-500 text-white' :
+                isSelectedOption ? 'bg-primary text-primary-foreground' :
+                'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
               )}>
                 {key}
               </span>
-              <span className="flex-1">{text}</span>
-              {submitted && isCorrectOption && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
-              {submitted && isSelectedOption && !isCorrectOption && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
+              <span className="flex-1 leading-snug">{text}</span>
+              {submitted && isCorrectOption && <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />}
+              {submitted && isSelectedOption && !isCorrectOption && <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />}
             </button>
           );
         })}
@@ -83,35 +97,34 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
       {/* Result banner */}
       {submitted && (
         <div className={cn(
-          'p-3 rounded-lg text-center text-sm font-semibold border',
+          'flex items-center gap-2 p-3.5 rounded-xl text-sm font-semibold border animate-in fade-in slide-in-from-bottom-2 duration-300',
           isCorrect
-            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            : 'bg-red-50 text-red-700 border-red-200'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30'
+            : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
         )}>
           {isCorrect
-            ? '✓ Correct!'
-            : `✗ Incorrect — The correct answer is ${question.correctAnswer}`}
+            ? <><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Correct!</>
+            : <><XCircle className="w-5 h-5 text-red-500" /> Incorrect — The correct answer is <strong>{question.correctAnswer}</strong></>}
         </div>
       )}
 
-      {/* Explanation — shown after submit */}
+      {/* Explanation */}
       {submitted && question.explanation && (
-        <div className={cn(
-          'rounded-lg border p-4 space-y-1.5',
-          isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-amber-50 border-amber-200'
-        )}>
+        <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-400">
           <div className="flex items-center gap-1.5">
-            <Lightbulb className={cn('w-4 h-4', isCorrect ? 'text-emerald-600' : 'text-amber-600')} />
-            <p className={cn('text-xs font-semibold uppercase tracking-wide', isCorrect ? 'text-emerald-700' : 'text-amber-700')}>
-              {isCorrect ? 'Explanation' : `Why ${question.correctAnswer} is correct`}
-            </p>
+            <Lightbulb className="w-4 h-4 text-amber-500" />
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Explanation</p>
           </div>
           <p className="text-sm text-foreground leading-relaxed">{question.explanation}</p>
         </div>
       )}
 
       {!submitted && (
-        <Button onClick={handleSubmit} disabled={!selected} className="w-full">
+        <Button
+          onClick={handleSubmit}
+          disabled={!selected}
+          className="w-full h-11 text-base font-semibold"
+        >
           Submit Answer
         </Button>
       )}

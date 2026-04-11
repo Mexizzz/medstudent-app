@@ -8,22 +8,22 @@ import {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-card">
+    <div className="min-h-screen" style={{ background: '#ffffff', color: '#0f172a' }}>
       {/* Nav */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+      <header className="sticky top-0 z-50 border-b" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', borderColor: '#e2e8f0' }}>
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
               M
             </div>
-            <span className="font-bold text-xl text-foreground">MedStudy</span>
+            <span className="font-bold text-xl" style={{ color: '#0f172a' }}>MedStudy</span>
             <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+            <Link href="#pricing" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>
               Pricing
             </Link>
-            <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2">
+            <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>
               Log in
             </Link>
             <Link href="/signup" className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
@@ -34,17 +34,16 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 via-white to-white" />
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)' }}>
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold mb-6 border border-emerald-200">
             <Sparkles className="w-4 h-4" />
             Start free — Upgrade anytime
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.1] max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto" style={{ color: '#0f172a' }}>
             The AI Study App for <span className="text-blue-600">Medical Students</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: '#475569' }}>
             Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly generates MCQs, flashcards, and clinical cases tailored to <em>your</em> material. Built for USMLE, PLAB, UKMLA, AMC, MCCQE, and any medical curriculum worldwide.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -56,14 +55,15 @@ export default function LandingPage() {
             </Link>
             <Link
               href="#features"
-              className="flex items-center gap-2 px-6 py-3.5 bg-card text-foreground rounded-xl text-base font-semibold hover:bg-muted transition-colors border border-border"
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold transition-colors border hover:bg-slate-50"
+              style={{ background: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
             >
               See How It Works
             </Link>
           </div>
 
           {/* Trust signals */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm" style={{ color: '#64748b' }}>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free plan available</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
@@ -73,12 +73,12 @@ export default function LandingPage() {
       </section>
 
       {/* Problem / Solution */}
-      <section className="py-16 sm:py-20 border-t border-border">
+      <section className="py-16 sm:py-20 border-t" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
-            <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong className="text-foreground">actually learning</strong>.
+            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
+            <p className="mt-4 text-lg leading-relaxed" style={{ color: '#475569' }}>
+              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong style={{ color: '#0f172a' }}>actually learning</strong>.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -103,8 +103,8 @@ export default function LandingPage() {
                 <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mx-auto mb-5 shadow-lg shadow-blue-500/20">
                   {emoji}
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -112,11 +112,11 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="bg-muted py-16 sm:py-24" id="features">
+      <section className="py-16 sm:py-24" id="features" style={{ background: '#f8fafc' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Packed with Features Built for Med Students</h2>
-            <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Packed with Features Built for Med Students</h2>
+            <p className="mt-3 text-lg max-w-xl mx-auto" style={{ color: '#475569' }}>
               Every tool you need in one place — no switching between apps.
             </p>
           </div>
@@ -195,12 +195,12 @@ export default function LandingPage() {
                 color: 'bg-cyan-50 text-cyan-600',
               },
             ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="bg-card rounded-xl border border-border p-5 hover:shadow-md hover:border-border transition-all group">
+              <div key={title} className="rounded-xl border p-5 hover:shadow-md transition-all group" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
                 <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-semibold text-foreground mb-1.5">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="text-base font-semibold mb-1.5" style={{ color: '#0f172a' }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -208,28 +208,28 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-16 sm:py-24" id="pricing">
+      <section className="py-16 sm:py-24" id="pricing" style={{ background: '#ffffff' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-semibold mb-4 border border-blue-200">
               <Crown className="w-3.5 h-3.5" />
               Simple Pricing
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Choose Your Plan</h2>
-            <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Choose Your Plan</h2>
+            <p className="mt-3 text-lg max-w-xl mx-auto" style={{ color: '#64748b' }}>
               Start free and upgrade as you need more power. Every plan includes core AI study features.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Free */}
-            <div className="bg-card rounded-2xl border border-border p-6 flex flex-col">
-              <h3 className="text-lg font-bold text-foreground">Free</h3>
+            <div className="rounded-2xl border p-6 flex flex-col" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
+              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Free</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">£0</span>
-                <span className="text-muted-foreground ml-1">/month</span>
+                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£0</span>
+                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">Perfect for getting started and trying out MedStudy.</p>
+              <p className="text-sm mb-6" style={{ color: '#64748b' }}>Perfect for getting started and trying out MedStudy.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
                   { text: '50 AI questions/day', included: true },
@@ -244,31 +244,32 @@ export default function LandingPage() {
                   <li key={item.text} className="flex items-center gap-2">
                     {item.included
                       ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      : <X className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />}
-                    <span className={item.included ? 'text-foreground' : 'text-muted-foreground/60'}>{item.text}</span>
+                      : <X className="w-4 h-4 flex-shrink-0" style={{ color: '#cbd5e1' }} />}
+                    <span style={{ color: item.included ? '#0f172a' : '#94a3b8' }}>{item.text}</span>
                   </li>
                 ))}
               </ul>
               <Link
                 href="/signup"
-                className="mt-6 block text-center px-6 py-2.5 border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="mt-6 block text-center px-6 py-2.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-slate-50"
+                style={{ color: '#0f172a', borderColor: '#e2e8f0' }}
               >
                 Get Started Free
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="bg-card rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10">
+            <div className="rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10" style={{ background: '#ffffff' }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
                 Most Popular
               </div>
-              <h3 className="text-lg font-bold text-foreground">Pro</h3>
+              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Pro</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">£7.99</span>
-                <span className="text-muted-foreground ml-1">/month</span>
+                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£7.99</span>
+                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-1">or £4.99/mo billed annually</p>
-              <p className="text-sm text-muted-foreground mb-6">For serious students who want the full toolkit.</p>
+              <p className="text-xs mb-1" style={{ color: '#64748b' }}>or £4.99/mo billed annually</p>
+              <p className="text-sm mb-6" style={{ color: '#64748b' }}>For serious students who want the full toolkit.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
                   { text: '250 AI questions/day', included: true },
@@ -284,8 +285,8 @@ export default function LandingPage() {
                   <li key={item.text} className="flex items-center gap-2">
                     {item.included
                       ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      : <X className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />}
-                    <span className={item.included ? 'text-foreground' : 'text-muted-foreground/60'}>{item.text}</span>
+                      : <X className="w-4 h-4 flex-shrink-0" style={{ color: '#cbd5e1' }} />}
+                    <span style={{ color: item.included ? '#0f172a' : '#94a3b8' }}>{item.text}</span>
                   </li>
                 ))}
               </ul>
@@ -298,17 +299,17 @@ export default function LandingPage() {
             </div>
 
             {/* Max */}
-            <div className="bg-card rounded-2xl border border-border p-6 flex flex-col relative">
+            <div className="rounded-2xl border p-6 flex flex-col relative" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">
                 Unlimited
               </div>
-              <h3 className="text-lg font-bold text-foreground">Max</h3>
+              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Max</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold text-foreground">£14.99</span>
-                <span className="text-muted-foreground ml-1">/month</span>
+                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£14.99</span>
+                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-1">or £9.99/mo billed annually</p>
-              <p className="text-sm text-muted-foreground mb-6">No limits. Every feature. Total peace of mind.</p>
+              <p className="text-xs mb-1" style={{ color: '#64748b' }}>or £9.99/mo billed annually</p>
+              <p className="text-sm mb-6" style={{ color: '#64748b' }}>No limits. Every feature. Total peace of mind.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
                   'Unlimited questions/day',
@@ -322,7 +323,7 @@ export default function LandingPage() {
                 ].map(text => (
                   <li key={text} className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span className="text-foreground">{text}</span>
+                    <span style={{ color: '#0f172a' }}>{text}</span>
                   </li>
                 ))}
               </ul>
@@ -338,7 +339,7 @@ export default function LandingPage() {
       </section>
 
       {/* We Listen Section */}
-      <section className="bg-muted py-16 sm:py-20">
+      <section className="py-16 sm:py-20" style={{ background: '#f1f5f9' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
@@ -346,13 +347,13 @@ export default function LandingPage() {
                 <Heart className="w-3.5 h-3.5" />
                 Built With Students
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold leading-tight" style={{ color: '#0f172a' }}>
                 Your Voice Shapes MedStudy
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+              <p className="mt-4 text-lg leading-relaxed" style={{ color: '#475569' }}>
                 We&apos;re not just building <em>for</em> medical students — we&apos;re building <em>with</em> you. Every feature request, bug report, and suggestion from our users is reviewed and prioritized.
               </p>
-              <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
+              <p className="mt-3 text-lg leading-relaxed" style={{ color: '#475569' }}>
                 Have an idea that would make your study life easier? Tell us. We actively implement student requests and ship improvements every week.
               </p>
             </div>
@@ -377,13 +378,13 @@ export default function LandingPage() {
                   color: 'bg-rose-50 text-rose-600',
                 },
               ].map(({ icon: Icon, title, desc, color }) => (
-                <div key={title} className="flex gap-4 bg-card p-5 rounded-xl border border-border">
+                <div key={title} className="flex gap-4 p-5 rounded-xl border" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
                   <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                    <h3 className="font-semibold mb-1" style={{ color: '#0f172a' }}>{title}</h3>
+                    <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
                   </div>
                 </div>
               ))}
@@ -393,13 +394,13 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 sm:py-28">
+      <section className="py-20 sm:py-28" style={{ background: '#ffffff' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>
             Stop Wasting Hours Making Flashcards.<br />
             <span className="text-blue-600">Let AI Do It in Seconds.</span>
           </h2>
-          <p className="mt-5 text-lg text-muted-foreground max-w-xl mx-auto">
+          <p className="mt-5 text-lg max-w-xl mx-auto" style={{ color: '#475569' }}>
             Sign up free and start generating questions in seconds. Your exams won&apos;t wait, and neither should you.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -411,28 +412,29 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="flex items-center gap-2 px-6 py-4 text-muted-foreground rounded-xl text-lg font-medium hover:bg-muted transition-colors"
+              className="flex items-center gap-2 px-6 py-4 rounded-xl text-lg font-medium hover:bg-slate-100 transition-colors"
+              style={{ color: '#64748b' }}
             >
               Already have an account? Log in
             </Link>
           </div>
-          <p className="mt-5 text-sm text-muted-foreground">
+          <p className="mt-5 text-sm" style={{ color: '#94a3b8' }}>
             Free plan available. No credit card required. Upgrade anytime.
           </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 bg-muted">
+      <footer className="border-t py-8" style={{ background: '#f1f5f9', borderColor: '#e2e8f0' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-xs" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
               M
             </div>
-            <span className="font-semibold text-foreground">MedStudy</span>
+            <span className="font-semibold" style={{ color: '#0f172a' }}>MedStudy</span>
             <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded tracking-wider">AI</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm" style={{ color: '#64748b' }}>
             &copy; {new Date().getFullYear()} MedStudy. Built with care for medical students everywhere.
           </p>
         </div>
