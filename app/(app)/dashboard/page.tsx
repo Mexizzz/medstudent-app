@@ -79,17 +79,17 @@ export default async function DashboardPage() {
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-4 shrink-0">
-            <div className="text-center">
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="hidden sm:block text-center">
               <p className="text-2xl font-bold">{streakInfo.currentStreak}</p>
               <p className="text-white/60 text-xs">day streak</p>
             </div>
-            <div className="w-px h-10 bg-white/20" />
-            <div className="text-center">
+            <div className="hidden sm:block w-px h-10 bg-white/20" />
+            <div className="hidden sm:block text-center">
               <p className="text-2xl font-bold">{xpProgress.totalXp.toLocaleString()}</p>
               <p className="text-white/60 text-xs">total XP</p>
             </div>
-            <div className="w-px h-10 bg-white/20" />
+            <div className="hidden sm:block w-px h-10 bg-white/20" />
             <SkellyWidget
               streak={streakInfo.currentStreak}
               todayComplete={streakInfo.todayComplete}

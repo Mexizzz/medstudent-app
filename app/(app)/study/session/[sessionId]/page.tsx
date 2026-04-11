@@ -9,9 +9,19 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, X, Loader2, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
 import { AddToFolderButton } from '@/components/study/AddToFolderButton';
-import { cn, ACTIVITY_LABELS, subjectColor } from '@/lib/utils';
+import { cn, ACTIVITY_LABELS, subjectColor, durationLabel } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Question } from '@/db/schema';
+
+async function fireMilestoneConfetti(type: 'levelup' | 'streak') {
+  const { default: confetti } = await import('canvas-confetti');
+  if (type === 'levelup') {
+    confetti({ particleCount: 150, spread: 90, origin: { y: 0.4 }, colors: ['#8b5cf6', '#6d28d9', '#fbbf24', '#fff'] });
+    setTimeout(() => confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } }), 350);
+  } else {
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.5 }, colors: ['#f97316', '#fbbf24', '#fff'] });
+  }
+}
 
 interface SessionResponse {
   questionId: string;
@@ -42,6 +52,9 @@ interface SessionResult {
 export default function SessionPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = use(params);
   const router = useRouter();
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const timerSecs = searchParams ? parseInt(searchParams.get('timerSecs') ?? '0') : 0;
+  const timedMode = timerSecs > 0;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +63,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
   const [responses, setResponses] = useState<SessionResponse[]>([]);
   const [result, setResult] = useState<SessionResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const startTime = useRef(Date.now());
   const questionStartTime = useRef(Date.now());
 
@@ -89,6 +103,35 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
     }]);
     setAnswered(true);
   }
+
+  // Countdown timer for timed mode
+  useEffect(() => {
+    if (!timedMode || answered || !current) return;
+    setTimeLeft(timerSecs);
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(interval);
+          // Auto-answer as wrong when time runs out
+          if (!answered) handleAnswer(false, '', undefined, undefined);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [currentIndex, timedMode, answered]);
+
+  // Keyboard shortcut: Enter advances to next when answered
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!answered || submitting) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'Enter') handleNext();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [answered, submitting, isLast, responses]);
 
   async function handleExplain() {
     if (explainOpen) { setExplainOpen(false); return; }
@@ -138,11 +181,27 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
           })),
         });
         if (data.xpEarned) {
-          const { xpEarned, xpProgress } = data;
-          toast.success(
-            `+${xpEarned} XP earned! ${xpProgress?.rank?.badge ?? ''} ${xpProgress?.rank?.title ?? ''}`,
-            { duration: 5000 }
-          );
+          const { xpEarned, xpProgress, rankChanged } = data;
+          if (rankChanged) {
+            fireMilestoneConfetti('levelup');
+            toast.success(
+              `LEVEL UP! ${xpProgress?.rank?.badge ?? ''} ${xpProgress?.rank?.title ?? ''} — +${xpEarned} XP`,
+              { duration: 7000 }
+            );
+          } else {
+            toast.success(
+              `+${xpEarned} XP earned! ${xpProgress?.rank?.badge ?? ''} ${xpProgress?.rank?.title ?? ''}`,
+              { duration: 4000 }
+            );
+          }
+        }
+        // Streak milestone celebration
+        if (data.streakInfo?.currentStreak) {
+          const s = data.streakInfo.currentStreak;
+          if ([7, 14, 30, 60, 100].includes(s)) {
+            fireMilestoneConfetti('streak');
+            toast.success(`🔥 ${s}-day streak! You're unstoppable.`, { duration: 6000 });
+          }
         }
       } catch {}
       setSubmitting(false);
@@ -193,9 +252,28 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
         <div className="flex-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
             <span>{currentIndex + 1} / {questions.length}</span>
-            <span>{Math.round(progress)}%</span>
+            {timedMode && timeLeft !== null && !answered ? (
+              <span className={cn(
+                'font-bold tabular-nums px-2 py-0.5 rounded-md transition-colors',
+                timeLeft <= 5 ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 animate-pulse' :
+                timeLeft <= 10 ? 'bg-orange-100 text-orange-600 dark:bg-orange-500/20' :
+                'bg-muted text-muted-foreground'
+              )}>
+                ⏱ {timeLeft}s
+              </span>
+            ) : (
+              <span>{Math.round(progress)}%</span>
+            )}
           </div>
           <Progress value={progress} className="h-2" />
+          {timedMode && timeLeft !== null && !answered && (
+            <div className="h-1 mt-1 rounded-full bg-muted overflow-hidden">
+              <div
+                className={cn('h-full rounded-full transition-all duration-1000', timeLeft <= 5 ? 'bg-red-500' : timeLeft <= 10 ? 'bg-orange-500' : 'bg-blue-500')}
+                style={{ width: `${(timeLeft / timerSecs) * 100}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -267,20 +345,23 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
 
       {/* Next button */}
       {answered && (
-        <Button
-          onClick={handleNext}
-          disabled={submitting}
-          className="w-full gap-2 py-5"
-          size="lg"
-        >
-          {submitting ? (
-            <><Loader2 className="w-4 h-4 animate-spin" />Saving...</>
-          ) : isLast ? (
-            'Finish Session'
-          ) : (
-            <><span>Next Question</span><ArrowRight className="w-4 h-4" /></>
-          )}
-        </Button>
+        <div className="space-y-1">
+          <Button
+            onClick={handleNext}
+            disabled={submitting}
+            className="w-full gap-2 py-5"
+            size="lg"
+          >
+            {submitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin" />Saving...</>
+            ) : isLast ? (
+              'Finish Session'
+            ) : (
+              <><span>Next Question</span><ArrowRight className="w-4 h-4" /></>
+            )}
+          </Button>
+          <p className="text-center text-[10px] text-muted-foreground/50">Press Enter to continue · 1-4 to pick answer</p>
+        </div>
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Loader2, Brain, Play, Tag, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Brain, Play, Tag, ChevronDown, ChevronUp, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { ACTIVITY_LABELS, subjectColor, cn } from '@/lib/utils';
 
@@ -44,6 +44,8 @@ function StudyPageContent() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]); // empty = all
   const [topicsLoading, setTopicsLoading]   = useState(false);
   const [showTopics, setShowTopics]         = useState(false);
+  const [timedMode, setTimedMode]           = useState(false);
+  const [timerSecs, setTimerSecs]           = useState(30);
 
   useEffect(() => {
     fetch('/api/content')
@@ -103,7 +105,8 @@ function StudyPageContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      router.push(`/study/session/${data.sessionId}`);
+      const qs = timedMode ? `?timerSecs=${timerSecs}` : '';
+      router.push(`/study/session/${data.sessionId}${qs}`);
     } catch (err) {
       toast.error(String(err));
       setStarting(false);
@@ -297,6 +300,47 @@ function StudyPageContent() {
                 step={5}
                 onValueChange={([v]) => setCount(v)}
               />
+            </CardContent>
+          </Card>
+
+          {/* ── Timed mode ── */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Timer className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-medium">Timed Mode</span>
+                  <span className="text-xs text-muted-foreground">Simulate exam pressure</span>
+                </div>
+                <button
+                  onClick={() => setTimedMode(v => !v)}
+                  className={cn(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    timedMode ? 'bg-orange-500' : 'bg-muted'
+                  )}
+                >
+                  <span className={cn('inline-block h-4 w-4 rounded-full bg-white shadow transition-transform', timedMode ? 'translate-x-6' : 'translate-x-1')} />
+                </button>
+              </div>
+              {timedMode && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">Seconds per question</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {[15, 30, 45, 60, 90].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setTimerSecs(s)}
+                        className={cn(
+                          'text-sm px-3 py-1.5 rounded-lg border font-medium transition-colors',
+                          timerSecs === s ? 'bg-orange-500 text-white border-orange-500' : 'bg-card border-border hover:border-orange-300 text-muted-foreground'
+                        )}
+                      >
+                        {s}s
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,24 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
   ].filter(o => o.text);
 
   const isCorrect = submitted && selected === question.correctAnswer;
+  const keyMap: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (submitted) return;
+      const mapped = keyMap[e.key];
+      if (mapped && options.find(o => o.key === mapped)) {
+        setSelected(mapped);
+      }
+      if ((e.key === 'Enter' || e.key === ' ') && selected) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   function handleSubmit() {
     if (!selected) return;

@@ -163,9 +163,11 @@ export async function POST(
       await db.insert(userXp).values({ id: nanoid(), userId, totalXp: xpEarned, updatedAt: xpNow });
     }
     const xpRows = await db.select().from(userXp).where(eq(userXp.userId, userId));
+    const prevXpProgress = getXpProgress((xpRows[0]?.totalXp ?? xpEarned) - xpEarned);
     const xpProgress = getXpProgress(xpRows[0]?.totalXp ?? xpEarned);
+    const rankChanged = xpProgress.rank.level > prevXpProgress.rank.level;
 
-    return NextResponse.json({ score, correctCount, totalAnswered, xpEarned, xpProgress });
+    return NextResponse.json({ score, correctCount, totalAnswered, xpEarned, xpProgress, rankChanged });
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
