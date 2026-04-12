@@ -1,15 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { HeroPlayer } from '@/components/animations/HeroPlayer';
-import { AnimatedStatsBar } from '@/components/animations/StatsCounter';
-import { AnimatedSteps } from '@/components/animations/AnimatedSteps';
-import { AnimatedPricingCards } from '@/components/animations/AnimatedPricingCards';
-import { AnimatedTestimonials } from '@/components/animations/AnimatedTestimonials';
-import { AnimatedFeatureCards } from '@/components/animations/AnimatedFeatureCards';
-import { HeroNoisePlayer } from '@/components/animations/NoisePlayer';
 import {
-  Zap, ArrowRight, CheckCircle2, MessageCircle,
-  Heart, Sparkles, Crown, Check, X, ChevronDown, Globe
+  Brain, BookOpen, Users, BarChart2, GraduationCap,
+  Mic, Zap, ArrowRight, CheckCircle2, MessageCircle, Target,
+  FlaskConical, XCircle, Lightbulb, CalendarDays, UserPlus, Heart, Sparkles,
+  Crown, Check, X, ChevronDown, Star, TrendingUp, Globe
 } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -84,8 +79,7 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-slate-800 dark:to-slate-900">
-        <HeroNoisePlayer />
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-sm font-semibold mb-6 border border-emerald-200 dark:border-emerald-800">
             <Sparkles className="w-4 h-4" />
             Start free — Upgrade anytime
@@ -118,16 +112,27 @@ export default function LandingPage() {
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Your data stays yours</span>
           </div>
-
-          {/* Hero Animation */}
-          <div className="mt-14 max-w-2xl mx-auto">
-            <HeroPlayer />
-          </div>
         </div>
       </section>
 
       {/* Stats Bar */}
-      <AnimatedStatsBar />
+      <section className="bg-blue-900 dark:bg-blue-950">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
+            {[
+              { value: '10,000+', label: 'Questions Generated' },
+              { value: '50+', label: 'Countries' },
+              { value: '4.8★', label: 'Average Rating' },
+              { value: 'Free', label: 'To Get Started' },
+            ].map(({ value, label }) => (
+              <div key={label}>
+                <p className="text-2xl sm:text-3xl font-extrabold text-white">{value}</p>
+                <p className="text-sm mt-1 text-blue-300">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Problem / Solution */}
       <section className="py-16 sm:py-20 border-t border-slate-200 dark:border-slate-700">
@@ -138,7 +143,33 @@ export default function LandingPage() {
               You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong className="text-slate-900 dark:text-white">actually learning</strong>.
             </p>
           </div>
-          <AnimatedSteps />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                step: '1',
+                title: 'Upload Anything',
+                desc: 'Paste your lecture notes, upload PDFs, or drop a YouTube link. MedStudy reads and understands your content in seconds.',
+              },
+              {
+                step: '2',
+                title: 'AI Creates Your Study Material',
+                desc: 'Get MCQs, fill-in-the-blank questions, short answers, clinical cases, and summaries — all generated from YOUR specific material.',
+              },
+              {
+                step: '3',
+                title: 'Study, Review, Improve',
+                desc: 'Take quizzes, review wrong answers, track your weak topics, and watch your scores climb. The AI adapts to what you need most.',
+              },
+            ].map(({ step, title, desc }) => (
+              <div key={step} className="text-center">
+                <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mx-auto mb-5 shadow-lg shadow-blue-500/20">
+                  {step}
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -151,7 +182,30 @@ export default function LandingPage() {
               Every tool you need in one place — no switching between apps.
             </p>
           </div>
-          <AnimatedFeatureCards />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { icon: Brain, title: 'AI Question Generator', desc: 'Upload any content and instantly get MCQs, fill-in-the-blank, and short answer questions. Each set is unique to your material.', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+              { icon: GraduationCap, title: 'AI Tutor Chat', desc: 'Chat with a personalized AI tutor that knows your weak topics, reviews your wrong answers, and explains concepts clearly.', color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
+              { icon: BarChart2, title: 'Smart Analytics', desc: 'Detailed dashboards showing accuracy by topic, study streaks, time spent, and progress trends over weeks.', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+              { icon: Users, title: 'Study Rooms', desc: 'Create or join live rooms with study timers, group chat, and see how long everyone has been studying.', color: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' },
+              { icon: Mic, title: 'Voice Chat', desc: 'Built-in voice calls in study rooms. Room creators can mute participants. Study together from anywhere.', color: 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' },
+              { icon: FlaskConical, title: 'Exam Simulation', desc: 'Simulate real exam conditions with timed sessions, randomized question pools, and detailed score breakdowns.', color: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
+              { icon: XCircle, title: 'Wrong Answer Review', desc: 'All your mistakes in one place. Quiz yourself specifically on questions you got wrong until you master them.', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+              { icon: CalendarDays, title: 'Study Planner', desc: 'Set goals, track daily study time, and build consistent habits with streak tracking and XP rewards.', color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
+              { icon: UserPlus, title: 'Friends & Messaging', desc: "Add classmates, send direct messages, and motivate each other. See your friends' ranks and progress.", color: 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400' },
+              { icon: Lightbulb, title: 'AI Lessons', desc: 'AI-generated lesson summaries and breakdowns of complex topics, personalized to your content.', color: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-500' },
+              { icon: Target, title: 'Weakness Targeting', desc: 'The AI identifies your weakest topics and creates targeted drill sessions to close knowledge gaps.', color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' },
+              { icon: BookOpen, title: 'Content Library', desc: 'All your uploaded materials organized in one place. Generate new question sets from any source anytime.', color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' },
+            ].map(({ icon: Icon, title, desc, color }) => (
+              <div key={title} className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-all group bg-white dark:bg-slate-800">
+                <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold mb-1.5 text-slate-900 dark:text-white">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -208,7 +262,41 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Loved by Medical Students Worldwide</h2>
           </div>
-          <AnimatedTestimonials />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "MedStudy completely changed how I revise. I upload my lecture slides and have a full MCQ set ready in 30 seconds. My USMLE Step 1 score improved massively.",
+                name: 'Sarah K.',
+                role: 'Year 3 Medical Student, USMLE Prep',
+                stars: 5,
+              },
+              {
+                quote: "The AI tutor actually knows what I got wrong. It's like having a personal tutor available at 2am before my PLAB exam. The study rooms are amazing too.",
+                name: 'James O.',
+                role: 'PLAB Candidate, UK',
+                stars: 5,
+              },
+              {
+                quote: "I tried Anki but making cards took forever. MedStudy generates them automatically from my notes. Best free medical study app I've used. Highly recommend.",
+                name: 'Priya M.',
+                role: 'Final Year MBBS, India',
+                stars: 5,
+              },
+            ].map(({ quote, name, role, stars }) => (
+              <div key={name} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 bg-white dark:bg-slate-800">
+                <div className="flex gap-0.5 mb-4">
+                  {Array.from({ length: stars }).map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed mb-5 italic text-slate-600 dark:text-slate-300">&ldquo;{quote}&rdquo;</p>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{name}</p>
+                  <p className="text-xs mt-0.5 text-slate-400 dark:text-slate-500">{role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -226,7 +314,97 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <AnimatedPricingCards />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Free */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col bg-white dark:bg-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Free</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£0</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
+              </div>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">Perfect for getting started and trying out MedStudy.</p>
+              <ul className="space-y-3 text-sm flex-1">
+                {[
+                  { text: '50 AI questions/day', included: true },
+                  { text: '10 tutor messages/day', included: true },
+                  { text: '5 content sources', included: true },
+                  { text: 'MCQs & Flashcards', included: true },
+                  { text: 'Basic analytics', included: true },
+                  { text: 'Fill-in-the-blank', included: false },
+                  { text: 'Clinical cases', included: false },
+                  { text: 'Exam simulation', included: false },
+                ].map(item => (
+                  <li key={item.text} className="flex items-center gap-2">
+                    {item.included
+                      ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      : <X className="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600" />}
+                    <span className={item.included ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="mt-6 block text-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-600 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white">
+                Get Started Free
+              </Link>
+            </div>
+
+            {/* Pro */}
+            <div className="rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10 bg-white dark:bg-slate-800">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">Most Popular</div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£7.99</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
+              </div>
+              <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £4.99/mo billed annually</p>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">For serious students who want the full toolkit.</p>
+              <ul className="space-y-3 text-sm flex-1">
+                {[
+                  { text: '250 AI questions/day', included: true },
+                  { text: '100 tutor messages/day', included: true },
+                  { text: '50 content sources', included: true },
+                  { text: 'All question types', included: true },
+                  { text: 'AI lessons & summaries', included: true },
+                  { text: 'Fill-in-the-blank & Short answer', included: true },
+                  { text: 'Study rooms (create & join)', included: true },
+                  { text: 'Clinical cases', included: false },
+                  { text: 'Exam simulation', included: false },
+                ].map(item => (
+                  <li key={item.text} className="flex items-center gap-2">
+                    {item.included
+                      ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      : <X className="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600" />}
+                    <span className={item.included ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="mt-6 block text-center px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+                Start Pro Trial
+              </Link>
+            </div>
+
+            {/* Max */}
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col relative bg-white dark:bg-slate-800">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">Unlimited</div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Max</h3>
+              <div className="mt-3 mb-5">
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£14.99</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
+              </div>
+              <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £9.99/mo billed annually</p>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">No limits. Every feature. Total peace of mind.</p>
+              <ul className="space-y-3 text-sm flex-1">
+                {['Unlimited questions/day', 'Unlimited tutor messages', 'Unlimited sources', 'All question types', 'AI lessons & summaries', 'Clinical case generation', 'Full exam simulation lab', 'Priority support'].map(text => (
+                  <li key={text} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    <span className="text-slate-900 dark:text-white">{text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="mt-6 block text-center px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-semibold hover:from-amber-600 hover:to-orange-600 transition-colors shadow-sm">
+                Go Max
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
