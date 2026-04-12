@@ -16,6 +16,9 @@ const dbPath = path.join(dataDir, 'medstudent.db');
 
 const sqlite = new Database(dbPath);
 
+// Allow up to 10s of retries before throwing SQLITE_BUSY
+// (Railway build spawns 47 parallel workers that all open the same db file)
+sqlite.pragma('busy_timeout = 10000');
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
