@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ForceLightMode } from '@/components/ForceLightMode';
 import {
   Brain, BookOpen, Users, BarChart2, GraduationCap,
   Mic, Zap, ArrowRight, CheckCircle2, MessageCircle, Target,
@@ -55,6 +56,7 @@ const FAQS = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+      <ForceLightMode />
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
