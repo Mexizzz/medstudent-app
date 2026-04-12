@@ -277,6 +277,12 @@ export default function RootLayout({
           </>
         )}
       </head>
+      <Script
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2380490503915154"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <TooltipProvider>
