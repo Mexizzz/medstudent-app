@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { studySessions, questions, contentSources } from '@/db/schema';
-import { inArray, sql, and, isNotNull, eq } from 'drizzle-orm';
+import { inArray, sql, and, eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { requireAuth, handleAuthError } from '@/lib/auth';
+import { requireAuth, handleAuthError, AuthError } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 /** Shuffle MCQ options so the correct answer isn't always in the same position */
@@ -119,8 +119,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ sessionId, questions: shuffledPool, total: shuffledPool.length });
   } catch (error) {
-    const authErr = handleAuthError(error);
-    if (authErr) return authErr;
+    if (error instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('Session create error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
