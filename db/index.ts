@@ -23,15 +23,14 @@ sqlite.pragma('foreign_keys = ON');
 export const db = drizzle(sqlite, { schema });
 export { sqlite };
 
-// Run Drizzle migrations
-try {
-  migrate(db, { migrationsFolder: path.join(process.cwd(), 'db/migrations') });
-} catch (e) {
-  console.error('Drizzle migrate error:', e);
+// Run migrations only at runtime, not during `next build`
+// (build spawns 47 parallel workers that would all lock the same SQLite file)
+if (process.env.NEXT_PHASE !== 'phase-production-build') {
+  try {
+    migrate(db, { migrationsFolder: path.join(process.cwd(), 'db/migrations') });
+  } catch (e) {
+    console.error('Drizzle migrate error:', e);
+  }
+  // Safety net: add image_url column if migration was previously missed
+  try { sqlite.exec('ALTER TABLE questions ADD COLUMN image_url TEXT'); } catch { /* already exists */ }
 }
-
-// Safety net: apply any columns that may have been missed
-const safeAlter = (sql: string) => {
-  try { sqlite.exec(sql); } catch { /* column already exists */ }
-};
-safeAlter('ALTER TABLE questions ADD COLUMN image_url TEXT');
