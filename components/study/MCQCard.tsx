@@ -65,6 +65,17 @@ export function MCQCard({ question, onAnswer }: MCQCardProps) {
             </span>
           )}
         </div>
+        {/* Medical image (X-ray, ECG, histology etc.) */}
+        {question.imageUrl && (
+          <div className="rounded-xl overflow-hidden border border-border bg-black/5 dark:bg-white/5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={question.imageUrl}
+              alt="Medical image for this question"
+              className="w-full max-h-72 object-contain"
+            />
+          </div>
+        )}
         <p className="text-base font-medium leading-relaxed">{question.question}</p>
       </div>
 

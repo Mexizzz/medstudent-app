@@ -3,6 +3,7 @@ import { SubjectRadarChart } from '@/components/analytics/SubjectRadarChart';
 import { PerformanceLineChart } from '@/components/analytics/PerformanceLineChart';
 import { TopicBreakdownBar } from '@/components/analytics/TopicBreakdownBar';
 import { WeaknessRemediationCard } from '@/components/analytics/WeaknessRemediationCard';
+import { DownloadReportButton } from '@/components/analytics/DownloadReportButton';
 import { TrendingUp, TrendingDown, BarChart2, Target, Activity } from 'lucide-react';
 import { scoreBg, scoreColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -201,9 +202,12 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
-        <p className="text-muted-foreground text-sm mt-1">Track your performance over time</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+          <p className="text-muted-foreground text-sm mt-1">Track your performance over time</p>
+        </div>
+        <DownloadReportButton />
       </div>
 
       {byTopic.length === 0 ? (

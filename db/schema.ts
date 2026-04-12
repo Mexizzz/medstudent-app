@@ -73,6 +73,7 @@ export const questions = sqliteTable('questions', {
   teachingPoint:        text('teaching_point'),
 
   explanation: text('explanation'),
+  imageUrl:    text('image_url'),
   createdAt:   integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 

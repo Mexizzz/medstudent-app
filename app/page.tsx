@@ -54,22 +54,22 @@ const FAQS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen" style={{ background: '#ffffff', color: '#0f172a' }}>
+    <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b" style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', borderColor: '#e2e8f0' }}>
+      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md">
         <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-lg bg-gradient-to-br from-blue-800 via-blue-500 to-cyan-400">
               M
             </div>
-            <span className="font-bold text-xl" style={{ color: '#0f172a' }}>MedStudy</span>
-            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
+            <span className="font-bold text-xl text-slate-900 dark:text-white">MedStudy</span>
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 text-[10px] font-bold uppercase rounded-full tracking-wider">AI</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/blog" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Blog</Link>
-            <Link href="#pricing" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Pricing</Link>
-            <Link href="#faq" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>FAQ</Link>
-            <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors" style={{ color: '#64748b' }}>Log in</Link>
+            <Link href="/blog" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Blog</Link>
+            <Link href="#pricing" className="text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Pricing</Link>
+            <Link href="#faq" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">FAQ</Link>
+            <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Log in</Link>
             <Link href="/signup" className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
               Sign up free
             </Link>
@@ -78,16 +78,16 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)' }}>
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-slate-800 dark:to-slate-900">
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold mb-6 border border-emerald-200">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full text-sm font-semibold mb-6 border border-emerald-200 dark:border-emerald-800">
             <Sparkles className="w-4 h-4" />
             Start free — Upgrade anytime
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto" style={{ color: '#0f172a' }}>
-            The AI Study App for <span className="text-blue-600">Medical Students</span>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto text-slate-900 dark:text-white">
+            The AI Study App for <span className="text-blue-600 dark:text-blue-400">Medical Students</span>
           </h1>
-          <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: '#475569' }}>
+          <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed text-slate-600 dark:text-slate-300">
             Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly generates MCQs, flashcards, and clinical cases tailored to <em>your</em> material. Built for USMLE, PLAB, UKMLA, AMC, MCCQE, and any medical curriculum worldwide.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -99,15 +99,14 @@ export default function LandingPage() {
             </Link>
             <Link
               href="#features"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold transition-colors border hover:bg-slate-50"
-              style={{ background: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
+              className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold transition-colors border bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               See How It Works
             </Link>
           </div>
 
           {/* Trust signals */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm" style={{ color: '#64748b' }}>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free plan available</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
@@ -117,7 +116,7 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Bar */}
-      <section style={{ background: '#1e3a8a' }}>
+      <section className="bg-blue-900 dark:bg-blue-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
             {[
@@ -128,7 +127,7 @@ export default function LandingPage() {
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="text-2xl sm:text-3xl font-extrabold text-white">{value}</p>
-                <p className="text-sm mt-1" style={{ color: '#93c5fd' }}>{label}</p>
+                <p className="text-sm mt-1 text-blue-300">{label}</p>
               </div>
             ))}
           </div>
@@ -136,12 +135,12 @@ export default function LandingPage() {
       </section>
 
       {/* Problem / Solution */}
-      <section className="py-16 sm:py-20 border-t" style={{ borderColor: '#e2e8f0' }}>
+      <section className="py-16 sm:py-20 border-t border-slate-200 dark:border-slate-700">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
-            <p className="mt-4 text-lg leading-relaxed" style={{ color: '#475569' }}>
-              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong style={{ color: '#0f172a' }}>actually learning</strong>.
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Medical School Is Hard. Studying Doesn&apos;t Have to Be.</h2>
+            <p className="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+              You&apos;re drowning in lecture slides, anatomy atlases, and textbook chapters. Making your own flashcards takes hours. MedStudy does the heavy lifting so you can focus on <strong className="text-slate-900 dark:text-white">actually learning</strong>.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -166,8 +165,8 @@ export default function LandingPage() {
                 <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mx-auto mb-5 shadow-lg shadow-blue-500/20">
                   {step}
                 </div>
-                <h3 className="text-lg font-bold mb-2" style={{ color: '#0f172a' }}>{title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
+                <h3 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
               </div>
             ))}
           </div>
@@ -175,35 +174,35 @@ export default function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-16 sm:py-24" id="features" style={{ background: '#f8fafc' }}>
+      <section className="py-16 sm:py-24 bg-slate-50 dark:bg-slate-800/50" id="features">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Packed with Features Built for Med Students</h2>
-            <p className="mt-3 text-lg max-w-xl mx-auto" style={{ color: '#475569' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Packed with Features Built for Med Students</h2>
+            <p className="mt-3 text-lg max-w-xl mx-auto text-slate-600 dark:text-slate-300">
               Every tool you need in one place — no switching between apps.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: Brain, title: 'AI Question Generator', desc: 'Upload any content and instantly get MCQs, fill-in-the-blank, and short answer questions. Each set is unique to your material.', color: 'bg-blue-50 text-blue-600' },
-              { icon: GraduationCap, title: 'AI Tutor Chat', desc: 'Chat with a personalized AI tutor that knows your weak topics, reviews your wrong answers, and explains concepts clearly.', color: 'bg-violet-50 text-violet-600' },
-              { icon: BarChart2, title: 'Smart Analytics', desc: 'Detailed dashboards showing accuracy by topic, study streaks, time spent, and progress trends over weeks.', color: 'bg-emerald-50 text-emerald-600' },
-              { icon: Users, title: 'Study Rooms', desc: 'Create or join live rooms with study timers, group chat, and see how long everyone has been studying.', color: 'bg-orange-50 text-orange-600' },
-              { icon: Mic, title: 'Voice Chat', desc: 'Built-in voice calls in study rooms. Room creators can mute participants. Study together from anywhere.', color: 'bg-pink-50 text-pink-600' },
-              { icon: FlaskConical, title: 'Exam Simulation', desc: 'Simulate real exam conditions with timed sessions, randomized question pools, and detailed score breakdowns.', color: 'bg-red-50 text-red-600' },
-              { icon: XCircle, title: 'Wrong Answer Review', desc: 'All your mistakes in one place. Quiz yourself specifically on questions you got wrong until you master them.', color: 'bg-amber-50 text-amber-600' },
-              { icon: CalendarDays, title: 'Study Planner', desc: 'Set goals, track daily study time, and build consistent habits with streak tracking and XP rewards.', color: 'bg-indigo-50 text-indigo-600' },
-              { icon: UserPlus, title: 'Friends & Messaging', desc: "Add classmates, send direct messages, and motivate each other. See your friends' ranks and progress.", color: 'bg-teal-50 text-teal-600' },
-              { icon: Lightbulb, title: 'AI Lessons', desc: 'AI-generated lesson summaries and breakdowns of complex topics, personalized to your content.', color: 'bg-yellow-50 text-yellow-600' },
-              { icon: Target, title: 'Weakness Targeting', desc: 'The AI identifies your weakest topics and creates targeted drill sessions to close knowledge gaps.', color: 'bg-rose-50 text-rose-600' },
-              { icon: BookOpen, title: 'Content Library', desc: 'All your uploaded materials organized in one place. Generate new question sets from any source anytime.', color: 'bg-cyan-50 text-cyan-600' },
+              { icon: Brain, title: 'AI Question Generator', desc: 'Upload any content and instantly get MCQs, fill-in-the-blank, and short answer questions. Each set is unique to your material.', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+              { icon: GraduationCap, title: 'AI Tutor Chat', desc: 'Chat with a personalized AI tutor that knows your weak topics, reviews your wrong answers, and explains concepts clearly.', color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400' },
+              { icon: BarChart2, title: 'Smart Analytics', desc: 'Detailed dashboards showing accuracy by topic, study streaks, time spent, and progress trends over weeks.', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+              { icon: Users, title: 'Study Rooms', desc: 'Create or join live rooms with study timers, group chat, and see how long everyone has been studying.', color: 'bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' },
+              { icon: Mic, title: 'Voice Chat', desc: 'Built-in voice calls in study rooms. Room creators can mute participants. Study together from anywhere.', color: 'bg-pink-50 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400' },
+              { icon: FlaskConical, title: 'Exam Simulation', desc: 'Simulate real exam conditions with timed sessions, randomized question pools, and detailed score breakdowns.', color: 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' },
+              { icon: XCircle, title: 'Wrong Answer Review', desc: 'All your mistakes in one place. Quiz yourself specifically on questions you got wrong until you master them.', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+              { icon: CalendarDays, title: 'Study Planner', desc: 'Set goals, track daily study time, and build consistent habits with streak tracking and XP rewards.', color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' },
+              { icon: UserPlus, title: 'Friends & Messaging', desc: "Add classmates, send direct messages, and motivate each other. See your friends' ranks and progress.", color: 'bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400' },
+              { icon: Lightbulb, title: 'AI Lessons', desc: 'AI-generated lesson summaries and breakdowns of complex topics, personalized to your content.', color: 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-500' },
+              { icon: Target, title: 'Weakness Targeting', desc: 'The AI identifies your weakest topics and creates targeted drill sessions to close knowledge gaps.', color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' },
+              { icon: BookOpen, title: 'Content Library', desc: 'All your uploaded materials organized in one place. Generate new question sets from any source anytime.', color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400' },
             ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="rounded-xl border p-5 hover:shadow-md transition-all group" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
+              <div key={title} className="rounded-xl border border-slate-200 dark:border-slate-700 p-5 hover:shadow-md transition-all group bg-white dark:bg-slate-800">
                 <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-base font-semibold mb-1.5" style={{ color: '#0f172a' }}>{title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
+                <h3 className="text-base font-semibold mb-1.5 text-slate-900 dark:text-white">{title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
               </div>
             ))}
           </div>
@@ -211,20 +210,20 @@ export default function LandingPage() {
       </section>
 
       {/* Comparison vs Anki / Osmosis */}
-      <section className="py-16 sm:py-20 border-t" style={{ borderColor: '#e2e8f0' }}>
+      <section className="py-16 sm:py-20 border-t border-slate-200 dark:border-slate-700">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>How MedStudy Compares</h2>
-            <p className="mt-3 text-lg" style={{ color: '#64748b' }}>See why medical students are switching to MedStudy</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">How MedStudy Compares</h2>
+            <p className="mt-3 text-lg text-slate-500 dark:text-slate-400">See why medical students are switching to MedStudy</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr style={{ background: '#f8fafc' }}>
-                  <th className="text-left px-4 py-3 font-semibold rounded-tl-xl" style={{ color: '#0f172a', borderBottom: '2px solid #e2e8f0' }}>Feature</th>
-                  <th className="px-4 py-3 font-bold text-blue-600 text-center" style={{ background: '#eff6ff', borderBottom: '2px solid #3b82f6' }}>MedStudy ✦</th>
-                  <th className="px-4 py-3 font-semibold text-center" style={{ color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>Anki</th>
-                  <th className="px-4 py-3 font-semibold text-center rounded-tr-xl" style={{ color: '#64748b', borderBottom: '2px solid #e2e8f0' }}>Osmosis</th>
+                <tr className="bg-slate-50 dark:bg-slate-800">
+                  <th className="text-left px-4 py-3 font-semibold rounded-tl-xl text-slate-900 dark:text-white border-b-2 border-slate-200 dark:border-slate-600">Feature</th>
+                  <th className="px-4 py-3 font-bold text-blue-600 dark:text-blue-400 text-center bg-blue-50 dark:bg-blue-900/20 border-b-2 border-blue-500">MedStudy ✦</th>
+                  <th className="px-4 py-3 font-semibold text-center text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-600">Anki</th>
+                  <th className="px-4 py-3 font-semibold text-center rounded-tr-xl text-slate-500 dark:text-slate-400 border-b-2 border-slate-200 dark:border-slate-600">Osmosis</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,16 +237,16 @@ export default function LandingPage() {
                   ['Wrong answer drill sessions', true, true, true],
                   ['Analytics & progress tracking', true, false, true],
                 ].map(([feat, ms, anki, osm]) => (
-                  <tr key={String(feat)} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td className="px-4 py-3 font-medium" style={{ color: '#0f172a' }}>{feat}</td>
-                    <td className="px-4 py-3 text-center" style={{ background: '#f0f7ff' }}>
-                      {ms ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span style={{ color: '#cbd5e1' }}>✗</span>}
+                  <tr key={String(feat)} className="border-b border-slate-100 dark:border-slate-700/50">
+                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{feat}</td>
+                    <td className="px-4 py-3 text-center bg-blue-50/50 dark:bg-blue-900/10">
+                      {ms ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span className="text-slate-300 dark:text-slate-600">✗</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {anki ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span style={{ color: '#cbd5e1' }}>✗</span>}
+                      {anki ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span className="text-slate-300 dark:text-slate-600">✗</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {osm ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span style={{ color: '#cbd5e1' }}>✗</span>}
+                      {osm ? <span className="text-emerald-500 font-bold text-base">✓</span> : <span className="text-slate-300 dark:text-slate-600">✗</span>}
                     </td>
                   </tr>
                 ))}
@@ -258,10 +257,10 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 sm:py-20" style={{ background: '#f8fafc' }}>
+      <section className="py-16 sm:py-20 bg-slate-50 dark:bg-slate-800/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold" style={{ color: '#0f172a' }}>Loved by Medical Students Worldwide</h2>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Loved by Medical Students Worldwide</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
@@ -284,16 +283,16 @@ export default function LandingPage() {
                 stars: 5,
               },
             ].map(({ quote, name, role, stars }) => (
-              <div key={name} className="rounded-2xl border p-6" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
+              <div key={name} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 bg-white dark:bg-slate-800">
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: stars }).map((_, i) => (
                     <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm leading-relaxed mb-5 italic" style={{ color: '#475569' }}>&ldquo;{quote}&rdquo;</p>
+                <p className="text-sm leading-relaxed mb-5 italic text-slate-600 dark:text-slate-300">&ldquo;{quote}&rdquo;</p>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: '#0f172a' }}>{name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>{role}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{name}</p>
+                  <p className="text-xs mt-0.5 text-slate-400 dark:text-slate-500">{role}</p>
                 </div>
               </div>
             ))}
@@ -302,28 +301,28 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="py-16 sm:py-24" id="pricing" style={{ background: '#ffffff' }}>
+      <section className="py-16 sm:py-24 bg-white dark:bg-slate-900" id="pricing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-semibold mb-4 border border-blue-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold mb-4 border border-blue-200 dark:border-blue-800">
               <Crown className="w-3.5 h-3.5" />
               Simple Pricing
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Choose Your Plan</h2>
-            <p className="mt-3 text-lg max-w-xl mx-auto" style={{ color: '#64748b' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Choose Your Plan</h2>
+            <p className="mt-3 text-lg max-w-xl mx-auto text-slate-500 dark:text-slate-400">
               Start free and upgrade as you need more power. Every plan includes core AI study features.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Free */}
-            <div className="rounded-2xl border p-6 flex flex-col" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
-              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Free</h3>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col bg-white dark:bg-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Free</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£0</span>
-                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£0</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
               </div>
-              <p className="text-sm mb-6" style={{ color: '#64748b' }}>Perfect for getting started and trying out MedStudy.</p>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">Perfect for getting started and trying out MedStudy.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
                   { text: '50 AI questions/day', included: true },
@@ -338,26 +337,26 @@ export default function LandingPage() {
                   <li key={item.text} className="flex items-center gap-2">
                     {item.included
                       ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      : <X className="w-4 h-4 flex-shrink-0" style={{ color: '#cbd5e1' }} />}
-                    <span style={{ color: item.included ? '#0f172a' : '#94a3b8' }}>{item.text}</span>
+                      : <X className="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600" />}
+                    <span className={item.included ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>{item.text}</span>
                   </li>
                 ))}
               </ul>
-              <Link href="/signup" className="mt-6 block text-center px-6 py-2.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-slate-50" style={{ color: '#0f172a', borderColor: '#e2e8f0' }}>
+              <Link href="/signup" className="mt-6 block text-center px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-600 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white">
                 Get Started Free
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10" style={{ background: '#ffffff' }}>
+            <div className="rounded-2xl border-2 border-blue-500 p-6 flex flex-col relative shadow-lg shadow-blue-500/10 bg-white dark:bg-slate-800">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">Most Popular</div>
-              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Pro</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£7.99</span>
-                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£7.99</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
               </div>
-              <p className="text-xs mb-1" style={{ color: '#64748b' }}>or £4.99/mo billed annually</p>
-              <p className="text-sm mb-6" style={{ color: '#64748b' }}>For serious students who want the full toolkit.</p>
+              <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £4.99/mo billed annually</p>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">For serious students who want the full toolkit.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {[
                   { text: '250 AI questions/day', included: true },
@@ -373,8 +372,8 @@ export default function LandingPage() {
                   <li key={item.text} className="flex items-center gap-2">
                     {item.included
                       ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      : <X className="w-4 h-4 flex-shrink-0" style={{ color: '#cbd5e1' }} />}
-                    <span style={{ color: item.included ? '#0f172a' : '#94a3b8' }}>{item.text}</span>
+                      : <X className="w-4 h-4 flex-shrink-0 text-slate-300 dark:text-slate-600" />}
+                    <span className={item.included ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}>{item.text}</span>
                   </li>
                 ))}
               </ul>
@@ -384,20 +383,20 @@ export default function LandingPage() {
             </div>
 
             {/* Max */}
-            <div className="rounded-2xl border p-6 flex flex-col relative" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-6 flex flex-col relative bg-white dark:bg-slate-800">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">Unlimited</div>
-              <h3 className="text-lg font-bold" style={{ color: '#0f172a' }}>Max</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Max</h3>
               <div className="mt-3 mb-5">
-                <span className="text-4xl font-extrabold" style={{ color: '#0f172a' }}>£14.99</span>
-                <span className="ml-1" style={{ color: '#64748b' }}>/month</span>
+                <span className="text-4xl font-extrabold text-slate-900 dark:text-white">£14.99</span>
+                <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
               </div>
-              <p className="text-xs mb-1" style={{ color: '#64748b' }}>or £9.99/mo billed annually</p>
-              <p className="text-sm mb-6" style={{ color: '#64748b' }}>No limits. Every feature. Total peace of mind.</p>
+              <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £9.99/mo billed annually</p>
+              <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">No limits. Every feature. Total peace of mind.</p>
               <ul className="space-y-3 text-sm flex-1">
                 {['Unlimited questions/day', 'Unlimited tutor messages', 'Unlimited sources', 'All question types', 'AI lessons & summaries', 'Clinical case generation', 'Full exam simulation lab', 'Priority support'].map(text => (
                   <li key={text} className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span style={{ color: '#0f172a' }}>{text}</span>
+                    <span className="text-slate-900 dark:text-white">{text}</span>
                   </li>
                 ))}
               </ul>
@@ -410,35 +409,35 @@ export default function LandingPage() {
       </section>
 
       {/* We Listen Section */}
-      <section className="py-16 sm:py-20" style={{ background: '#f1f5f9' }}>
+      <section className="py-16 sm:py-20 bg-slate-100 dark:bg-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-sm font-semibold mb-4 border border-rose-200">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-full text-sm font-semibold mb-4 border border-rose-200 dark:border-rose-800">
                 <Heart className="w-3.5 h-3.5" />
                 Built With Students
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold leading-tight" style={{ color: '#0f172a' }}>Your Voice Shapes MedStudy</h2>
-              <p className="mt-4 text-lg leading-relaxed" style={{ color: '#475569' }}>
+              <h2 className="text-3xl sm:text-4xl font-bold leading-tight text-slate-900 dark:text-white">Your Voice Shapes MedStudy</h2>
+              <p className="mt-4 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 We&apos;re not just building <em>for</em> medical students — we&apos;re building <em>with</em> you. Every feature request, bug report, and suggestion from our users is reviewed and prioritized.
               </p>
-              <p className="mt-3 text-lg leading-relaxed" style={{ color: '#475569' }}>
+              <p className="mt-3 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 Have an idea that would make your study life easier? Tell us. We actively implement student requests and ship improvements every week.
               </p>
             </div>
             <div className="space-y-4">
               {[
-                { icon: MessageCircle, title: 'Request Features', desc: "Want something new? Suggest it directly and we'll prioritize it based on student demand.", color: 'bg-blue-50 text-blue-600' },
-                { icon: Zap, title: 'Weekly Updates', desc: 'We ship new features and improvements every week based on real student feedback.', color: 'bg-amber-50 text-amber-600' },
-                { icon: Heart, title: 'Student-First Design', desc: 'Every decision is made with one question: does this help students learn better?', color: 'bg-rose-50 text-rose-600' },
+                { icon: MessageCircle, title: 'Request Features', desc: "Want something new? Suggest it directly and we'll prioritize it based on student demand.", color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+                { icon: Zap, title: 'Weekly Updates', desc: 'We ship new features and improvements every week based on real student feedback.', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500' },
+                { icon: Heart, title: 'Student-First Design', desc: 'Every decision is made with one question: does this help students learn better?', color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400' },
               ].map(({ icon: Icon, title, desc, color }) => (
-                <div key={title} className="flex gap-4 p-5 rounded-xl border" style={{ background: '#ffffff', borderColor: '#e2e8f0' }}>
+                <div key={title} className="flex gap-4 p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80">
                   <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold mb-1" style={{ color: '#0f172a' }}>{title}</h3>
-                    <p className="text-sm leading-relaxed" style={{ color: '#64748b' }}>{desc}</p>
+                    <h3 className="font-semibold mb-1 text-slate-900 dark:text-white">{title}</h3>
+                    <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -448,20 +447,20 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 sm:py-24" id="faq" style={{ background: '#ffffff' }}>
+      <section className="py-16 sm:py-24 bg-white dark:bg-slate-900" id="faq">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#0f172a' }}>Frequently Asked Questions</h2>
-            <p className="mt-3 text-lg" style={{ color: '#64748b' }}>Everything you need to know about MedStudy</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Frequently Asked Questions</h2>
+            <p className="mt-3 text-lg text-slate-500 dark:text-slate-400">Everything you need to know about MedStudy</p>
           </div>
           <div className="space-y-4">
             {FAQS.map(({ q, a }) => (
-              <details key={q} className="group rounded-xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
-                <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer select-none font-semibold" style={{ color: '#0f172a', background: '#f8fafc' }}>
+              <details key={q} className="group rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer select-none font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800">
                   <span>{q}</span>
-                  <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform group-open:rotate-180" style={{ color: '#64748b' }} />
+                  <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform group-open:rotate-180 text-slate-500 dark:text-slate-400" />
                 </summary>
-                <div className="px-5 py-4 text-sm leading-relaxed" style={{ color: '#475569', background: '#ffffff' }}>
+                <div className="px-5 py-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900">
                   {a}
                 </div>
               </details>
@@ -471,13 +470,13 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 sm:py-28" style={{ background: '#1e3a8a' }}>
+      <section className="py-20 sm:py-28 bg-blue-900 dark:bg-blue-950">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             Stop Wasting Hours Making Flashcards.<br />
-            <span style={{ color: '#93c5fd' }}>Let AI Do It in Seconds.</span>
+            <span className="text-blue-300">Let AI Do It in Seconds.</span>
           </h2>
-          <p className="mt-5 text-lg max-w-xl mx-auto" style={{ color: '#bfdbfe' }}>
+          <p className="mt-5 text-lg max-w-xl mx-auto text-blue-200">
             Sign up free and start generating questions in seconds. Your exams won&apos;t wait, and neither should you.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -489,41 +488,40 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="flex items-center gap-2 px-6 py-4 rounded-xl text-lg font-medium transition-colors hover:bg-blue-800"
-              style={{ color: '#93c5fd' }}
+              className="flex items-center gap-2 px-6 py-4 rounded-xl text-lg font-medium transition-colors hover:bg-blue-800 text-blue-300"
             >
               Already have an account? Log in
             </Link>
           </div>
-          <p className="mt-5 text-sm" style={{ color: '#93c5fd' }}>
+          <p className="mt-5 text-sm text-blue-300">
             Free plan available. No credit card required. Upgrade anytime.
           </p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-8" style={{ background: '#f1f5f9', borderColor: '#e2e8f0' }}>
+      <footer className="border-t border-slate-200 dark:border-slate-700 py-8 bg-slate-100 dark:bg-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-xs" style={{ background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%)' }}>
+              <div className="w-6 h-6 rounded-md flex items-center justify-center text-white font-black text-xs bg-gradient-to-br from-blue-800 via-blue-500 to-cyan-400">
                 M
               </div>
-              <span className="font-semibold" style={{ color: '#0f172a' }}>MedStudy</span>
-              <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold uppercase rounded tracking-wider">AI</span>
+              <span className="font-semibold text-slate-900 dark:text-white">MedStudy</span>
+              <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-[9px] font-bold uppercase rounded tracking-wider">AI</span>
             </div>
-            <div className="flex items-center gap-4 text-sm" style={{ color: '#64748b' }}>
+            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <Link href="/login" className="hover:text-blue-600 transition-colors">Log in</Link>
               <Link href="/signup" className="hover:text-blue-600 transition-colors">Sign up free</Link>
               <Link href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
               <Link href="#faq" className="hover:text-blue-600 transition-colors">FAQ</Link>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-4 border-t" style={{ borderColor: '#e2e8f0' }}>
-            <p className="text-sm" style={{ color: '#64748b' }}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               &copy; {new Date().getFullYear()} MedStudy. Built with care for medical students everywhere.
             </p>
-            <p className="text-xs flex items-center gap-1" style={{ color: '#94a3b8' }}>
+            <p className="text-xs flex items-center gap-1 text-slate-400 dark:text-slate-500">
               <Globe className="w-3 h-3" /> Available worldwide · USMLE · PLAB · UKMLA · AMC · MCCQE
             </p>
           </div>

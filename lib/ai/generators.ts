@@ -1,4 +1,4 @@
-import { groq, MODEL, FALLBACK_MODEL } from './client';
+import { groq, getGroq, MODEL, FALLBACK_MODEL } from './client';
 import { chunkText } from '../utils';
 import {
   MCQ_SYSTEM, mcqUserPrompt,
@@ -300,3 +300,62 @@ export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
   // Flatten in order (Promise.all preserves order)
   return results.flat();
 }
+
+// Vision model — Groq's multimodal Llama 4 for image-based question generation
+const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+
+export async function generateMCQsFromImage(
+  imageBase64: string,
+  mimeType: string,
+  count: number,
+  subject: string,
+  difficulty: string,
+): Promise<GeneratedMCQ[]> {
+  const systemPrompt = `You are a medical educator creating exam-style MCQs from medical images (X-rays, ECGs, histology slides, anatomy diagrams, lab results).
+
+Analyze the image carefully and generate ${count} high-quality MCQ(s).
+Return ONLY valid JSON: { "questions": [...] }
+
+Each question:
+{
+  "question": "Based on this [image type], what is the most likely diagnosis/finding/next step?",
+  "optionA": "...",
+  "optionB": "...",
+  "optionC": "...",
+  "optionD": "...",
+  "correctAnswer": "A"|"B"|"C"|"D",
+  "explanation": "Detailed explanation referencing specific image findings",
+  "difficulty": "${difficulty}",
+  "topic": "relevant medical topic"
+}
+
+Make questions clinically relevant. Reference specific features visible in the image.`;
+
+  const response = await getGroq().chat.completions.create({
+    model: VISION_MODEL,
+    temperature: 0.2,
+    max_tokens: 4096,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: `data:${mimeType};base64,${imageBase64}` },
+          },
+          {
+            type: 'text',
+            text: `Generate ${count} MCQ(s) about this medical image. Subject: ${subject}. Difficulty: ${difficulty}.`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const content = response.choices[0]?.message?.content ?? '{}';
+  const parsed = JSON.parse(content) as { questions: GeneratedMCQ[] };
+  return parsed.questions ?? [];
+}
+
