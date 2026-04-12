@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActivityRouter } from '@/components/study/ActivityRouter';
 import { SessionSummary } from '@/components/study/SessionSummary';
+import { QuestionTransition } from '@/components/study/QuestionTransition';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
@@ -301,11 +302,13 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
       </div>
 
       {/* Question card */}
-      <Card key={current.id} className="shadow-sm">
-        <CardContent className="p-5">
-          <ActivityRouter question={current} onAnswer={handleAnswer} />
-        </CardContent>
-      </Card>
+      <QuestionTransition transitionKey={currentIndex}>
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <ActivityRouter question={current} onAnswer={handleAnswer} />
+          </CardContent>
+        </Card>
+      </QuestionTransition>
 
       {/* Explain Like a Professor */}
       {answered && (current.type === 'mcq' || current.type === 'clinical_case' || current.type === 'flashcard') && (

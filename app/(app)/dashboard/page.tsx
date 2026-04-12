@@ -16,6 +16,8 @@ import { eq } from 'drizzle-orm';
 import { TierBadge, TierGlow } from '@/components/ui/TierBadge';
 import { WeakAutoQuizCard } from '@/components/dashboard/WeakAutoQuizCard';
 import { SkellyWidget } from '@/components/dashboard/SkellyWidget';
+import { StreakCelebrationOverlay } from '@/components/animations/StreakCelebrationOverlay';
+import { DashboardNoisePlayer } from '@/components/animations/NoisePlayer';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +63,9 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+    <div className="relative p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+      <StreakCelebrationOverlay streakCount={streakInfo.currentStreak} todayComplete={streakInfo.todayComplete} />
+      <DashboardNoisePlayer />
       {/* Hero Banner */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 text-white"

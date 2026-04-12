@@ -103,12 +103,16 @@ function StudyPageContent() {
           planId: planId ?? undefined,
         }),
       });
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Server error (${res.status}) — please try again`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || 'Failed to start session');
       const qs = timedMode ? `?timerSecs=${timerSecs}` : '';
       router.push(`/study/session/${data.sessionId}${qs}`);
     } catch (err) {
-      toast.error(String(err));
+      toast.error(err instanceof Error ? err.message : 'Failed to start session');
       setStarting(false);
     }
   }

@@ -3,9 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock, RotateCcw, Home, BookOpen, ChevronDown, ChevronUp, List } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, RotateCcw, Home, BookOpen, ChevronDown, ChevronUp, List, Share2, Download, Image } from 'lucide-react';
 import Link from 'next/link';
 import { cn, durationLabel } from '@/lib/utils';
+import { ResultPlayer } from '@/components/animations/ResultPlayer';
+import { SkellyPlayer } from '@/components/animations/SkellyPlayer';
 
 interface SessionResult {
   score: number;
@@ -335,6 +337,52 @@ function SkellyReaction({ score, skelly }: { score: number; skelly: string }) {
   );
 }
 
+// ── Share + Badge section ─────────────────────────────────────────────────────
+function ShareSection({ score, tier, correctCount, totalAnswered }: { score: number; tier: string; correctCount: number; totalAnswered: number }) {
+  const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const text = `I scored ${score}% (${correctCount}/${totalAnswered}) on MedStudy! 🧠 ${tier} — study smarter at medstudy.space`;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      await navigator.share({ text }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleDownloadBadge = async () => {
+    setDownloading(true);
+    try {
+      const url = `/api/badge?score=${score}&tier=${encodeURIComponent(tier)}&correct=${correctCount}&total=${totalAnswered}`;
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `medstudy-${tier.toLowerCase()}-${score}.png`;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch { /* ignore */ }
+    setDownloading(false);
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <Button variant="outline" className="gap-2" onClick={handleDownloadBadge} disabled={downloading}>
+        <Image className="w-4 h-4" />
+        {downloading ? 'Generating…' : 'Download Badge'}
+      </Button>
+      <Button variant="outline" className="gap-2" onClick={handleShare}>
+        <Share2 className="w-4 h-4" />
+        {copied ? 'Copied!' : 'Share Result'}
+      </Button>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
   const { score, correctCount, totalAnswered, durationSeconds } = result;
@@ -343,8 +391,21 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
   const tier = getTier(score);
   const [quote] = useState(() => pickQuote(tier));
   const [showReplay, setShowReplay] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(score >= 60);
 
-  useConfetti(score);
+  useConfetti(showCelebration ? 0 : score); // delay confetti until after celebration
+
+  if (showCelebration) {
+    return (
+      <ResultPlayer
+        score={score}
+        tier={tier.label}
+        correctCount={correctCount}
+        totalAnswered={totalAnswered}
+        onDone={() => setShowCelebration(false)}
+      />
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -360,7 +421,7 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
 
           {/* Skelly + ring side by side */}
           <div className="flex items-center justify-center gap-6">
-            <SkellyReaction score={score} skelly={tier.skelly} />
+            <SkellyPlayer score={score} size={120} />
             <ScoreRing score={score} color={tier.color} size={130} />
           </div>
 
@@ -471,6 +532,9 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
           </Link>
         </Button>
       </div>
+
+      {/* Share + Badge */}
+      <ShareSection score={score} tier={tier.label} correctCount={correctCount} totalAnswered={totalAnswered} />
     </div>
   );
 }
