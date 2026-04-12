@@ -159,7 +159,7 @@ export default function BrainBattlePage() {
     fetch('/api/content')
       .then((r) => r.json())
       .then((d) => {
-        const raw: ContentSource[] = d.sources || [];
+        const raw: ContentSource[] = Array.isArray(d) ? d : (d.sources || []);
         const s: ContentSource[] = raw
           .filter((src) => src.id)
           .map((src) => ({
