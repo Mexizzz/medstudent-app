@@ -305,7 +305,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
       <QuestionTransition transitionKey={currentIndex}>
         <Card className="shadow-sm">
           <CardContent className="p-5">
-            <ActivityRouter question={current} onAnswer={handleAnswer} />
+            <ActivityRouter key={current.id} question={current} onAnswer={handleAnswer} />
           </CardContent>
         </Card>
       </QuestionTransition>
