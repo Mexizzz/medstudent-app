@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { TrialBanner } from "@/components/layout/TrialBanner";
 
 export default function AppLayout({
   children,
@@ -9,6 +10,7 @@ export default function AppLayout({
     <>
       <Sidebar />
       <div className="lg:pl-56 pt-14 lg:pt-0">
+        <TrialBanner />
         <main className="min-h-screen">
           {children}
         </main>

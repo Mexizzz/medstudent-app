@@ -133,6 +133,18 @@ export async function getUserTier(userId: string): Promise<SubscriptionTier> {
   });
   if (!user) return 'free';
 
+  // If trial has expired, lazily downgrade to free
+  if (user.subscriptionStatus === 'trial' && user.subscriptionEndsAt) {
+    if (new Date() > user.subscriptionEndsAt) {
+      await db.update(users)
+        .set({ subscriptionTier: 'free', subscriptionStatus: 'active' })
+        .where(eq(users.id, userId));
+      return 'free';
+    }
+    // Trial still active — return the stored tier (max)
+    return (user.subscriptionTier as SubscriptionTier) || 'free';
+  }
+
   // If subscription is canceled and past the end date, revert to free
   if (user.subscriptionStatus === 'canceled' && user.subscriptionEndsAt) {
     if (new Date() > user.subscriptionEndsAt) return 'free';

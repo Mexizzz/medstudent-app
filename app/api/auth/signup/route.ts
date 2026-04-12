@@ -27,11 +27,16 @@ export async function POST(req: NextRequest) {
     const id = nanoid();
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
     db.insert(users).values({
       id,
       email: email.toLowerCase().trim(),
       passwordHash,
       name: name?.trim() || null,
+      subscriptionTier: 'max',
+      subscriptionStatus: 'trial',
+      subscriptionEndsAt: trialEndsAt,
       createdAt: new Date(),
     }).run();
 

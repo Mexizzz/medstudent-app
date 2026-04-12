@@ -30,7 +30,7 @@ const FAQS = [
   },
   {
     q: 'Is MedStudy free to use?',
-    a: 'Yes — MedStudy has a generous free plan with question generation, AI tutor access, study sessions, and analytics. No credit card required. Pro (£7.99/mo) and Max (£14.99/mo) plans unlock additional features like unlimited questions, exam simulation, and clinical case generation.',
+    a: 'Yes — every new account gets 7 days of Max access completely free, no credit card required. After the trial you stay on a generous free plan, or upgrade to Pro (£7.99/mo) or Max (£14.99/mo) to keep unlimited access.',
   },
   {
     q: 'What types of questions can MedStudy generate?',
@@ -73,8 +73,9 @@ export default function LandingPage() {
             <Link href="#pricing" className="text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Pricing</Link>
             <Link href="#faq" className="hidden sm:block text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">FAQ</Link>
             <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Log in</Link>
-            <Link href="/signup" className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors shadow-sm">
-              Sign up free
+            <Link href="/signup" className="text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 text-amber-300" />
+              Join free — Max trial
             </Link>
           </div>
         </nav>
@@ -83,9 +84,9 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white">
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-20 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold mb-6 border border-emerald-200">
-            <Sparkles className="w-4 h-4" />
-            Start free — Upgrade anytime
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-violet-100 to-indigo-100 text-indigo-700 rounded-full text-sm font-bold mb-6 border border-indigo-200 shadow-sm">
+            <Crown className="w-4 h-4 text-amber-500" />
+            Join free — 7 days Max access included
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto text-slate-900">
             The AI Study App for <span className="text-blue-600">Medical Students</span>
@@ -94,15 +95,16 @@ export default function LandingPage() {
             Upload your lectures, notes, or textbooks — MedStudy&apos;s AI instantly generates MCQs, flashcards, and clinical cases tailored to <em>your</em> material. Built for USMLE, PLAB, UKMLA, AMC, MCCQE, and any medical curriculum worldwide.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/signup" className="flex items-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl text-base font-semibold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/25">
-              Start Studying for Free <ArrowRight className="w-4 h-4" />
+            <Link href="/signup" className="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-base font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-indigo-500/30">
+              <Crown className="w-4 h-4 text-amber-300" />
+              Start Free — 7 Days Max
             </Link>
             <Link href="#features" className="flex items-center gap-2 px-6 py-3.5 rounded-xl text-base font-semibold transition-colors border bg-white text-slate-900 border-slate-200 hover:bg-slate-50">
               See How It Works
             </Link>
           </div>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free plan available</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> 7 days Max — completely free</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant access</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Your data stays yours</span>
