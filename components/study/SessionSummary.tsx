@@ -7,7 +7,6 @@ import { CheckCircle2, XCircle, Clock, RotateCcw, Home, BookOpen, ChevronDown, C
 import Link from 'next/link';
 import { cn, durationLabel } from '@/lib/utils';
 import { ResultPlayer } from '@/components/animations/ResultPlayer';
-import { SkellyPlayer } from '@/components/animations/SkellyPlayer';
 
 interface SessionResult {
   score: number;
@@ -421,7 +420,7 @@ export function SessionSummary({ result, onRetry }: SessionSummaryProps) {
 
           {/* Skelly + ring side by side */}
           <div className="flex items-center justify-center gap-6">
-            <SkellyPlayer score={score} size={120} />
+            <SkellyReaction score={score} skelly={tier.skelly} />
             <ScoreRing score={score} color={tier.color} size={130} />
           </div>
 
