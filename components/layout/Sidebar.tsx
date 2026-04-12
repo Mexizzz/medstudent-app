@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, FolderOpen, Crown, HelpCircle, Gauge, Trophy, TrendingUp, Palette, ChevronRight
+  LayoutDashboard, BookOpen, Brain, BarChart2, CalendarDays, XCircle, GraduationCap, Lightbulb, Target, FlaskConical, NotebookPen, Users, Flame, LogOut, User, Menu, X, UserPlus, MessageCircle, FolderOpen, Crown, HelpCircle, Gauge, Trophy, TrendingUp, Palette, ChevronRight, Swords
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { XpProgress } from '@/lib/xp';
@@ -38,6 +38,7 @@ const navSections: NavSection[] = [
       { href: '/exam',          label: 'Exam Mode',      icon: GraduationCap },
       { href: '/exam-lab',      label: 'Exam Lab',       icon: FlaskConical },
       { href: '/wrong-answers', label: 'Wrong Answers',  icon: XCircle },
+      { href: '/game',          label: 'Brain Battle',   icon: Swords },
     ],
   },
   {
