@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import * as schema from './schema';
 import path from 'path';
 import fs from 'fs';
@@ -21,3 +22,10 @@ sqlite.pragma('foreign_keys = ON');
 
 export const db = drizzle(sqlite, { schema });
 export { sqlite };
+
+// Run migrations on startup (ensures Railway and any environment stays up to date)
+try {
+  migrate(db, { migrationsFolder: path.join(process.cwd(), 'db/migrations') });
+} catch (e) {
+  console.error('Migration error:', e);
+}
