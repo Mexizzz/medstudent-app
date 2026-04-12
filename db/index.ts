@@ -23,9 +23,15 @@ sqlite.pragma('foreign_keys = ON');
 export const db = drizzle(sqlite, { schema });
 export { sqlite };
 
-// Run migrations on startup (ensures Railway and any environment stays up to date)
+// Run Drizzle migrations
 try {
   migrate(db, { migrationsFolder: path.join(process.cwd(), 'db/migrations') });
 } catch (e) {
-  console.error('Migration error:', e);
+  console.error('Drizzle migrate error:', e);
 }
+
+// Safety net: apply any columns that may have been missed
+const safeAlter = (sql: string) => {
+  try { sqlite.exec(sql); } catch { /* column already exists */ }
+};
+safeAlter('ALTER TABLE questions ADD COLUMN image_url TEXT');
