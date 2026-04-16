@@ -9,6 +9,7 @@ import {
   Crown, TrendingUp, Zap, FileText, FolderOpen, UserPlus, Stethoscope,
   Search, ChevronDown, ChevronUp, BarChart2, Calendar, Eye, EyeOff,
   Send, CheckCircle2, Clock, XCircle, ArrowLeft, Lightbulb, Trash2,
+  Youtube, FileIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,6 +53,13 @@ interface AdminData {
     id: string; userId: string; userEmail: string; userName: string;
     title: string; description: string; category: string; status: string;
     adminNote: string | null; upvoteCount: number; createdAt: string;
+  }[];
+  sources: {
+    id: string; userId: string; userEmail: string; userName: string;
+    type: string; title: string; subject: string | null; topic: string | null;
+    wordCount: number | null; pageCount: number | null;
+    youtubeUrl: string | null; status: string | null;
+    createdAt: string | number; questionCount: number;
   }[];
 }
 
@@ -118,7 +126,7 @@ export default function AdminPage() {
   const [sortBy, setSortBy] = useState<'date' | 'sessions' | 'questions' | 'score'>('date');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'sessions' | 'rooms' | 'support' | 'requests'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'library' | 'sessions' | 'rooms' | 'support' | 'requests'>('overview');
   const [showPasswords, setShowPasswords] = useState(false);
   const [changingTier, setChangingTier] = useState<string | null>(null);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
@@ -129,6 +137,11 @@ export default function AdminPage() {
   const [requestFilter, setRequestFilter] = useState<'all' | 'open' | 'planned' | 'in_progress' | 'done' | 'declined'>('all');
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
   const [requestNote, setRequestNote] = useState('');
+  const [sourceSearch, setSourceSearch] = useState('');
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<string>('all');
+  const [sourceUserFilter, setSourceUserFilter] = useState<string | null>(null);
+  const [viewingSource, setViewingSource] = useState<{ id: string; title: string; type: string; rawText: string | null; filePath: string | null; youtubeUrl: string | null; wordCount: number | null; pageCount: number | null } | null>(null);
+  const [sourceLoading, setSourceLoading] = useState(false);
 
   async function handleChangeTier(userId: string, tier: string) {
     try {
@@ -238,6 +251,24 @@ export default function AdminPage() {
     }
   }
 
+  async function handleViewSource(sourceId: string) {
+    setSourceLoading(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'viewSource', sourceId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error); return; }
+      setViewingSource(json);
+    } catch {
+      toast.error('Failed to load source');
+    } finally {
+      setSourceLoading(false);
+    }
+  }
+
   async function handleResetPassword(userId: string) {
     if (!newPass || newPass.length < 4) { toast.error('Min 4 characters'); return; }
     try {
@@ -326,6 +357,7 @@ export default function AdminPage() {
   const tabs = [
     { id: 'overview' as const, label: 'Overview', icon: BarChart2 },
     { id: 'users' as const, label: 'Users', icon: Users },
+    { id: 'library' as const, label: 'Library', icon: BookOpen },
     { id: 'sessions' as const, label: 'Sessions', icon: Activity },
     { id: 'rooms' as const, label: 'Rooms', icon: MessageSquare },
     { id: 'support' as const, label: 'Support', icon: HelpCircle, badge: stats.openTickets },
@@ -712,6 +744,142 @@ export default function AdminPage() {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── LIBRARY TAB ── */}
+        {activeTab === 'library' && (
+          <div className="space-y-4">
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Input
+                  value={sourceSearch}
+                  onChange={e => setSourceSearch(e.target.value)}
+                  placeholder="Search by title, user email, subject..."
+                  className="pl-10 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500"
+                />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {['all', 'pdf', 'text', 'youtube', 'image', 'lecture'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setSourceTypeFilter(t)}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      sourceTypeFilter === t ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {t === 'all' ? `All (${data.sources.length})` : t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {sourceUserFilter && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSourceUserFilter(null)}
+                  className="text-slate-400 border-slate-700 hover:bg-slate-800"
+                >
+                  Clear user filter ✕
+                </Button>
+              )}
+            </div>
+
+            {(() => {
+              const filteredSources = data.sources.filter(s => {
+                const matchSearch = !sourceSearch ||
+                  s.title?.toLowerCase().includes(sourceSearch.toLowerCase()) ||
+                  s.userEmail?.toLowerCase().includes(sourceSearch.toLowerCase()) ||
+                  s.subject?.toLowerCase().includes(sourceSearch.toLowerCase()) ||
+                  s.topic?.toLowerCase().includes(sourceSearch.toLowerCase());
+                const matchType = sourceTypeFilter === 'all' || s.type === sourceTypeFilter;
+                const matchUser = !sourceUserFilter || s.userId === sourceUserFilter;
+                return matchSearch && matchType && matchUser;
+              });
+              return (
+                <>
+                  <p className="text-xs text-slate-500">{filteredSources.length} upload{filteredSources.length !== 1 ? 's' : ''} shown</p>
+                  <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-slate-500 text-xs uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left">Title</th>
+                            <th className="px-4 py-3 text-left">Type</th>
+                            <th className="px-4 py-3 text-left">User</th>
+                            <th className="px-4 py-3 text-left">Subject / Topic</th>
+                            <th className="px-4 py-3 text-left">Size</th>
+                            <th className="px-4 py-3 text-left">Questions</th>
+                            <th className="px-4 py-3 text-left">Uploaded</th>
+                            <th className="px-4 py-3 text-left">View</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/50">
+                          {filteredSources.map(s => {
+                            const TypeIcon = s.type === 'youtube' ? Youtube : s.type === 'pdf' ? FileText : FileIcon;
+                            const typeColors: Record<string, string> = {
+                              pdf: 'text-rose-400',
+                              youtube: 'text-red-400',
+                              text: 'text-blue-400',
+                              image: 'text-purple-400',
+                              lecture: 'text-amber-400',
+                            };
+                            return (
+                              <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
+                                <td className="px-4 py-3">
+                                  <p className="font-medium text-white text-sm truncate max-w-[220px]" title={s.title}>{s.title || '(untitled)'}</p>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 ${typeColors[s.type] || 'text-slate-400'}`}>
+                                    <TypeIcon className="w-3 h-3" />
+                                    {s.type}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <button
+                                    onClick={() => setSourceUserFilter(s.userId)}
+                                    className="text-left hover:text-indigo-400 transition-colors"
+                                    title="Filter by this user"
+                                  >
+                                    <p className="text-xs text-slate-300">{s.userName || s.userEmail?.split('@')[0]}</p>
+                                    <p className="text-[10px] text-slate-500">{s.userEmail}</p>
+                                  </button>
+                                </td>
+                                <td className="px-4 py-3 text-xs">
+                                  {s.subject && <p className="text-slate-300">{s.subject}</p>}
+                                  {s.topic && <p className="text-slate-500">{s.topic}</p>}
+                                  {!s.subject && !s.topic && <span className="text-slate-600">—</span>}
+                                </td>
+                                <td className="px-4 py-3 text-xs text-slate-400">
+                                  {s.wordCount ? `${s.wordCount.toLocaleString()} words` : s.pageCount ? `${s.pageCount} pages` : '—'}
+                                </td>
+                                <td className="px-4 py-3 text-slate-300">{s.questionCount}</td>
+                                <td className="px-4 py-3 text-slate-500 text-xs">{timeAgo(s.createdAt)}</td>
+                                <td className="px-4 py-3">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs gap-1 text-slate-400 hover:text-white"
+                                    onClick={() => handleViewSource(s.id)}
+                                    disabled={sourceLoading}
+                                  >
+                                    <Eye className="w-3 h-3" /> View
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {filteredSources.length === 0 && (
+                            <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">No uploads found</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -1117,6 +1285,55 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* ── SOURCE VIEWER MODAL ── */}
+      {viewingSource && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setViewingSource(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-800 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="font-semibold text-white truncate">{viewingSource.title}</h2>
+                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                  <span className="capitalize">{viewingSource.type}</span>
+                  {viewingSource.wordCount != null && <span>{viewingSource.wordCount.toLocaleString()} words</span>}
+                  {viewingSource.pageCount != null && <span>{viewingSource.pageCount} pages</span>}
+                  {viewingSource.youtubeUrl && (
+                    <a href={viewingSource.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline truncate max-w-[280px]">
+                      {viewingSource.youtubeUrl}
+                    </a>
+                  )}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setViewingSource(null)}
+                className="text-slate-400 hover:text-white shrink-0"
+              >
+                ✕ Close
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {viewingSource.rawText ? (
+                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                  {viewingSource.rawText}
+                </pre>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-12">
+                  No raw text stored for this source
+                  {viewingSource.filePath && <><br /><span className="text-xs text-slate-600">File path: {viewingSource.filePath}</span></>}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -138,6 +138,28 @@ export async function POST(req: NextRequest) {
       .from(contentSources)
       .groupBy(contentSources.type);
 
+    // All library uploads (sources) with user info — newest first
+    const allSources = await db
+      .select({
+        id: contentSources.id,
+        userId: contentSources.userId,
+        userEmail: sql<string>`(SELECT email FROM users WHERE id = ${contentSources.userId})`,
+        userName: sql<string>`(SELECT coalesce(name, email) FROM users WHERE id = ${contentSources.userId})`,
+        type: contentSources.type,
+        title: contentSources.title,
+        subject: contentSources.subject,
+        topic: contentSources.topic,
+        wordCount: contentSources.wordCount,
+        pageCount: contentSources.pageCount,
+        youtubeUrl: contentSources.youtubeUrl,
+        status: contentSources.status,
+        createdAt: contentSources.createdAt,
+        questionCount: sql<number>`(SELECT count(*) FROM questions WHERE source_id = ${contentSources.id})`,
+      })
+      .from(contentSources)
+      .orderBy(desc(contentSources.createdAt))
+      .limit(500);
+
     // Support tickets
     const allTickets = await db
       .select({
@@ -209,6 +231,7 @@ export async function POST(req: NextRequest) {
       rooms,
       tickets: allTickets,
       featureRequests: allRequests,
+      sources: allSources,
     });
   } catch (error) {
     console.error('Admin API error:', error);
@@ -322,6 +345,26 @@ export async function PUT(req: NextRequest) {
     if (body.action === 'deleteRequest') {
       await db.delete(featureRequests).where(eq(featureRequests.id, body.requestId));
       return NextResponse.json({ success: true });
+    }
+
+    // View a source's content (raw text of an upload)
+    if (body.action === 'viewSource') {
+      if (!body.sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 });
+      const src = await db.query.contentSources.findFirst({
+        where: (s, { eq: e }) => e(s.id, body.sourceId),
+      });
+      if (!src) return NextResponse.json({ error: 'Source not found' }, { status: 404 });
+      return NextResponse.json({
+        id: src.id,
+        title: src.title,
+        type: src.type,
+        rawText: src.rawText,
+        filePath: src.filePath,
+        youtubeUrl: src.youtubeUrl,
+        wordCount: src.wordCount,
+        pageCount: src.pageCount,
+        createdAt: src.createdAt,
+      });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
