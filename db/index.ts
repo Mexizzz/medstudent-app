@@ -36,4 +36,16 @@ if (process.env.NEXT_PHASE !== 'phase-production-build') {
   }
   // Safety net: add image_url column if migration was previously missed
   try { sqlite.exec('ALTER TABLE questions ADD COLUMN image_url TEXT'); } catch { /* already exists */ }
+  // Create focus_sessions table for Study Space feature
+  try {
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      started_at INTEGER NOT NULL,
+      last_heartbeat_at INTEGER,
+      ended_at INTEGER,
+      total_seconds INTEGER NOT NULL DEFAULT 0
+    )`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_user_started ON focus_sessions(user_id, started_at)`);
+  } catch { /* already exists */ }
 }
