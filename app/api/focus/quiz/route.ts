@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
+import { sqlite } from '@/db';
 import { requireAuth, AuthError } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,6 @@ Respond ONLY with valid JSON in this exact format:
     let raw: string | null = null;
     try { raw = await callGroq(MODEL); }
     catch { raw = await callGroq(FALLBACK_MODEL); }
-
     if (!raw) throw new Error('No response from AI');
 
     const parsed = JSON.parse(raw);
@@ -58,5 +58,29 @@ Respond ONLY with valid JSON in this exact format:
     if (error instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     console.error('Quiz generation error:', error);
     return NextResponse.json({ error: 'Failed to generate question' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { userId } = await requireAuth();
+    const { sessionId, correct } = await req.json();
+    if (!sessionId) return NextResponse.json({ error: 'sessionId required' }, { status: 400 });
+
+    const s = sqlite.prepare('SELECT user_id, ended_at FROM focus_sessions WHERE id = ?').get(sessionId) as any;
+    if (!s || s.user_id !== userId) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (s.ended_at) return NextResponse.json({ error: 'Ended' }, { status: 400 });
+
+    sqlite.prepare(`
+      UPDATE focus_sessions SET
+        total_quizzes = total_quizzes + 1,
+        correct_quizzes = correct_quizzes + ?
+      WHERE id = ?
+    `).run(correct ? 1 : 0, sessionId);
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (error instanceof AuthError) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

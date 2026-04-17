@@ -7,6 +7,7 @@ import { DuckComposition, type DuckState } from './DuckComposition';
 interface Props {
   state: DuckState;
   size?: number;
+  streak?: number;
 }
 
 function getCSSVar(name: string): string {
@@ -41,7 +42,7 @@ function resolveColor(varName: string): string {
   return '#6366f1';
 }
 
-export function DuckPlayer({ state, size = 160 }: Props) {
+export function DuckPlayer({ state, size = 160, streak = 0 }: Props) {
   const [colors, setColors] = useState({ primary: '#6366f1', bg: 'transparent' });
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export function DuckPlayer({ state, size = 160 }: Props) {
   return (
     <Player
       component={DuckComposition}
-      inputProps={{ state, primaryColor: colors.primary, bgColor: colors.bg }}
+      inputProps={{ state, primaryColor: colors.primary, bgColor: colors.bg, streak }}
       durationInFrames={300}
       fps={30}
       compositionWidth={160}

@@ -8,6 +8,7 @@ interface Props {
   state: DuckState;
   primaryColor: string;
   bgColor: string;
+  streak?: number;
 }
 
 function Duck({
@@ -19,6 +20,7 @@ function Duck({
   primaryColor,
   bookVisible = false,
   capBounce = 0,
+  streak = 0,
 }: {
   bodyY?: number;
   wingAngle?: number;
@@ -28,6 +30,7 @@ function Duck({
   primaryColor: string;
   bookVisible?: boolean;
   capBounce?: number;
+  streak?: number;
 }) {
   const duckYellow = '#F5C842';
   const duckDark = '#E8A800';
@@ -148,6 +151,32 @@ function Duck({
         />
       </g>
 
+      {/* Scarf (when streak ≥ 7) */}
+      {streak >= 7 && (
+        <g>
+          <path
+            d={`M ${cx - 18} ${cy - 6} Q ${cx} ${cy - 2} ${cx + 18} ${cy - 6} L ${cx + 20} ${cy + 2} Q ${cx} ${cy + 6} ${cx - 20} ${cy + 2} Z`}
+            fill={streak >= 30 ? '#dc2626' : streak >= 14 ? '#ea580c' : primaryColor}
+            stroke={streak >= 30 ? '#991b1b' : streak >= 14 ? '#9a3412' : primaryColor}
+            strokeWidth={0.5}
+          />
+          <rect
+            x={cx - 22} y={cy - 2}
+            width={4} height={10}
+            fill={streak >= 30 ? '#dc2626' : streak >= 14 ? '#ea580c' : primaryColor}
+          />
+          {/* fringe */}
+          {[0,1,2].map(i => (
+            <line key={i}
+              x1={cx - 22 + i * 1.3} y1={cy + 8}
+              x2={cx - 22 + i * 1.3} y2={cy + 11}
+              stroke={streak >= 30 ? '#991b1b' : streak >= 14 ? '#9a3412' : primaryColor}
+              strokeWidth={0.8}
+            />
+          ))}
+        </g>
+      )}
+
       {/* Book (when reading) */}
       {bookVisible && (
         <g>
@@ -174,7 +203,7 @@ function Duck({
   );
 }
 
-export function DuckComposition({ state, primaryColor, bgColor }: Props) {
+export function DuckComposition({ state, primaryColor, bgColor, streak = 0 }: Props) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
@@ -281,6 +310,7 @@ export function DuckComposition({ state, primaryColor, bgColor }: Props) {
           primaryColor={primaryColor}
           bookVisible={bookVisible}
           capBounce={capBounce}
+          streak={streak}
         />
       </svg>
     </AbsoluteFill>

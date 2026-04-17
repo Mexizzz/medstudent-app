@@ -48,4 +48,72 @@ if (process.env.NEXT_PHASE !== 'phase-production-build') {
     )`);
     sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_user_started ON focus_sessions(user_id, started_at)`);
   } catch { /* already exists */ }
+
+  // Study Space feature extensions
+  const addCol = (table: string, col: string, type: string) => {
+    try { sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`); } catch { /* already exists */ }
+  };
+  addCol('focus_sessions', 'topic', 'TEXT');
+  addCol('focus_sessions', 'subject', 'TEXT');
+  addCol('focus_sessions', 'goal_seconds', 'INTEGER');
+  addCol('focus_sessions', 'pomodoro', 'INTEGER DEFAULT 0');
+  addCol('focus_sessions', 'pomodoro_work', 'INTEGER DEFAULT 1500');
+  addCol('focus_sessions', 'pomodoro_break', 'INTEGER DEFAULT 300');
+  addCol('focus_sessions', 'distraction_seconds', 'INTEGER DEFAULT 0');
+  addCol('focus_sessions', 'correct_quizzes', 'INTEGER DEFAULT 0');
+  addCol('focus_sessions', 'total_quizzes', 'INTEGER DEFAULT 0');
+  addCol('focus_sessions', 'notes', 'TEXT');
+  addCol('focus_sessions', 'summary', 'TEXT');
+  addCol('focus_sessions', 'room_id', 'TEXT');
+
+  try {
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_stats (
+      user_id TEXT PRIMARY KEY,
+      current_streak INTEGER NOT NULL DEFAULT 0,
+      longest_streak INTEGER NOT NULL DEFAULT 0,
+      last_study_date TEXT,
+      freeze_tokens INTEGER NOT NULL DEFAULT 1,
+      total_xp INTEGER NOT NULL DEFAULT 0,
+      total_seconds INTEGER NOT NULL DEFAULT 0
+    )`);
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_achievements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      code TEXT NOT NULL,
+      unlocked_at INTEGER NOT NULL,
+      UNIQUE(user_id, code)
+    )`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_ach_user ON focus_achievements(user_id)`);
+
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_rooms (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      host_user_id TEXT NOT NULL,
+      max_members INTEGER NOT NULL DEFAULT 8,
+      body_double INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL
+    )`);
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_room_members (
+      room_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      joined_at INTEGER NOT NULL,
+      last_seen_at INTEGER NOT NULL,
+      PRIMARY KEY (room_id, user_id)
+    )`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_room_mem_user ON focus_room_members(user_id)`);
+
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_challenges (
+      id TEXT PRIMARY KEY,
+      from_user_id TEXT NOT NULL,
+      to_user_id TEXT NOT NULL,
+      target_seconds INTEGER NOT NULL,
+      starts_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at INTEGER NOT NULL
+    )`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_chal_to ON focus_challenges(to_user_id, status)`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_chal_from ON focus_challenges(from_user_id, status)`);
+  } catch (e) { console.error('Study Space schema error:', e); }
 }

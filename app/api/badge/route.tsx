@@ -1,7 +1,9 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const TIER_STYLES: Record<string, { bg: string; accent: string; label: string }> = {
   PERFECT:   { bg: '#1a1200', accent: '#f59e0b', label: '⭐ PERFECT' },
@@ -23,11 +25,19 @@ export async function GET(req: NextRequest) {
   const style = TIER_STYLES[tierKey] ?? TIER_STYLES['SOLID'];
   const scoreColor = style.accent;
 
-  // Fetch Inter Bold from Google Fonts
-  const fontRes = await fetch(
-    'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff'
-  );
-  const fontData = await fontRes.arrayBuffer();
+  let fontData: ArrayBuffer | null = null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const fontRes = await fetch(
+      'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff',
+      { signal: controller.signal, cache: 'force-cache' }
+    );
+    clearTimeout(timeout);
+    if (fontRes.ok) fontData = await fontRes.arrayBuffer();
+  } catch {
+    fontData = null;
+  }
 
   return new ImageResponse(
     (
@@ -123,7 +133,7 @@ export async function GET(req: NextRequest) {
     {
       width: 600,
       height: 315,
-      fonts: [{ name: 'Inter', data: fontData, weight: 900 }],
+      fonts: fontData ? [{ name: 'Inter', data: fontData, weight: 900 }] : [],
     }
   );
 }
