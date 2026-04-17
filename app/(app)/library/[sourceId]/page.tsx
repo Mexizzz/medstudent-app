@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, Youtube } from 'lucide-react';
+import { ArrowLeft, FileText, Youtube, Sparkles, Download, MessageSquare, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { subjectColor, ACTIVITY_LABELS } from '@/lib/utils';
 import { DeleteQuestionButton } from '@/components/library/DeleteQuestionButton';
@@ -88,8 +88,36 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ s
         </div>
       </div>
 
-      {/* AI Summary */}
-      {source.rawText && <AiSummaryPanel sourceId={sourceId} isPro={isPro} />}
+      {/* AI Summary entry point */}
+      {source.rawText && (
+        isPro ? (
+          <Link
+            href={`/library/${sourceId}/summarize`}
+            className="group block rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 hover:border-primary/50 hover:shadow-lg transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground flex items-center gap-2">
+                  AI Summary <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">NEW</span>
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Structured summary · chat-refine · downloadable PDF
+                </p>
+                <div className="hidden sm:flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> Refine by chat</span>
+                  <span className="flex items-center gap-1"><Download className="w-3 h-3" /> PDF export</span>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-primary shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </Link>
+        ) : (
+          <AiSummaryPanel sourceId={sourceId} isPro={isPro} />
+        )
+      )}
 
       {/* Questions summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">

@@ -116,4 +116,20 @@ if (process.env.NEXT_PHASE !== 'phase-production-build') {
     sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_chal_to ON focus_challenges(to_user_id, status)`);
     sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_chal_from ON focus_challenges(from_user_id, status)`);
   } catch (e) { console.error('Study Space schema error:', e); }
+
+  // PDF Summary + Chat Refine
+  try {
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS source_summaries (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      messages TEXT NOT NULL DEFAULT '[]',
+      version INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      UNIQUE(source_id, user_id)
+    )`);
+    sqlite.exec(`CREATE INDEX IF NOT EXISTS source_summaries_user ON source_summaries(user_id)`);
+  } catch (e) { console.error('source_summaries schema error:', e); }
 }

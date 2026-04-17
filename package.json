@@ -14,6 +14,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@lottiefiles/react-lottie-player": "^3.6.0",
+    "@react-pdf/renderer": "^4.5.1",
     "@remotion/google-fonts": "^4.0.448",
     "@remotion/noise": "^4.0.448",
     "@remotion/player": "^4.0.448",
