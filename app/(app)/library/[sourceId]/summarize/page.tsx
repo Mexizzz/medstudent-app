@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Download, Sparkles, Send, RefreshCw, Loader2,
-  FileText, MessageSquare, Check, AlertCircle, Lightbulb, Trash2,
+  FileText, MessageSquare, AlertCircle, Lightbulb, User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -94,12 +94,15 @@ export default function SummarizePage() {
   const [loading, setLoading] = useState(true);
   const [streaming, setStreaming] = useState(false);
   const [streamedText, setStreamedText] = useState('');
+  const [streamedAck, setStreamedAck] = useState('');
+  const [pendingUserMsg, setPendingUserMsg] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [refinement, setRefinement] = useState('');
   const [chatOpen, setChatOpen] = useState(true);
   const [downloading, setDownloading] = useState(false);
 
   const summaryScrollRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   async function loadExisting() {
     setLoading(true);
@@ -126,6 +129,8 @@ export default function SummarizePage() {
   async function generate(refinementText?: string) {
     setStreaming(true);
     setStreamedText('');
+    setStreamedAck('');
+    setPendingUserMsg(refinementText || null);
     setError('');
     try {
       const r = await fetch(`/api/content/${sourceId}/summary`, {
@@ -137,18 +142,26 @@ export default function SummarizePage() {
         const d = await r.json().catch(() => ({ error: 'Failed' }));
         setError(d.error || 'Failed to generate');
         setStreaming(false);
+        setPendingUserMsg(null);
         return;
       }
-      if (!r.body) { setStreaming(false); return; }
+      if (!r.body) { setStreaming(false); setPendingUserMsg(null); return; }
 
       const reader = r.body.getReader();
       const decoder = new TextDecoder();
       let acc = '';
+      const SEP = '---SUMMARY---';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
-        setStreamedText(acc);
+        const idx = acc.indexOf(SEP);
+        if (idx >= 0) {
+          setStreamedAck(acc.slice(0, idx).trim());
+          setStreamedText(acc.slice(idx + SEP.length).replace(/^\s*\n?/, ''));
+        } else {
+          setStreamedAck(acc);
+        }
       }
       setRefinement('');
       await loadExisting();
@@ -157,6 +170,8 @@ export default function SummarizePage() {
     } finally {
       setStreaming(false);
       setStreamedText('');
+      setStreamedAck('');
+      setPendingUserMsg(null);
     }
   }
 
@@ -192,15 +207,24 @@ export default function SummarizePage() {
     } catch {}
   }
 
-  const displayContent = streaming ? streamedText : (data?.summary?.content || '');
-  const hasSummary = Boolean(data?.summary?.content);
+  const savedContent = data?.summary?.content || '';
+  const displayContent = streaming
+    ? (streamedText || savedContent)
+    : savedContent;
+  const hasSummary = Boolean(savedContent);
   const messages = data?.summary?.messages || [];
 
   useEffect(() => {
-    if (summaryScrollRef.current && streaming) {
+    if (summaryScrollRef.current && streaming && streamedText) {
       summaryScrollRef.current.scrollTop = summaryScrollRef.current.scrollHeight;
     }
   }, [streamedText, streaming]);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [streamedAck, pendingUserMsg, messages.length]);
 
   if (loading) {
     return (
@@ -338,8 +362,8 @@ export default function SummarizePage() {
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-                  {messages.filter(m => m.role === 'user').length === 0 && (
+                <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                  {messages.length === 0 && !streaming && (
                     <div>
                       <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-2">Try asking for</p>
                       <div className="space-y-1.5">
@@ -358,19 +382,42 @@ export default function SummarizePage() {
                     </div>
                   )}
 
-                  {messages.filter(m => m.role === 'user').map((m, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                        <Check className="w-3 h-3" />
+                  {messages.map((m, i) => (
+                    <ChatBubble key={i} msg={m} />
+                  ))}
+
+                  {pendingUserMsg && (
+                    <ChatBubble msg={{ role: 'user', content: pendingUserMsg, ts: Date.now() }} />
+                  )}
+
+                  {streaming && (
+                    <div className="flex gap-2 items-start">
+                      <div className="w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles className="w-3.5 h-3.5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-foreground">{m.content}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+                        <div className="rounded-xl bg-primary/5 border border-primary/20 px-3 py-2">
+                          {streamedAck ? (
+                            <p className="text-xs text-foreground whitespace-pre-wrap">
+                              {streamedAck}
+                              <span className="inline-block w-1.5 h-3 bg-primary animate-pulse align-middle ml-0.5" />
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Thinking…
+                            </p>
+                          )}
+                        </div>
+                        {streamedText && (
+                          <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                            <FileText className="w-2.5 h-2.5" />
+                            Writing summary…
+                          </p>
+                        )}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="p-3 border-t border-border">
@@ -404,6 +451,36 @@ export default function SummarizePage() {
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ChatBubble({ msg }: { msg: Msg }) {
+  const isUser = msg.role === 'user';
+  const time = new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return (
+    <div className="flex gap-2 items-start">
+      <div
+        className={cn(
+          'w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5',
+          isUser ? 'bg-muted text-foreground' : 'bg-primary/15 text-primary',
+        )}
+      >
+        {isUser ? <User className="w-3.5 h-3.5" /> : <Sparkles className="w-3.5 h-3.5" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div
+          className={cn(
+            'rounded-xl px-3 py-2',
+            isUser ? 'bg-muted text-foreground' : 'bg-primary/5 border border-primary/20',
+          )}
+        >
+          <p className="text-xs text-foreground whitespace-pre-wrap">{msg.content}</p>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          {isUser ? 'You' : 'AI'} · {time}
+        </p>
       </div>
     </div>
   );
