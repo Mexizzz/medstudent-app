@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
         count,
         source.subject ?? 'Medicine',
         difficulty,
+        focusTopic,
       );
     } else {
       if (!source.rawText) return NextResponse.json({ error: 'Source has no text' }, { status: 404 });

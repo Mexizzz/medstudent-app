@@ -310,6 +310,7 @@ export async function generateMCQsFromImage(
   count: number,
   subject: string,
   difficulty: string,
+  focusTopic?: string,
 ): Promise<GeneratedMCQ[]> {
   const systemPrompt = `You are a medical educator creating exam-style MCQs from medical images (X-rays, ECGs, histology slides, anatomy diagrams, lab results).
 
@@ -347,7 +348,7 @@ Make questions clinically relevant. Reference specific features visible in the i
           },
           {
             type: 'text',
-            text: `Generate ${count} MCQ(s) about this medical image. Subject: ${subject}. Difficulty: ${difficulty}.`,
+            text: `Generate ${count} MCQ(s) about this medical image. Subject: ${subject}. Difficulty: ${difficulty}.${focusTopic ? ` Focus on: ${focusTopic}.` : ''}`,
           },
         ],
       },

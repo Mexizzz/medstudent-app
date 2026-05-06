@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { ExamProfile } from '@/db/schema';
 import type { ExamStyleAnalysis, GeneratedLabQuestion, QuestionMode } from '@/lib/exam-lab';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 const QUESTION_COUNTS = [10, 20, 30, 40, 50, 60, 70, 80] as const;
 
@@ -264,6 +265,9 @@ export default function ExamLabPage() {
   // Mobile sidebar
   const [showSidebar, setShowSidebar] = useState(false);
 
+  // Upgrade modal
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
+
   // Save
   const [saveTitle, setSaveTitle] = useState('');
   const [saving, setSaving] = useState(false);
@@ -314,7 +318,20 @@ export default function ExamLabPage() {
 
       const res = await fetch('/api/exam-lab/analyze', { method: 'POST', body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Analysis failed');
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          setUpgradeModal({
+            open: true,
+            feature: 'Exam Lab',
+            requiredTier: data.requiredTier ?? 'max',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
+        throw new Error(data.error ?? 'Analysis failed');
+      }
 
       await fetchProfiles();
       setSelectedProfile({ ...data.profile, styleAnalysis: JSON.stringify(data.profile.styleAnalysis) });
@@ -358,7 +375,20 @@ export default function ExamLabPage() {
 
       const res = await fetch('/api/exam-lab/generate', { method: 'POST', body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Generation failed');
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          setUpgradeModal({
+            open: true,
+            feature: 'Exam Lab',
+            requiredTier: data.requiredTier ?? 'max',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
+        throw new Error(data.error ?? 'Generation failed');
+      }
 
       setGeneratedQuestions(data.questions ?? []);
       setSaveTitle(`${selectedProfile.name} — ${subject || 'Study Material'}`);
@@ -872,6 +902,16 @@ export default function ExamLabPage() {
           </div>
         )}
       </main>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false })}
+        feature={upgradeModal.feature}
+        requiredTier={upgradeModal.requiredTier}
+        limitReached={upgradeModal.limitReached}
+        used={upgradeModal.used}
+        limit={upgradeModal.limit}
+      />
     </div>
   );
 }

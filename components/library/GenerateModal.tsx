@@ -100,6 +100,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
             difficulty,
             imageBase64: base64,
             imageMimeType: imageFile.type,
+            ...(focusTopic.trim() && { focusTopic: focusTopic.trim() }),
           }),
         });
         const contentType = res.headers.get('content-type') ?? '';
@@ -258,45 +259,49 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           </div>
 
           {!imageFile && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-background px-2 text-muted-foreground">or generate from text</span>
-                </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
               </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-background px-2 text-muted-foreground">or generate from text</span>
+              </div>
+            </div>
+          )}
 
-              {!isMcqPdf && (
-                <div>
-                  <Label>Difficulty</Label>
-                  <Select value={difficulty} onValueChange={setDifficulty}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+          {!isMcqPdf && (
+            <div>
+              <Label>Difficulty</Label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-              {!isMcqPdf && (
-                <div>
-                  <Label>Focus Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
-                  <Input
-                    value={focusTopic}
-                    onChange={e => setFocusTopic(e.target.value)}
-                    placeholder="e.g. Cell Membrane, Mitochondria…"
-                    className="mt-1 text-sm"
-                  />
-                  <p className="text-[11px] text-muted-foreground mt-1">Leave empty to generate from all topics</p>
-                </div>
-              )}
+          {!isMcqPdf && (
+            <div>
+              <Label>Focus Topic <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                value={focusTopic}
+                onChange={e => setFocusTopic(e.target.value)}
+                placeholder="e.g. Cell Membrane, Mitochondria…"
+                className="mt-1 text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {imageFile ? 'Hint to guide image-based MCQs' : 'Leave empty to generate from all topics'}
+              </p>
+            </div>
+          )}
 
+          {!imageFile && (
+            <>
               {isPdf && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -375,22 +380,6 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
                 </div>
               )}
             </>
-          )}
-
-          {imageFile && (
-            <div>
-              <Label>Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="easy">Easy</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="hard">Hard</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           )}
 
           <Button onClick={handleGenerate} disabled={loading} className="w-full">

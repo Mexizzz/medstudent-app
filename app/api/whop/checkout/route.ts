@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
 
     if (!planId) {
       console.error('Whop plan not found:', { planKey, envVar, value: planId, allEnv: Object.keys(process.env).filter(k => k.startsWith('WHOP')) });
-      return NextResponse.json({ error: 'Invalid plan or interval' }, { status: 400 });
+      return NextResponse.json({
+        error: `Checkout for ${plan?.toString().toUpperCase()} (${interval}) is temporarily unavailable. Please try the other interval or contact support.`,
+        missingEnv: envVar,
+      }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
