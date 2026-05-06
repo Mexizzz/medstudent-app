@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { users, usageTracking } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 // ── Types ─────────────────────────────────────────────
@@ -124,6 +124,21 @@ export const PRICING = {
 // ── Helpers ───────────────────────────────────────────
 function getToday(): string {
   return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Batch-downgrades all users whose trial has ended.
+ * Trial users with a paid subscription would already have status='active' (set by Whop webhook),
+ * so this only catches users who never converted. Safe to run frequently.
+ */
+export async function expireOldTrials(): Promise<{ downgraded: number }> {
+  const result = await db.update(users)
+    .set({ subscriptionTier: 'free', subscriptionStatus: 'active' })
+    .where(and(
+      eq(users.subscriptionStatus, 'trial'),
+      sql`${users.subscriptionEndsAt} IS NOT NULL AND ${users.subscriptionEndsAt} < unixepoch()`,
+    ));
+  return { downgraded: result.changes ?? 0 };
 }
 
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {

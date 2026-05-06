@@ -3,7 +3,8 @@ import { db } from '@/db';
 import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages, featureRequests } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { getMembership, getPlanFromWhopPlanId } from '@/lib/whop';
+import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId } from '@/lib/whop';
+import { expireOldTrials } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Mexiz1924';
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
     if (password !== ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
+
+    // Auto-cleanup: downgrade expired trials so the admin panel shows current effective tiers.
+    try { await expireOldTrials(); } catch (e) { console.error('expireOldTrials error:', e); }
 
     // Basic counts
     const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -248,6 +252,18 @@ export async function PATCH(req: NextRequest) {
     const { adminPassword } = body;
     if (adminPassword !== ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+
+    // List a user's Whop memberships by email (so admin can pick the right one)
+    if (body.action === 'findWhopMemberships') {
+      const email: string = (body.email ?? '').trim().toLowerCase();
+      if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 });
+      try {
+        const memberships = await findMembershipsByEmail(email);
+        return NextResponse.json({ memberships });
+      } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+      }
     }
 
     // Re-sync a user's subscription from Whop (used when webhook silently dropped the event)

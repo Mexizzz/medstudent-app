@@ -69,24 +69,63 @@ export interface WhopMembership {
   metadataUserId: string | null;
 }
 
+function mapMembership(data: Record<string, unknown>, fallbackId: string): WhopMembership {
+  const user = data.user as Record<string, unknown> | undefined;
+  const plan = data.plan as Record<string, unknown> | undefined;
+  const metadata = data.metadata as Record<string, unknown> | undefined;
+  return {
+    id: (data.id as string) ?? fallbackId,
+    planId: (data.plan_id as string) ?? (plan?.id as string) ?? '',
+    status: (data.status as string) ?? 'unknown',
+    expiresAt: (data.expires_at as number) ?? (data.renewal_period_end as number) ?? null,
+    email: (data.email as string) ?? (user?.email as string) ?? null,
+    metadataUserId: (metadata?.user_id as string) ?? null,
+  };
+}
+
 export async function getMembership(membershipId: string): Promise<WhopMembership> {
   const id = membershipId.replace(/^whop_/, '').trim();
-  const res = await fetch(`${WHOP_API}/memberships/${id}`, {
-    headers: { 'Authorization': `Bearer ${getApiKey()}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Whop fetch membership failed (${res.status}): ${text.slice(0, 200)}`);
+  // Try v2 first (current), then v5, then v1 (legacy). Whop has been migrating accounts.
+  const bases = [
+    'https://api.whop.com/api/v2',
+    'https://api.whop.com/api/v5',
+    'https://api.whop.com/api/v1',
+  ];
+  const errors: string[] = [];
+  for (const base of bases) {
+    const res = await fetch(`${base}/memberships/${id}`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return mapMembership(data, id);
+    }
+    const text = await res.text().catch(() => '');
+    errors.push(`${base.split('/').pop()}: ${res.status} ${text.slice(0, 120)}`);
+    // Auth failure on one version means key is bad — no point trying others
+    if (res.status === 401 || res.status === 403) break;
   }
-  const data = await res.json();
-  return {
-    id: data.id ?? id,
-    planId: data.plan_id ?? data.plan?.id ?? '',
-    status: data.status ?? 'unknown',
-    expiresAt: data.expires_at ?? data.renewal_period_end ?? null,
-    email: data.email ?? data.user?.email ?? null,
-    metadataUserId: data.metadata?.user_id ?? null,
-  };
+  throw new Error(`Whop fetch membership failed for ${id}. Tried: ${errors.join(' | ')}`);
+}
+
+export async function findMembershipsByEmail(email: string): Promise<WhopMembership[]> {
+  const e = email.trim().toLowerCase();
+  const bases = [
+    'https://api.whop.com/api/v2',
+    'https://api.whop.com/api/v5',
+    'https://api.whop.com/api/v1',
+  ];
+  for (const base of bases) {
+    const res = await fetch(`${base}/memberships?email=${encodeURIComponent(e)}`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (!res.ok) continue;
+    const json = await res.json();
+    const list = (json.data ?? json.memberships ?? []) as Record<string, unknown>[];
+    if (list.length === 0) continue;
+    return list.map(m => mapMembership(m, (m.id as string) ?? ''));
+  }
+  return [];
 }
 
 export async function cancelSubscription(membershipId: string, immediate = false): Promise<void> {

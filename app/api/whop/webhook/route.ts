@@ -2,8 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { verifyWebhookSignature, getPlanFromWhopPlanId } from '@/lib/whop';
+import { verifyWebhookSignature, getPlanFromWhopPlanId, getMembership } from '@/lib/whop';
 export const dynamic = 'force-dynamic';
+
+// Pull user_id and email from any of the paths Whop has used historically.
+function extractIdentifiers(data: Record<string, unknown>): { userId: string | null; email: string | null; membershipId: string | null; planId: string | null } {
+  const checkout = (data?.checkout ?? {}) as Record<string, unknown>;
+  const membership = (data?.membership ?? {}) as Record<string, unknown>;
+  const user = (data?.user ?? {}) as Record<string, unknown>;
+  const metadata = (data?.metadata ?? checkout?.metadata ?? membership?.metadata ?? {}) as Record<string, unknown>;
+  const userId = (metadata?.user_id as string) ?? null;
+  const email = ((data?.email as string) ?? (user?.email as string) ?? (checkout?.email as string) ?? null)?.toLowerCase().trim() || null;
+  const membershipId = (data?.id as string) ?? (membership?.id as string) ?? null;
+  const planId = (data?.plan_id as string) ?? (membership?.plan_id as string) ?? null;
+  return { userId, email, membershipId, planId };
+}
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -21,52 +34,91 @@ export async function POST(req: NextRequest) {
 
   const event = JSON.parse(rawBody);
   const eventType: string = event.type;
-  const data = event.data;
-  const metadata = data?.metadata || data?.checkout?.metadata || {};
-  const userId: string | undefined = metadata.user_id;
+  const data = event.data ?? {};
 
-  if (!userId) {
-    console.error('Whop webhook: no user_id in metadata', eventType);
-    return NextResponse.json({ received: true });
+  const { userId: metaUserId, email, membershipId, planId } = extractIdentifiers(data);
+
+  // Resolve our user: prefer metadata.user_id, fall back to email lookup.
+  let resolvedUserId: string | null = metaUserId;
+  if (!resolvedUserId && email) {
+    const u = await db.query.users.findFirst({ where: eq(users.email, email), columns: { id: true } });
+    resolvedUserId = u?.id ?? null;
+    if (resolvedUserId) {
+      console.warn(`Whop webhook: user_id missing from metadata, resolved via email ${email} -> ${resolvedUserId}`);
+    }
+  }
+
+  if (!resolvedUserId) {
+    console.error('Whop webhook: could not resolve user', { eventType, email, membershipId });
+    return NextResponse.json({ received: true, warning: 'unresolved_user' });
   }
 
   switch (eventType) {
-    case 'membership.activated': {
-      const planId = data?.plan_id || data?.plan?.id || '';
-      const plan = planId ? getPlanFromWhopPlanId(planId) : null;
+    case 'membership.activated':
+    case 'payment.succeeded':
+    case 'membership.updated':
+    case 'membership.created': {
+      // Try to use plan_id from the event; if missing, fetch the membership from Whop.
+      let effectivePlanId = planId;
+      let expiresAt: number | null = (data?.expires_at as number) ?? (data?.renewal_period_end as number) ?? null;
+      let status = (data?.status as string)?.toLowerCase() ?? 'active';
 
-      if (plan) {
-        await db.update(users).set({
-          subscriptionTier: plan.tier,
-          subscriptionStatus: 'active',
-          stripeSubscriptionId: `whop_${data?.id || ''}`,
-        }).where(eq(users.id, userId));
+      if ((!effectivePlanId || !expiresAt) && membershipId) {
+        try {
+          const m = await getMembership(membershipId);
+          effectivePlanId = effectivePlanId || m.planId;
+          expiresAt = expiresAt ?? m.expiresAt;
+          status = (m.status || status).toLowerCase();
+        } catch (e) {
+          console.error('Whop webhook: failed to fetch membership detail', e);
+        }
       }
+
+      const plan = effectivePlanId ? getPlanFromWhopPlanId(effectivePlanId) : null;
+      if (!plan) {
+        console.error('Whop webhook: unknown plan_id', { eventType, planId: effectivePlanId, userId: resolvedUserId });
+        return NextResponse.json({ received: true, warning: 'unknown_plan_id' });
+      }
+
+      const subscriptionStatus =
+        status === 'cancelled' || status === 'canceled' || status === 'completed' || status === 'expired' ? 'canceled' :
+        status === 'past_due' ? 'past_due' :
+        'active';
+
+      const finalTier = subscriptionStatus === 'canceled' ? 'free' : plan.tier;
+
+      await db.update(users).set({
+        subscriptionTier: finalTier,
+        subscriptionStatus,
+        stripeSubscriptionId: membershipId ? `whop_${membershipId}` : undefined,
+        subscriptionEndsAt: expiresAt ? new Date(expiresAt * 1000) : null,
+      }).where(eq(users.id, resolvedUserId));
+
+      console.log(`Whop webhook: ${eventType} -> user ${resolvedUserId} tier=${finalTier} status=${subscriptionStatus}`);
       break;
     }
 
-    case 'membership.deactivated': {
+    case 'membership.deactivated':
+    case 'membership.cancelled':
+    case 'membership.canceled': {
       await db.update(users).set({
         subscriptionTier: 'free',
         subscriptionStatus: 'canceled',
-      }).where(eq(users.id, userId));
-      break;
-    }
-
-    case 'payment.succeeded': {
-      // Keep user active on successful payment
-      await db.update(users).set({
-        subscriptionStatus: 'active',
-      }).where(eq(users.id, userId));
+      }).where(eq(users.id, resolvedUserId));
+      console.log(`Whop webhook: ${eventType} -> user ${resolvedUserId} downgraded to free`);
       break;
     }
 
     case 'payment.failed': {
       await db.update(users).set({
         subscriptionStatus: 'past_due',
-      }).where(eq(users.id, userId));
+      }).where(eq(users.id, resolvedUserId));
+      console.log(`Whop webhook: payment.failed -> user ${resolvedUserId} marked past_due`);
       break;
     }
+
+    default:
+      console.log(`Whop webhook: unhandled event ${eventType} for user ${resolvedUserId}`);
   }
 
   return NextResponse.json({ received: true });
