@@ -11,6 +11,22 @@ import {
 } from './prompts';
 
 // Core helper: calls Groq with JSON mode, falls back to smaller model on rate limit
+function isRateLimitMsg(msg: string): boolean {
+  return msg.includes('429')
+    || msg.includes('rate_limit')
+    || msg.includes('rate limit')
+    || msg.includes('Rate limit');
+}
+
+function isRequestTooLargeMsg(msg: string): boolean {
+  // Groq returns 413 when a single request's tokens exceed the per-minute TPM allowance.
+  return msg.includes('413') || msg.includes('Request too large') || msg.includes('tokens per minute');
+}
+
+async function sleep(ms: number) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
 async function callGroqJSON<T>(
   system: string,
   userPrompt: string,
@@ -18,46 +34,66 @@ async function callGroqJSON<T>(
 ): Promise<T> {
   for (const model of [MODEL, FALLBACK_MODEL]) {
     let content = '';
-    try {
-      const response = await groq.chat.completions.create({
-        model,
-        temperature: 0.2,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userPrompt },
-        ],
-      });
-      const finishReason = response.choices[0]?.finish_reason;
-      content = response.choices[0]?.message?.content ?? '{}';
-      if (finishReason === 'length') {
-        console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete. Content tail: ${content.slice(-300)}`);
-      }
-      const parsed = JSON.parse(content) as T;
-      // Diagnostic: log when the parsed object has an empty array property — helps diagnose
-      // "Generated 0 questions" where the model returns {questions:[]} validly.
-      if (parsed && typeof parsed === 'object') {
-        const obj = parsed as Record<string, unknown>;
-        for (const [k, v] of Object.entries(obj)) {
-          if (Array.isArray(v) && v.length === 0) {
-            console.warn(`Groq returned empty array for key "${k}" (model=${model}, finish=${finishReason}). Content head: ${content.slice(0, 300)}`);
+    // Up to 2 attempts per model so we can retry once after a brief pause when
+    // we hit TPM rate limits (Groq's TPM resets every 60s).
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await groq.chat.completions.create({
+          model,
+          temperature: 0.2,
+          max_tokens: maxTokens,
+          response_format: { type: 'json_object' },
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userPrompt },
+          ],
+        });
+        const finishReason = response.choices[0]?.finish_reason;
+        content = response.choices[0]?.message?.content ?? '{}';
+        if (finishReason === 'length') {
+          console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete. Content tail: ${content.slice(-300)}`);
+        }
+        const parsed = JSON.parse(content) as T;
+        if (parsed && typeof parsed === 'object') {
+          const obj = parsed as Record<string, unknown>;
+          for (const [k, v] of Object.entries(obj)) {
+            if (Array.isArray(v) && v.length === 0) {
+              console.warn(`Groq returned empty array for key "${k}" (model=${model}, finish=${finishReason}). Content head: ${content.slice(0, 300)}`);
+            }
           }
         }
+        return parsed;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+
+        // 413 = request too large for this model's TPM. Don't retry on the same
+        // model — it'll keep failing. Surface so the chunk loop can react.
+        if (isRequestTooLargeMsg(msg)) {
+          console.warn(`Groq request too large for ${model}: ${msg.slice(0, 200)}`);
+          throw new Error(`request_too_large: ${msg}`);
+        }
+
+        if (isRateLimitMsg(msg)) {
+          // First TPM hit: wait briefly and retry on the same model — TPM resets per minute.
+          if (attempt === 0) {
+            console.warn(`Rate limit on ${model} (attempt 1), waiting 8s and retrying`);
+            await sleep(8000);
+            continue;
+          }
+          // Still rate-limited — fall back to the smaller model.
+          if (model !== FALLBACK_MODEL) {
+            console.warn(`Rate limit on ${model}, falling back to ${FALLBACK_MODEL}`);
+            break; // break inner loop, outer loop moves to FALLBACK_MODEL
+          }
+          // Already on fallback — surface as a real error.
+          throw new Error(`rate_limit_exhausted: ${msg}`);
+        }
+
+        if (e instanceof SyntaxError) {
+          console.error(`Groq JSON parse failed (model=${model}, content length=${content.length}): ${msg}\n  Content tail: ${content.slice(-200)}`);
+        }
+        throw e;
       }
-      return parsed;
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      const isRateLimit = msg.includes('429') || msg.includes('rate limit');
-      if (isRateLimit && model !== FALLBACK_MODEL) {
-        console.warn(`Rate limit on ${model}, retrying with ${FALLBACK_MODEL}`);
-        continue;
-      }
-      // Surface JSON parse failures distinctly so silent zero-result bugs are visible
-      if (e instanceof SyntaxError) {
-        console.error(`Groq JSON parse failed (model=${model}, content length=${content.length}): ${msg}\n  Content tail: ${content.slice(-200)}`);
-      }
-      throw e;
     }
   }
   throw new Error('All models exhausted');
@@ -131,27 +167,44 @@ async function generateAcrossChunks<T>(
   generatorFn: (chunk: string, count: number, subject: string, topic: string, difficulty: string) => Promise<T[]>,
   focusTopic?: string
 ): Promise<T[]> {
-  const chunks = chunkText(rawText, 5000);
+  // 2000 words per chunk ≈ ~2700 input tokens. With ~3000 output tokens this stays
+  // safely under the 8B fallback model's 6000 TPM allowance per single request.
+  const chunks = chunkText(rawText, 2000);
   // If focusing on a specific topic, use fewer chunks (the topic content is likely in a subset)
   const perChunk = Math.ceil(totalCount / (focusTopic ? Math.min(chunks.length, 2) : chunks.length));
   const results: T[] = [];
 
+  const runChunk = async (chunk: string, needed: number) => {
+    const batch = await generatorFn(chunk, needed, subject, topic, difficulty);
+    results.push(...batch);
+  };
+
+  const handleChunkError = (e: unknown) => {
+    const msg = e instanceof Error ? e.message : String(e);
+    // Surface rate-limit / request-too-large / auth / JSON-parse — silently
+    // returning [] hides real failures.
+    if (
+      msg.includes('rate_limit_exhausted')
+      || msg.includes('request_too_large')
+      || msg.includes('429')
+      || msg.includes('413')
+      || msg.includes('401')
+      || msg.includes('403')
+      || e instanceof SyntaxError
+    ) {
+      throw e instanceof Error ? e : new Error(msg);
+    }
+    console.error('Chunk generation error:', e);
+  };
+
   for (const chunk of chunks) {
-    // Skip chunks that don't mention the focus topic (if set)
     if (focusTopic && !chunk.toLowerCase().includes(focusTopic.toLowerCase())) continue;
     const needed = Math.min(perChunk, totalCount - results.length);
     if (needed <= 0) break;
     try {
-      const batch = await generatorFn(chunk, needed, subject, topic, difficulty);
-      results.push(...batch);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      // Surface rate-limit, auth, and JSON-parse errors immediately — silently
-      // returning [] hides real bugs (e.g. response truncated at max_tokens).
-      if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403') || e instanceof SyntaxError) {
-        throw e instanceof Error ? e : new Error(msg);
-      }
-      console.error('Chunk generation error:', e);
+      await runChunk(chunk, needed);
+    } catch (e) {
+      handleChunkError(e);
     }
   }
 
@@ -161,14 +214,9 @@ async function generateAcrossChunks<T>(
       const needed = Math.min(perChunk, totalCount - results.length);
       if (needed <= 0) break;
       try {
-        const batch = await generatorFn(chunk, needed, subject, topic, difficulty);
-        results.push(...batch);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {
-          throw new Error(msg);
-        }
-        console.error('Chunk generation error:', e);
+        await runChunk(chunk, needed);
+      } catch (e) {
+        handleChunkError(e);
       }
     }
   }

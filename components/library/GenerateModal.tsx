@@ -135,13 +135,17 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
 
     setLoading(true);
 
-    const results = await Promise.allSettled(
-      selected.map(async (type) => {
-        const endpoint = type.id === 'fill_blank' ? 'fill-blank'
-          : type.id === 'short_answer' ? 'short-answer'
-          : type.id === 'clinical_case' ? 'clinical-case'
-          : type.id;
+    // Sequence the generations instead of parallel: the Groq free-tier TPM
+    // is shared across all in-flight requests, so firing 5 types at once
+    // guarantees rate-limit hits and silent zero-result responses.
+    const results: PromiseSettledResult<{ label: string; generated: number }>[] = [];
+    for (const type of selected) {
+      const endpoint = type.id === 'fill_blank' ? 'fill-blank'
+        : type.id === 'short_answer' ? 'short-answer'
+        : type.id === 'clinical_case' ? 'clinical-case'
+        : type.id;
 
+      try {
         const res = await fetch(`/api/generate/${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -171,9 +175,11 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           }
           throw new Error(data.error);
         }
-        return { label: type.label, generated: data.generated ?? 0 };
-      })
-    );
+        results.push({ status: 'fulfilled', value: { label: type.label, generated: data.generated ?? 0 } });
+      } catch (e) {
+        results.push({ status: 'rejected', reason: e instanceof Error ? e.message : String(e) });
+      }
+    }
 
     let totalGenerated = 0;
     let anyFailed = false;
