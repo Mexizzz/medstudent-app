@@ -31,7 +31,7 @@ interface AdminData {
   users: {
     id: string; email: string; name: string | null; username: string | null;
     passwordHash: string; subscriptionTier: string; subscriptionStatus: string | null;
-    stripeCustomerId: string | null; subscriptionEndsAt: string | null;
+    stripeCustomerId: string | null; stripeSubscriptionId: string | null; subscriptionEndsAt: string | null;
     createdAt: string; sessionCount: number; responseCount: number;
     sourceCount: number; questionCount: number; avgScore: number | null;
     lastActive: string | number | null;
@@ -129,6 +129,9 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'library' | 'sessions' | 'rooms' | 'support' | 'requests'>('overview');
   const [showPasswords, setShowPasswords] = useState(false);
   const [changingTier, setChangingTier] = useState<string | null>(null);
+  const [whopSyncUserId, setWhopSyncUserId] = useState<string | null>(null);
+  const [whopMembershipId, setWhopMembershipId] = useState('');
+  const [whopSyncing, setWhopSyncing] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
   const [adminReply, setAdminReply] = useState('');
@@ -165,6 +168,45 @@ export default function AdminPage() {
       setChangingTier(null);
     } catch {
       toast.error('Failed to change tier');
+    }
+  }
+
+  async function handleSyncFromWhop(email: string, userId: string) {
+    if (!whopMembershipId.trim()) { toast.error('Membership ID required'); return; }
+    setWhopSyncing(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: password,
+          action: 'syncFromWhop',
+          email,
+          membershipId: whopMembershipId.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Sync failed'); return; }
+      toast.success(`Synced: ${json.before.subscriptionTier} → ${json.after.subscriptionTier} (${json.after.subscriptionStatus})`);
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map(u => u.id === userId ? {
+            ...u,
+            subscriptionTier: json.after.subscriptionTier,
+            subscriptionStatus: json.after.subscriptionStatus,
+            stripeSubscriptionId: json.after.stripeSubscriptionId,
+            subscriptionEndsAt: json.after.subscriptionEndsAt,
+          } : u),
+        };
+      });
+      setWhopSyncUserId(null);
+      setWhopMembershipId('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Sync failed');
+    } finally {
+      setWhopSyncing(false);
     }
   }
 
@@ -722,6 +764,12 @@ export default function AdminPage() {
                                   <p className="font-mono text-slate-300 mt-0.5 break-all">{u.stripeCustomerId || '—'}</p>
                                 </div>
                                 <div>
+                                  <span className="text-slate-500">Whop Membership</span>
+                                  <p className={`font-mono mt-0.5 break-all ${u.stripeSubscriptionId ? 'text-slate-300' : 'text-amber-400'}`}>
+                                    {u.stripeSubscriptionId || '— (webhook never fired)'}
+                                  </p>
+                                </div>
+                                <div>
                                   <span className="text-slate-500">Responses</span>
                                   <p className="text-slate-300 mt-0.5">{u.responseCount.toLocaleString()}</p>
                                 </div>
@@ -730,6 +778,40 @@ export default function AdminPage() {
                                     <span className="text-slate-500">Password Hash</span>
                                     <p className="font-mono text-slate-400 mt-0.5 text-[10px] break-all">{u.passwordHash}</p>
                                   </div>
+                                )}
+                              </div>
+                              <div className="mt-3 pt-3 border-t border-slate-700/50">
+                                {whopSyncUserId === u.id ? (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs text-slate-400">Whop Membership ID:</span>
+                                    <Input
+                                      value={whopMembershipId}
+                                      onChange={e => setWhopMembershipId(e.target.value)}
+                                      placeholder="mem_xxxxxxxxxxxxx"
+                                      className="h-7 w-64 text-xs bg-slate-800 border-slate-700 text-white font-mono"
+                                      onKeyDown={e => e.key === 'Enter' && handleSyncFromWhop(u.email, u.id)}
+                                      autoFocus
+                                    />
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                                      disabled={whopSyncing}
+                                      onClick={() => handleSyncFromWhop(u.email, u.id)}
+                                    >
+                                      {whopSyncing ? 'Syncing…' : 'Sync'}
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => { setWhopSyncUserId(null); setWhopMembershipId(''); }}>Cancel</Button>
+                                    <span className="text-[10px] text-slate-500 basis-full">Find this in Whop dashboard → user → Memberships → membership ID (starts with <code className="text-slate-400">mem_</code>)</span>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
+                                    onClick={() => { setWhopSyncUserId(u.id); setWhopMembershipId(''); }}
+                                  >
+                                    <Crown className="w-3 h-3" /> Sync from Whop
+                                  </Button>
                                 )}
                               </div>
                             </td>

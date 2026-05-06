@@ -60,6 +60,35 @@ export async function createCheckout(planId: string, userId: string, userEmail: 
   return `https://whop.com${purchaseUrl}`;
 }
 
+export interface WhopMembership {
+  id: string;
+  planId: string;
+  status: string;
+  expiresAt: number | null;
+  email: string | null;
+  metadataUserId: string | null;
+}
+
+export async function getMembership(membershipId: string): Promise<WhopMembership> {
+  const id = membershipId.replace(/^whop_/, '').trim();
+  const res = await fetch(`${WHOP_API}/memberships/${id}`, {
+    headers: { 'Authorization': `Bearer ${getApiKey()}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Whop fetch membership failed (${res.status}): ${text.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return {
+    id: data.id ?? id,
+    planId: data.plan_id ?? data.plan?.id ?? '',
+    status: data.status ?? 'unknown',
+    expiresAt: data.expires_at ?? data.renewal_period_end ?? null,
+    email: data.email ?? data.user?.email ?? null,
+    metadataUserId: data.metadata?.user_id ?? null,
+  };
+}
+
 export async function cancelSubscription(membershipId: string, immediate = false): Promise<void> {
   const res = await fetch(`${WHOP_API}/memberships/${membershipId}/cancel`, {
     method: 'POST',

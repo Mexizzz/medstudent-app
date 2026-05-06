@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages, featureRequests } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { getMembership, getPlanFromWhopPlanId } from '@/lib/whop';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Mexiz1924';
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
         subscriptionTier: users.subscriptionTier,
         subscriptionStatus: users.subscriptionStatus,
         stripeCustomerId: users.stripeCustomerId,
+        stripeSubscriptionId: users.stripeSubscriptionId,
         subscriptionEndsAt: users.subscriptionEndsAt,
         createdAt: users.createdAt,
         sessionCount: sql<number>`(SELECT count(*) FROM study_sessions WHERE user_id = ${users.id})`,
@@ -246,6 +248,67 @@ export async function PATCH(req: NextRequest) {
     const { adminPassword } = body;
     if (adminPassword !== ADMIN_PASSWORD) {
       return NextResponse.json({ error: 'Invalid admin password' }, { status: 401 });
+    }
+
+    // Re-sync a user's subscription from Whop (used when webhook silently dropped the event)
+    if (body.action === 'syncFromWhop') {
+      const email: string = (body.email ?? '').trim().toLowerCase();
+      const membershipId: string = (body.membershipId ?? '').trim();
+      if (!email || !membershipId) {
+        return NextResponse.json({ error: 'email and membershipId required' }, { status: 400 });
+      }
+
+      const user = await db.query.users.findFirst({ where: eq(users.email, email) });
+      if (!user) return NextResponse.json({ error: `No user with email ${email}` }, { status: 404 });
+
+      let membership;
+      try {
+        membership = await getMembership(membershipId);
+      } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+      }
+
+      const plan = membership.planId ? getPlanFromWhopPlanId(membership.planId) : null;
+      if (!plan) {
+        return NextResponse.json({
+          error: `Whop plan_id "${membership.planId}" doesn't match any of your configured WHOP_*_PLAN_ID env vars`,
+          membership,
+        }, { status: 400 });
+      }
+
+      // Whop status → our status
+      const rawStatus = membership.status.toLowerCase();
+      const subscriptionStatus =
+        rawStatus === 'active' || rawStatus === 'trialing' ? 'active' :
+        rawStatus === 'past_due' ? 'past_due' :
+        rawStatus === 'cancelled' || rawStatus === 'canceled' || rawStatus === 'completed' || rawStatus === 'expired' ? 'canceled' :
+        'active';
+
+      const finalTier = subscriptionStatus === 'canceled' ? 'free' : plan.tier;
+      const subscriptionEndsAt = membership.expiresAt ? new Date(membership.expiresAt * 1000) : null;
+
+      await db.update(users).set({
+        subscriptionTier: finalTier,
+        subscriptionStatus,
+        stripeSubscriptionId: `whop_${membership.id}`,
+        subscriptionEndsAt,
+      }).where(eq(users.id, user.id));
+
+      return NextResponse.json({
+        success: true,
+        before: {
+          subscriptionTier: user.subscriptionTier,
+          subscriptionStatus: user.subscriptionStatus,
+          stripeSubscriptionId: user.stripeSubscriptionId,
+        },
+        after: {
+          subscriptionTier: finalTier,
+          subscriptionStatus,
+          stripeSubscriptionId: `whop_${membership.id}`,
+          subscriptionEndsAt,
+        },
+        membership,
+      });
     }
 
     // Change subscription tier
