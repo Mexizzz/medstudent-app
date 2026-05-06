@@ -14,9 +14,10 @@ import {
 async function callGroqJSON<T>(
   system: string,
   userPrompt: string,
-  maxTokens = 4096,
+  maxTokens = 8192,
 ): Promise<T> {
   for (const model of [MODEL, FALLBACK_MODEL]) {
+    let content = '';
     try {
       const response = await groq.chat.completions.create({
         model,
@@ -28,7 +29,11 @@ async function callGroqJSON<T>(
           { role: 'user', content: userPrompt },
         ],
       });
-      const content = response.choices[0]?.message?.content ?? '{}';
+      const finishReason = response.choices[0]?.finish_reason;
+      content = response.choices[0]?.message?.content ?? '{}';
+      if (finishReason === 'length') {
+        console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete.`);
+      }
       return JSON.parse(content) as T;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -36,6 +41,10 @@ async function callGroqJSON<T>(
       if (isRateLimit && model !== FALLBACK_MODEL) {
         console.warn(`Rate limit on ${model}, retrying with ${FALLBACK_MODEL}`);
         continue;
+      }
+      // Surface JSON parse failures distinctly so silent zero-result bugs are visible
+      if (e instanceof SyntaxError) {
+        console.error(`Groq JSON parse failed (model=${model}, content length=${content.length}): ${msg}\n  Content tail: ${content.slice(-200)}`);
       }
       throw e;
     }
@@ -126,9 +135,10 @@ async function generateAcrossChunks<T>(
       results.push(...batch);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // Surface rate-limit and auth errors immediately — no point continuing
-      if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {
-        throw new Error(msg);
+      // Surface rate-limit, auth, and JSON-parse errors immediately — silently
+      // returning [] hides real bugs (e.g. response truncated at max_tokens).
+      if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403') || e instanceof SyntaxError) {
+        throw e instanceof Error ? e : new Error(msg);
       }
       console.error('Chunk generation error:', e);
     }
