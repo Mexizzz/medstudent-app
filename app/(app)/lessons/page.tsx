@@ -9,6 +9,7 @@ import { Lightbulb, Loader2, Trash2, Plus, BookOpen, Sparkles, Menu, X, MessageS
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { LessonData, LessonSummary } from '@/lib/lessons';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 export default function LessonsPage() {
   const [lessonList, setLessonList] = useState<LessonSummary[]>([]);
@@ -18,6 +19,7 @@ export default function LessonsPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
 
   const fetchList = useCallback(async () => {
     try {
@@ -43,7 +45,20 @@ export default function LessonsPage() {
         body: JSON.stringify({ topic: topic.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Generation failed');
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          setUpgradeModal({
+            open: true,
+            feature: 'AI Lessons',
+            requiredTier: data.requiredTier ?? 'pro',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
+        throw new Error(data.error ?? 'Generation failed');
+      }
       setActiveLesson(data.lesson);
       setTopic('');
       await fetchList();
@@ -263,6 +278,16 @@ export default function LessonsPage() {
           )}
         </div>
       </div>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false })}
+        feature={upgradeModal.feature}
+        requiredTier={upgradeModal.requiredTier}
+        limitReached={upgradeModal.limitReached}
+        used={upgradeModal.used}
+        limit={upgradeModal.limit}
+      />
     </div>
   );
 }

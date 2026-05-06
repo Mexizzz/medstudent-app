@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Trash2, GraduationCap, User, Sparkles, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -41,6 +42,7 @@ export default function TutorPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const hasStarted = useRef(false);
@@ -75,6 +77,23 @@ export default function TutorPage() {
       });
 
       if (!res.ok || !res.body) {
+        const ct = res.headers.get('content-type') ?? '';
+        if (ct.includes('application/json')) {
+          const data = await res.json().catch(() => null);
+          if (data?.upgradeRequired) {
+            setUpgradeModal({
+              open: true,
+              feature: 'AI Tutor',
+              requiredTier: data.requiredTier ?? 'pro',
+              limitReached: res.status === 429,
+              used: data.used,
+              limit: data.limit,
+            });
+            setMessages(prev => prev.slice(0, -1));
+            return;
+          }
+          throw new Error(data?.error ?? `Server error ${res.status}`);
+        }
         const errText = await res.text().catch(() => 'Unknown error');
         throw new Error(`Server error ${res.status}: ${errText.slice(0, 200)}`);
       }
@@ -272,6 +291,16 @@ export default function TutorPage() {
           </p>
         </div>
       </div>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false })}
+        feature={upgradeModal.feature}
+        requiredTier={upgradeModal.requiredTier}
+        limitReached={upgradeModal.limitReached}
+        used={upgradeModal.used}
+        limit={upgradeModal.limit}
+      />
     </div>
   );
 }

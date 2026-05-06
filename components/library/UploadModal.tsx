@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Upload, Youtube, Loader2, FileText, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
 const SUBJECTS = [
   'Anatomy', 'Physiology', 'Biochemistry', 'Pathology', 'Microbiology',
@@ -25,6 +26,7 @@ interface UploadModalProps {
 export function UploadModal({ onSuccess }: UploadModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
 
   // PDF fields
   const [file, setFile] = useState<File | null>(null);
@@ -60,7 +62,21 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
 
       const res = await fetch('/api/content/upload', { method: 'POST', body: formData });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          setOpen(false);
+          setUpgradeModal({
+            open: true,
+            feature: 'PDF Upload',
+            requiredTier: data.requiredTier ?? 'pro',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       toast.success(`Uploaded "${pdfTitle}" — ${data.wordCount?.toLocaleString()} words`);
       setOpen(false);
@@ -93,6 +109,18 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.upgradeRequired) {
+          setOpen(false);
+          setUpgradeModal({
+            open: true,
+            feature: 'YouTube Import',
+            requiredTier: data.requiredTier ?? 'pro',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
         // If auto-fetch failed, prompt user to paste manually
         if (!showPasteArea && !ytManualText) {
           setShowPasteArea(true);
@@ -279,6 +307,16 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      <UpgradeModal
+        open={upgradeModal.open}
+        onClose={() => setUpgradeModal({ open: false })}
+        feature={upgradeModal.feature}
+        requiredTier={upgradeModal.requiredTier}
+        limitReached={upgradeModal.limitReached}
+        used={upgradeModal.used}
+        limit={upgradeModal.limit}
+      />
     </Dialog>
   );
 }
