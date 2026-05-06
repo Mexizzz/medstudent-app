@@ -176,17 +176,24 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
     );
 
     let totalGenerated = 0;
+    let anyFailed = false;
     for (const r of results) {
       if (r.status === 'fulfilled') {
         totalGenerated += r.value.generated;
       } else {
+        anyFailed = true;
         toast.error(`Generation failed: ${r.reason}`);
       }
     }
 
-    toast.success(`Generated ${totalGenerated} questions!`);
-    setOpen(false);
-    onSuccess();
+    if (totalGenerated > 0) {
+      toast.success(`Generated ${totalGenerated} questions!`);
+      setOpen(false);
+      onSuccess();
+    } else if (!anyFailed) {
+      // API returned 200 with 0 generated — model produced no items.
+      toast.error("Couldn't generate questions from this content. Try a longer or clearer source, or remove the focus topic.");
+    }
     setLoading(false);
   }
 

@@ -32,9 +32,20 @@ async function callGroqJSON<T>(
       const finishReason = response.choices[0]?.finish_reason;
       content = response.choices[0]?.message?.content ?? '{}';
       if (finishReason === 'length') {
-        console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete.`);
+        console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete. Content tail: ${content.slice(-300)}`);
       }
-      return JSON.parse(content) as T;
+      const parsed = JSON.parse(content) as T;
+      // Diagnostic: log when the parsed object has an empty array property — helps diagnose
+      // "Generated 0 questions" where the model returns {questions:[]} validly.
+      if (parsed && typeof parsed === 'object') {
+        const obj = parsed as Record<string, unknown>;
+        for (const [k, v] of Object.entries(obj)) {
+          if (Array.isArray(v) && v.length === 0) {
+            console.warn(`Groq returned empty array for key "${k}" (model=${model}, finish=${finishReason}). Content head: ${content.slice(0, 300)}`);
+          }
+        }
+      }
+      return parsed;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       const isRateLimit = msg.includes('429') || msg.includes('rate limit');
