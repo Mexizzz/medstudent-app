@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { questions, sessionResponses } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { getAuthUser } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD

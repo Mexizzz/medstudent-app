@@ -6,6 +6,7 @@ import { requireAuth } from '@/lib/auth';
 import { groq, MODEL } from '@/lib/ai/client';
 
 export const maxDuration = 120;
+export const dynamic = 'force-dynamic';
 
 export async function POST(_req: Request, { params }: { params: Promise<{ sourceId: string }> }) {
   try {

@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { questions, contentSources } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
