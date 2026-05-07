@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { users, usageTracking } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { getMembership, getPlanFromWhopPlanId } from '@/lib/whop';
 
 // ── Types ─────────────────────────────────────────────
 export type SubscriptionTier = 'free' | 'pro' | 'max';
@@ -141,6 +142,64 @@ export async function expireOldTrials(): Promise<{ downgraded: number }> {
   return { downgraded: result.changes ?? 0 };
 }
 
+/**
+ * Reverts expired complimentary upgrades.
+ * For each user with status='comp' whose subscriptionEndsAt has passed:
+ *   - If they have a linked Whop membership that's still active, restore their Whop tier.
+ *   - Otherwise downgrade to free.
+ * Returns counts for logging.
+ */
+export async function expireComps(): Promise<{ reverted: number; errors: number }> {
+  const expired = await db.query.users.findMany({
+    where: and(
+      eq(users.subscriptionStatus, 'comp'),
+      sql`${users.subscriptionEndsAt} IS NOT NULL AND ${users.subscriptionEndsAt} < unixepoch()`,
+    ),
+    columns: { id: true, stripeSubscriptionId: true },
+  });
+
+  let reverted = 0;
+  let errors = 0;
+  for (const u of expired) {
+    try {
+      const whopId = u.stripeSubscriptionId?.startsWith('whop_')
+        ? u.stripeSubscriptionId.slice(5)
+        : null;
+
+      if (whopId) {
+        try {
+          const m = await getMembership(whopId);
+          const plan = m.planId ? getPlanFromWhopPlanId(m.planId) : null;
+          const isActive = m.status === 'active' || m.status === 'trialing';
+          if (plan && isActive) {
+            await db.update(users).set({
+              subscriptionTier: plan.tier,
+              subscriptionStatus: 'active',
+              subscriptionEndsAt: m.expiresAt ? new Date(m.expiresAt * 1000) : null,
+            }).where(eq(users.id, u.id));
+            reverted++;
+            continue;
+          }
+        } catch (e) {
+          console.error(`expireComps: Whop fetch failed for user ${u.id}`, e);
+        }
+      }
+
+      // No active Whop membership → downgrade to free.
+      await db.update(users).set({
+        subscriptionTier: 'free',
+        subscriptionStatus: 'active',
+        subscriptionEndsAt: null,
+      }).where(eq(users.id, u.id));
+      reverted++;
+    } catch (e) {
+      console.error(`expireComps: revert failed for user ${u.id}`, e);
+      errors++;
+    }
+  }
+  return { reverted, errors };
+}
+
 export async function getUserTier(userId: string): Promise<SubscriptionTier> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -157,6 +216,14 @@ export async function getUserTier(userId: string): Promise<SubscriptionTier> {
       return 'free';
     }
     // Trial still active — return the stored tier (max)
+    return (user.subscriptionTier as SubscriptionTier) || 'free';
+  }
+
+  // Comp upgrades: while active, return the comped tier. Past the end,
+  // fall through to free here — the cron + admin GET will sync from Whop
+  // to restore their actual paid tier in batch (expireComps).
+  if (user.subscriptionStatus === 'comp' && user.subscriptionEndsAt) {
+    if (new Date() > user.subscriptionEndsAt) return 'free';
     return (user.subscriptionTier as SubscriptionTier) || 'free';
   }
 

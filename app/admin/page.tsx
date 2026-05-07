@@ -132,6 +132,10 @@ export default function AdminPage() {
   const [whopSyncUserId, setWhopSyncUserId] = useState<string | null>(null);
   const [whopMembershipId, setWhopMembershipId] = useState('');
   const [whopSyncing, setWhopSyncing] = useState(false);
+  const [compUserId, setCompUserId] = useState<string | null>(null);
+  const [compTier, setCompTier] = useState<'pro' | 'max'>('max');
+  const [compDays, setCompDays] = useState(30);
+  const [comping, setComping] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
   const [adminReply, setAdminReply] = useState('');
@@ -207,6 +211,43 @@ export default function AdminPage() {
       toast.error(e instanceof Error ? e.message : 'Sync failed');
     } finally {
       setWhopSyncing(false);
+    }
+  }
+
+  async function handleCompUpgrade(userId: string) {
+    setComping(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: password,
+          action: 'compUpgrade',
+          userId,
+          tier: compTier,
+          days: compDays,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Comp upgrade failed'); return; }
+      toast.success(`Comped to ${compTier.toUpperCase()} for ${json.days} days — auto-reverts ${new Date(json.endsAt).toLocaleDateString()}`);
+      setData(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          users: prev.users.map(u => u.id === userId ? {
+            ...u,
+            subscriptionTier: compTier,
+            subscriptionStatus: 'comp',
+            subscriptionEndsAt: json.endsAt,
+          } : u),
+        };
+      });
+      setCompUserId(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Comp upgrade failed');
+    } finally {
+      setComping(false);
     }
   }
 
@@ -780,7 +821,7 @@ export default function AdminPage() {
                                   </div>
                                 )}
                               </div>
-                              <div className="mt-3 pt-3 border-t border-slate-700/50">
+                              <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
                                 {whopSyncUserId === u.id ? (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-xs text-slate-400">Whop Membership ID:</span>
@@ -803,15 +844,57 @@ export default function AdminPage() {
                                     <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => { setWhopSyncUserId(null); setWhopMembershipId(''); }}>Cancel</Button>
                                     <span className="text-[10px] text-slate-500 basis-full">Find this in Whop dashboard → user → Memberships → membership ID (starts with <code className="text-slate-400">mem_</code>)</span>
                                   </div>
+                                ) : compUserId === u.id ? (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs text-slate-400">Comp upgrade:</span>
+                                    <select
+                                      value={compTier}
+                                      onChange={e => setCompTier(e.target.value as 'pro' | 'max')}
+                                      className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-2 text-white"
+                                    >
+                                      <option value="max">Max</option>
+                                      <option value="pro">Pro</option>
+                                    </select>
+                                    <span className="text-xs text-slate-400">for</span>
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      max={365}
+                                      value={compDays}
+                                      onChange={e => setCompDays(Math.max(1, Math.min(365, Number(e.target.value) || 30)))}
+                                      className="h-7 w-16 text-xs bg-slate-800 border-slate-700 text-white text-center"
+                                    />
+                                    <span className="text-xs text-slate-400">days</span>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs bg-violet-600 hover:bg-violet-700"
+                                      disabled={comping}
+                                      onClick={() => handleCompUpgrade(u.id)}
+                                    >
+                                      {comping ? 'Applying…' : 'Apply'}
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => setCompUserId(null)}>Cancel</Button>
+                                    <span className="text-[10px] text-slate-500 basis-full">Auto-reverts to their Whop tier (or free) when the period ends.</span>
+                                  </div>
                                 ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
-                                    onClick={() => { setWhopSyncUserId(u.id); setWhopMembershipId(''); }}
-                                  >
-                                    <Crown className="w-3 h-3" /> Sync from Whop
-                                  </Button>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
+                                      onClick={() => { setWhopSyncUserId(u.id); setWhopMembershipId(''); }}
+                                    >
+                                      <Crown className="w-3 h-3" /> Sync from Whop
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 text-xs gap-1 text-violet-400 hover:text-violet-300 hover:bg-slate-800"
+                                      onClick={() => { setCompUserId(u.id); setCompTier('max'); setCompDays(30); }}
+                                    >
+                                      <Crown className="w-3 h-3" /> Comp Upgrade
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                             </td>

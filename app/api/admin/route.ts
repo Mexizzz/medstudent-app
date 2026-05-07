@@ -4,7 +4,7 @@ import { users, contentSources, questions, studySessions, sessionResponses, stud
 import { sql, desc, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId } from '@/lib/whop';
-import { expireOldTrials } from '@/lib/subscription';
+import { expireOldTrials, expireComps } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Mexiz1924';
@@ -16,8 +16,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
-    // Auto-cleanup: downgrade expired trials so the admin panel shows current effective tiers.
+    // Auto-cleanup: downgrade expired trials and revert expired comp upgrades
+    // so the admin panel shows current effective tiers.
     try { await expireOldTrials(); } catch (e) { console.error('expireOldTrials error:', e); }
+    try { await expireComps(); } catch (e) { console.error('expireComps error:', e); }
 
     // Basic counts
     const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
@@ -325,6 +327,25 @@ export async function PATCH(req: NextRequest) {
         },
         membership,
       });
+    }
+
+    // Complimentary tier upgrade — bumps a user to a higher tier for N days,
+    // then auto-reverts (via expireComps cron) to their actual paid Whop tier
+    // if they have one, otherwise to free.
+    if (body.action === 'compUpgrade') {
+      const { userId, tier = 'max', days = 30 } = body;
+      if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
+      if (!['pro', 'max'].includes(tier)) {
+        return NextResponse.json({ error: 'tier must be pro or max' }, { status: 400 });
+      }
+      const numDays = Math.max(1, Math.min(365, Number(days) || 30));
+      const endsAt = new Date(Date.now() + numDays * 24 * 60 * 60 * 1000);
+      await db.update(users).set({
+        subscriptionTier: tier,
+        subscriptionStatus: 'comp',
+        subscriptionEndsAt: endsAt,
+      }).where(eq(users.id, userId));
+      return NextResponse.json({ success: true, tier, endsAt: endsAt.toISOString(), days: numDays });
     }
 
     // Change subscription tier

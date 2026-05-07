@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { expireOldTrials } from '@/lib/subscription';
+import { expireOldTrials, expireComps } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
-// Hit this from Railway cron (or any uptime monitor) to downgrade expired trials.
+// Hit this from Railway cron (or any uptime monitor) to downgrade expired trials
+// and revert expired complimentary upgrades.
 // Protected by CRON_SECRET — pass as ?secret=... or Authorization: Bearer <secret>.
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await expireOldTrials();
-  return NextResponse.json({ ok: true, ...result });
+  const trials = await expireOldTrials();
+  const comps = await expireComps();
+  return NextResponse.json({ ok: true, trials, comps });
 }
