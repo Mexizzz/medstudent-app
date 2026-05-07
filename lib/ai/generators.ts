@@ -17,13 +17,23 @@ import {
  */
 export function mapGeneratorError(error: unknown): { status: number; message: string } | null {
   const msg = error instanceof Error ? error.message : String(error);
-  if (msg.startsWith('rate_limit_exhausted') || msg.includes('rate_limit_exhausted')) {
+
+  if (msg.includes('rate_limit_exhausted')) {
+    // Daily-limit path: extract the "try again in Xm" hint from Groq's body if present.
+    if (msg.includes('tokens per day') || msg.includes('TPD')) {
+      const tryAgain = msg.match(/try again in\s+([0-9hms.\s]+)/i);
+      const hint = tryAgain ? ` Try again in ${tryAgain[1].trim()}.` : ' Resets at midnight UTC.';
+      return {
+        status: 503,
+        message: `Daily AI quota reached for today.${hint}`,
+      };
+    }
     return {
       status: 503,
       message: 'AI is rate-limited right now. Please wait ~60 seconds and try again, or generate fewer types at once.',
     };
   }
-  if (msg.startsWith('request_too_large') || msg.includes('request_too_large')) {
+  if (msg.includes('request_too_large')) {
     return {
       status: 503,
       message: 'This source is too large for the AI in one pass. Try a smaller page range or fewer questions per generation.',
@@ -37,6 +47,13 @@ function isRateLimitMsg(msg: string): boolean {
     || msg.includes('rate_limit')
     || msg.includes('rate limit')
     || msg.includes('Rate limit');
+}
+
+function isDailyLimitMsg(msg: string): boolean {
+  // Groq distinguishes "tokens per minute" (TPM, resets in 60s) vs
+  // "tokens per day" (TPD, resets at UTC midnight). Retrying a TPD with
+  // 6s+15s backoff is pointless — skip retries and try the fallback.
+  return msg.includes('tokens per day') || msg.includes('TPD');
 }
 
 function isRequestTooLargeMsg(msg: string): boolean {
@@ -92,6 +109,12 @@ async function callGroqJSON<T>(
       if (isRequestTooLargeMsg(msg)) {
         console.warn(`Groq request too large: ${msg.slice(0, 200)}`);
         throw new Error(`request_too_large: ${msg}`);
+      }
+
+      // Daily limit (TPD) won't recover in 21s of retries — skip straight to fallback.
+      if (isDailyLimitMsg(msg)) {
+        console.warn(`Groq daily token limit reached — skipping retries, falling back`);
+        throw new Error(`rate_limit_exhausted: ${msg}`);
       }
 
       if (isRateLimitMsg(msg) && attempt < RETRY_DELAYS_MS.length) {
