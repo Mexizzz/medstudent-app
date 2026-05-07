@@ -4,6 +4,9 @@ import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlit
 export const users = sqliteTable('users', {
   id:           text('id').primaryKey(),
   email:        text('email').notNull().unique(),
+  // Canonicalized email used for duplicate detection — Gmail dots/+aliases stripped, lowercased.
+  // Different from `email` so we still display what the user typed.
+  normalizedEmail: text('normalized_email'),
   passwordHash: text('password_hash').notNull(),
   name:         text('name'),
   username:     text('username').unique(),
@@ -12,8 +15,10 @@ export const users = sqliteTable('users', {
   subscriptionTier:    text('subscription_tier').notNull().default('free'), // 'free' | 'pro' | 'max'
   stripeCustomerId:    text('stripe_customer_id'),
   stripeSubscriptionId:text('stripe_subscription_id'),
-  subscriptionStatus:  text('subscription_status').default('active'), // 'active' | 'canceled' | 'past_due'
+  subscriptionStatus:  text('subscription_status').default('active'), // 'active' | 'canceled' | 'past_due' | 'trial' | 'comp'
   subscriptionEndsAt:  integer('subscription_ends_at', { mode: 'timestamp' }),
+  // IP address captured at signup, used for trial throttling.
+  signupIp:     text('signup_ip'),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 

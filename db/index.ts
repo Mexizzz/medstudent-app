@@ -117,6 +117,32 @@ if (process.env.NEXT_PHASE !== 'phase-production-build') {
     sqlite.exec(`CREATE INDEX IF NOT EXISTS focus_chal_from ON focus_challenges(from_user_id, status)`);
   } catch (e) { console.error('Study Space schema error:', e); }
 
+  // Backfill normalized_email for existing users so the new dedup check covers
+  // accounts created before the trial-abuse guard shipped.
+  try {
+    const rows = sqlite.prepare(`SELECT id, email FROM users WHERE normalized_email IS NULL OR normalized_email = ''`).all() as { id: string; email: string }[];
+    if (rows.length > 0) {
+      const update = sqlite.prepare(`UPDATE users SET normalized_email = ? WHERE id = ?`);
+      const tx = sqlite.transaction((items: { id: string; email: string }[]) => {
+        for (const r of items) {
+          const e = (r.email ?? '').trim().toLowerCase();
+          const at = e.lastIndexOf('@');
+          if (at < 0) { update.run(e, r.id); continue; }
+          let local = e.slice(0, at);
+          const domain = e.slice(at + 1);
+          const plus = local.indexOf('+');
+          if (plus >= 0) local = local.slice(0, plus);
+          const norm = (domain === 'gmail.com' || domain === 'googlemail.com')
+            ? `${local.replace(/\./g, '')}@gmail.com`
+            : `${local}@${domain}`;
+          update.run(norm, r.id);
+        }
+      });
+      tx(rows);
+      console.log(`Backfilled normalized_email for ${rows.length} users`);
+    }
+  } catch (e) { console.error('normalized_email backfill error:', e); }
+
   // PDF Summary + Chat Refine
   try {
     sqlite.exec(`CREATE TABLE IF NOT EXISTS source_summaries (
