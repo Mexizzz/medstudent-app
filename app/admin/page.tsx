@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -314,25 +314,51 @@ export default function AdminPage() {
     }
   }
 
-  async function handleLogin() {
-    if (!password.trim()) return;
+  async function handleLogin(pw: string = password) {
+    if (!pw.trim()) return;
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: pw }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error); return; }
+      if (!res.ok) {
+        setError(json.error);
+        // Wrong password — clear any stale stored value so we don't loop on bad creds.
+        try { localStorage.removeItem('medstudy_admin_pw'); } catch {}
+        return;
+      }
       setData(json);
+      try { localStorage.setItem('medstudy_admin_pw', pw); } catch {}
     } catch {
       setError('Failed to connect');
     } finally {
       setLoading(false);
     }
   }
+
+  function handleLogout() {
+    try { localStorage.removeItem('medstudy_admin_pw'); } catch {}
+    setData(null);
+    setPassword('');
+  }
+
+  // Auto-login on mount if a previous successful password was saved.
+  const autoLoginAttempted = useRef(false);
+  useEffect(() => {
+    if (autoLoginAttempted.current) return;
+    autoLoginAttempted.current = true;
+    let saved: string | null = null;
+    try { saved = localStorage.getItem('medstudy_admin_pw'); } catch {}
+    if (saved) {
+      setPassword(saved);
+      handleLogin(saved);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleViewSource(sourceId: string) {
     setSourceLoading(true);
@@ -393,7 +419,7 @@ export default function AdminPage() {
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
             />
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-            <Button onClick={handleLogin} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-11 font-semibold">
+            <Button onClick={() => handleLogin()} disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-11 font-semibold">
               {loading ? 'Authenticating...' : 'Access Dashboard'}
             </Button>
           </CardContent>
@@ -466,7 +492,7 @@ export default function AdminPage() {
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               <span className="text-xs text-slate-400">{stats.users} users</span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setData(null)} className="text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-white">
+            <Button variant="outline" size="sm" onClick={handleLogout} className="text-slate-400 border-slate-700 hover:bg-slate-800 hover:text-white">
               <LogOut className="w-4 h-4 mr-1.5" /> Logout
             </Button>
           </div>
