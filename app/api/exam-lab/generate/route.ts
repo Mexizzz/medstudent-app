@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { examProfiles } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { groq, MODEL, FALLBACK_MODEL } from '@/lib/ai/client';
 import {
   GENERATE_SYSTEM, STRUCTURED_SYSTEM, TABLE_SYSTEM,
   generateUserPrompt, generateStructuredPrompt, generateTablePrompt,
@@ -13,15 +12,17 @@ import path from 'path';
 import fs from 'fs/promises';
 import { requireAuth, handleAuthError } from '@/lib/auth';
 import { checkUsageLimit, incrementUsage, getUserTier, hasFeature } from '@/lib/subscription';
+import { callLLMJSON, mapGeneratorError } from '@/lib/ai/generators';
 export const dynamic = 'force-dynamic';
 
 export const maxDuration = 120;
 
 // Each MCQ (question + 4 options + explanation) ~ 200-300 tokens.
-// Keep each batch <= 20 so we stay well within 8192 max_tokens.
-const BATCH_SIZE = 20;
+// Keep each batch small so a single response stays under the per-request TPM
+// allowance even on the Gemini fallback path.
+const BATCH_SIZE = 12;
 
-async function callGroqGenerateBatch(
+async function callLLMGenerateBatch(
   styleAnalysis: ExamStyleAnalysis,
   material: string,
   count: number,
@@ -37,30 +38,15 @@ async function callGroqGenerateBatch(
       ? generateTablePrompt(styleAnalysis, material, count, subject)
       : generateUserPrompt(styleAnalysis, material, count, subject, mode);
 
-  for (const model of [MODEL, FALLBACK_MODEL]) {
-    try {
-      const res = await groq.chat.completions.create({
-        model,
-        temperature: 0.5,
-        max_tokens: 8192,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      });
-      const data = JSON.parse(res.choices[0]?.message?.content ?? '{}') as { questions?: GeneratedLabQuestion[] };
-      return data.questions ?? [];
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes('429') || msg.includes('rate limit')) continue;
-      throw e;
-    }
-  }
-  throw new Error('All models rate-limited. Try again shortly.');
+  const data = await callLLMJSON<{ questions?: GeneratedLabQuestion[] }>(
+    systemPrompt,
+    userPrompt,
+    4096,
+  );
+  return data.questions ?? [];
 }
 
-async function callGroqGenerate(
+async function callLLMGenerate(
   styleAnalysis: ExamStyleAnalysis,
   material: string,
   count: number,
@@ -68,10 +54,12 @@ async function callGroqGenerate(
   mode: QuestionMode,
 ): Promise<GeneratedLabQuestion[]> {
   if (count <= BATCH_SIZE) {
-    return callGroqGenerateBatch(styleAnalysis, material, count, subject, mode);
+    return callLLMGenerateBatch(styleAnalysis, material, count, subject, mode);
   }
 
-  // Split into batches of BATCH_SIZE and run in parallel
+  // Split into batches and run sequentially. Parallel batches multiply TPM
+  // pressure and trigger rate limits on free tiers — sequential is slower
+  // but reliable.
   const batches: number[] = [];
   let remaining = count;
   while (remaining > 0) {
@@ -79,10 +67,12 @@ async function callGroqGenerate(
     remaining -= BATCH_SIZE;
   }
 
-  const batchResults = await Promise.all(
-    batches.map(batchCount => callGroqGenerateBatch(styleAnalysis, material, batchCount, subject, mode))
-  );
-  return batchResults.flat();
+  const out: GeneratedLabQuestion[] = [];
+  for (const batchCount of batches) {
+    const part = await callLLMGenerateBatch(styleAnalysis, material, batchCount, subject, mode);
+    out.push(...part);
+  }
+  return out;
 }
 
 export async function POST(req: NextRequest) {
@@ -134,13 +124,15 @@ export async function POST(req: NextRequest) {
     // Truncate material to 8000 chars
     const truncated = material.slice(0, 8000);
 
-    const questions = await callGroqGenerate(styleAnalysis, truncated, count, subject, mode);
+    const questions = await callLLMGenerate(styleAnalysis, truncated, count, subject, mode);
     await incrementUsage(userId, 'exam_generate');
 
     return NextResponse.json({ questions });
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
+    const mapped = mapGeneratorError(error);
+    if (mapped) return NextResponse.json({ error: mapped.message }, { status: mapped.status });
     console.error('Exam generate error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

@@ -172,7 +172,7 @@ async function callGeminiJSON<T>(
  * (or isn't configured), surfaces the original Groq error so the route layer can
  * map it to a clean user-facing message.
  */
-async function callLLMJSON<T>(
+export async function callLLMJSON<T>(
   system: string,
   userPrompt: string,
   maxTokens = 4096,
