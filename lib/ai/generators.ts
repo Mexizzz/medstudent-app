@@ -1,4 +1,4 @@
-import { groq, getGroq, MODEL, FALLBACK_MODEL } from './client';
+import { groq, getGroq, MODEL } from './client';
 import { chunkText } from '../utils';
 import {
   MCQ_SYSTEM, mcqUserPrompt,
@@ -11,6 +11,27 @@ import {
 } from './prompts';
 
 // Core helper: calls Groq with JSON mode, falls back to smaller model on rate limit
+/**
+ * Map a generator/Groq error to a user-facing message + HTTP status.
+ * Returns null if it's not a known generator error (caller should treat as 500).
+ */
+export function mapGeneratorError(error: unknown): { status: number; message: string } | null {
+  const msg = error instanceof Error ? error.message : String(error);
+  if (msg.startsWith('rate_limit_exhausted') || msg.includes('rate_limit_exhausted')) {
+    return {
+      status: 503,
+      message: 'AI is rate-limited right now. Please wait ~60 seconds and try again, or generate fewer types at once.',
+    };
+  }
+  if (msg.startsWith('request_too_large') || msg.includes('request_too_large')) {
+    return {
+      status: 503,
+      message: 'This source is too large for the AI in one pass. Try a smaller page range or fewer questions per generation.',
+    };
+  }
+  return null;
+}
+
 function isRateLimitMsg(msg: string): boolean {
   return msg.includes('429')
     || msg.includes('rate_limit')
@@ -30,73 +51,70 @@ async function sleep(ms: number) {
 async function callGroqJSON<T>(
   system: string,
   userPrompt: string,
-  maxTokens = 8192,
+  maxTokens = 4096,
 ): Promise<T> {
-  for (const model of [MODEL, FALLBACK_MODEL]) {
-    let content = '';
-    // Up to 2 attempts per model so we can retry once after a brief pause when
-    // we hit TPM rate limits (Groq's TPM resets every 60s).
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const response = await groq.chat.completions.create({
-          model,
-          temperature: 0.2,
-          max_tokens: maxTokens,
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: userPrompt },
-          ],
-        });
-        const finishReason = response.choices[0]?.finish_reason;
-        content = response.choices[0]?.message?.content ?? '{}';
-        if (finishReason === 'length') {
-          console.warn(`Groq response truncated at ${maxTokens} tokens (model=${model}). JSON likely incomplete. Content tail: ${content.slice(-300)}`);
-        }
-        const parsed = JSON.parse(content) as T;
-        if (parsed && typeof parsed === 'object') {
-          const obj = parsed as Record<string, unknown>;
-          for (const [k, v] of Object.entries(obj)) {
-            if (Array.isArray(v) && v.length === 0) {
-              console.warn(`Groq returned empty array for key "${k}" (model=${model}, finish=${finishReason}). Content head: ${content.slice(0, 300)}`);
-            }
-          }
-        }
-        return parsed;
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
+  // Stay on the 70B primary. The 8B fallback's per-request TPM ceiling (6000)
+  // is too tight for our prompts (system + content + max_tokens easily exceeds
+  // 6000), so falling back guarantees a 413. Instead, retry 70B with backoff —
+  // its TPM is much higher and resets every 60s.
+  const RETRY_DELAYS_MS = [6000, 15000];
+  let content = '';
+  let lastErr: unknown = null;
 
-        // 413 = request too large for this model's TPM. Don't retry on the same
-        // model — it'll keep failing. Surface so the chunk loop can react.
-        if (isRequestTooLargeMsg(msg)) {
-          console.warn(`Groq request too large for ${model}: ${msg.slice(0, 200)}`);
-          throw new Error(`request_too_large: ${msg}`);
-        }
-
-        if (isRateLimitMsg(msg)) {
-          // First TPM hit: wait briefly and retry on the same model — TPM resets per minute.
-          if (attempt === 0) {
-            console.warn(`Rate limit on ${model} (attempt 1), waiting 8s and retrying`);
-            await sleep(8000);
-            continue;
-          }
-          // Still rate-limited — fall back to the smaller model.
-          if (model !== FALLBACK_MODEL) {
-            console.warn(`Rate limit on ${model}, falling back to ${FALLBACK_MODEL}`);
-            break; // break inner loop, outer loop moves to FALLBACK_MODEL
-          }
-          // Already on fallback — surface as a real error.
-          throw new Error(`rate_limit_exhausted: ${msg}`);
-        }
-
-        if (e instanceof SyntaxError) {
-          console.error(`Groq JSON parse failed (model=${model}, content length=${content.length}): ${msg}\n  Content tail: ${content.slice(-200)}`);
-        }
-        throw e;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const response = await groq.chat.completions.create({
+        model: MODEL,
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userPrompt },
+        ],
+      });
+      const finishReason = response.choices[0]?.finish_reason;
+      content = response.choices[0]?.message?.content ?? '{}';
+      if (finishReason === 'length') {
+        console.warn(`Groq response truncated at ${maxTokens} tokens. JSON likely incomplete. Content tail: ${content.slice(-300)}`);
       }
+      const parsed = JSON.parse(content) as T;
+      if (parsed && typeof parsed === 'object') {
+        const obj = parsed as Record<string, unknown>;
+        for (const [k, v] of Object.entries(obj)) {
+          if (Array.isArray(v) && v.length === 0) {
+            console.warn(`Groq returned empty array for key "${k}" (finish=${finishReason}). Content head: ${content.slice(0, 300)}`);
+          }
+        }
+      }
+      return parsed;
+    } catch (e: unknown) {
+      lastErr = e;
+      const msg = e instanceof Error ? e.message : String(e);
+
+      if (isRequestTooLargeMsg(msg)) {
+        console.warn(`Groq request too large: ${msg.slice(0, 200)}`);
+        throw new Error(`request_too_large: ${msg}`);
+      }
+
+      if (isRateLimitMsg(msg) && attempt < RETRY_DELAYS_MS.length) {
+        const delay = RETRY_DELAYS_MS[attempt];
+        console.warn(`Rate limit on ${MODEL} (attempt ${attempt + 1}), waiting ${delay}ms and retrying`);
+        await sleep(delay);
+        continue;
+      }
+
+      if (isRateLimitMsg(msg)) {
+        throw new Error(`rate_limit_exhausted: ${msg}`);
+      }
+
+      if (e instanceof SyntaxError) {
+        console.error(`Groq JSON parse failed (content length=${content.length}): ${msg}\n  Content tail: ${content.slice(-200)}`);
+      }
+      throw e;
     }
   }
-  throw new Error('All models exhausted');
+  throw lastErr instanceof Error ? lastErr : new Error('Groq retries exhausted');
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────

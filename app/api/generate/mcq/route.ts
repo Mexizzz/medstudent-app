@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
-import { generateMCQs, generateMCQsFromImage, parseMcqPdf } from '@/lib/ai/generators';
+import { generateMCQs, generateMCQsFromImage, parseMcqPdf, mapGeneratorError } from '@/lib/ai/generators';
 import { getSourceText } from '@/lib/content/source-text';
 
 export const maxDuration = 120;
@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
+    const mapped = mapGeneratorError(error);
+    if (mapped) return NextResponse.json({ error: mapped.message }, { status: mapped.status });
     console.error('MCQ generate error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { contentSources, questions } from '@/db/schema';
-import { generateFlashcards } from '@/lib/ai/generators';
+import { generateFlashcards, mapGeneratorError } from '@/lib/ai/generators';
 import { getSourceText } from '@/lib/content/source-text';
 import { nanoid } from 'nanoid';
 import { requireAuth, handleAuthError } from '@/lib/auth';
@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     const authErr = handleAuthError(error);
     if (authErr) return authErr;
+    const mapped = mapGeneratorError(error);
+    if (mapped) return NextResponse.json({ error: mapped.message }, { status: mapped.status });
     console.error('Flashcard generate error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
