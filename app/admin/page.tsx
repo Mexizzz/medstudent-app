@@ -9,7 +9,7 @@ import {
   Crown, TrendingUp, Zap, FileText, FolderOpen, UserPlus, Stethoscope,
   Search, ChevronDown, ChevronUp, BarChart2, Calendar, Eye, EyeOff,
   Send, CheckCircle2, Clock, XCircle, ArrowLeft, Lightbulb, Trash2,
-  Youtube, FileIcon,
+  Youtube, FileIcon, Ban, ShieldOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,6 +32,7 @@ interface AdminData {
     id: string; email: string; name: string | null; username: string | null;
     passwordHash: string; subscriptionTier: string; subscriptionStatus: string | null;
     stripeCustomerId: string | null; stripeSubscriptionId: string | null; subscriptionEndsAt: string | null;
+    bannedUntil: string | null; banReason: string | null;
     createdAt: string; sessionCount: number; responseCount: number;
     sourceCount: number; questionCount: number; avgScore: number | null;
     lastActive: string | number | null;
@@ -136,6 +137,10 @@ export default function AdminPage() {
   const [compTier, setCompTier] = useState<'pro' | 'max'>('max');
   const [compDays, setCompDays] = useState(30);
   const [comping, setComping] = useState(false);
+  const [banUserId, setBanUserId] = useState<string | null>(null);
+  const [banDays, setBanDays] = useState<number | 'permanent'>(7);
+  const [banReason, setBanReason] = useState('');
+  const [banning, setBanning] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
   const [adminReply, setAdminReply] = useState('');
@@ -211,6 +216,80 @@ export default function AdminPage() {
       toast.error(e instanceof Error ? e.message : 'Sync failed');
     } finally {
       setWhopSyncing(false);
+    }
+  }
+
+  async function handleBanUser(userId: string) {
+    setBanning(true);
+    try {
+      const days = banDays === 'permanent' ? -1 : banDays;
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: password,
+          action: 'banUser',
+          userId,
+          days,
+          reason: banReason.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Ban failed'); return; }
+      toast.success(json.permanent ? 'User permanently banned' : `Banned until ${new Date(json.bannedUntil).toLocaleDateString()}`);
+      setData(prev => prev ? {
+        ...prev,
+        users: prev.users.map(u => u.id === userId ? { ...u, bannedUntil: json.bannedUntil, banReason: banReason.trim() || null } : u),
+      } : prev);
+      setBanUserId(null);
+      setBanReason('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Ban failed');
+    } finally {
+      setBanning(false);
+    }
+  }
+
+  async function handleUnbanUser(userId: string) {
+    if (!confirm('Lift the ban on this user?')) return;
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'unbanUser', userId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Unban failed'); return; }
+      toast.success('Ban lifted');
+      setData(prev => prev ? {
+        ...prev,
+        users: prev.users.map(u => u.id === userId ? { ...u, bannedUntil: null, banReason: null } : u),
+      } : prev);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Unban failed');
+    }
+  }
+
+  async function handleDeleteUser(userId: string, email: string) {
+    // Two-step confirm — this is irreversible and cascades to all their data.
+    if (!confirm(`PERMANENTLY DELETE ${email}?\n\nThis removes their account and ALL their content (sources, questions, sessions, tickets, etc.). This cannot be undone.`)) return;
+    if (!confirm(`Are you absolutely sure? Type-confirm by clicking OK one more time.`)) return;
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'deleteUser', userId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Delete failed'); return; }
+      toast.success(`Deleted ${json.deleted}`);
+      setData(prev => prev ? {
+        ...prev,
+        users: prev.users.filter(u => u.id !== userId),
+        stats: { ...prev.stats, users: Math.max(0, (prev.stats.users || 0) - 1) },
+      } : prev);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Delete failed');
     }
   }
 
@@ -741,7 +820,14 @@ export default function AdminPage() {
                         <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
                           <td className="px-4 py-3">
                             <button onClick={() => setExpandedUser(expandedUser === u.id ? null : u.id)} className="text-left">
-                              <p className="font-medium text-white text-sm">{u.name || u.email.split('@')[0]}</p>
+                              <p className="font-medium text-white text-sm flex items-center gap-2">
+                                {u.name || u.email.split('@')[0]}
+                                {u.bannedUntil && new Date(u.bannedUntil) > new Date() && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/30">
+                                    <Ban className="w-2.5 h-2.5" /> Banned
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-xs text-slate-500">{u.email}</p>
                             </button>
                           </td>
@@ -902,6 +988,39 @@ export default function AdminPage() {
                                     <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => setCompUserId(null)}>Cancel</Button>
                                     <span className="text-[10px] text-slate-500 basis-full">Auto-reverts to their Whop tier (or free) when the period ends.</span>
                                   </div>
+                                ) : banUserId === u.id ? (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs text-slate-400">Ban for:</span>
+                                    <select
+                                      value={banDays}
+                                      onChange={e => setBanDays(e.target.value === 'permanent' ? 'permanent' : Number(e.target.value))}
+                                      className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-2 text-white"
+                                    >
+                                      <option value={1}>1 day</option>
+                                      <option value={3}>3 days</option>
+                                      <option value={7}>7 days</option>
+                                      <option value={30}>30 days</option>
+                                      <option value={90}>90 days</option>
+                                      <option value={'permanent'}>Permanent</option>
+                                    </select>
+                                    <Input
+                                      value={banReason}
+                                      onChange={e => setBanReason(e.target.value)}
+                                      placeholder="Reason (optional)"
+                                      className="h-7 w-56 text-xs bg-slate-800 border-slate-700 text-white"
+                                      onKeyDown={e => e.key === 'Enter' && handleBanUser(u.id)}
+                                      autoFocus
+                                    />
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs bg-red-600 hover:bg-red-700"
+                                      disabled={banning}
+                                      onClick={() => handleBanUser(u.id)}
+                                    >
+                                      {banning ? 'Banning…' : 'Confirm Ban'}
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => { setBanUserId(null); setBanReason(''); }}>Cancel</Button>
+                                  </div>
                                 ) : (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <Button
@@ -919,6 +1038,33 @@ export default function AdminPage() {
                                       onClick={() => { setCompUserId(u.id); setCompTier('max'); setCompDays(30); }}
                                     >
                                       <Crown className="w-3 h-3" /> Comp Upgrade
+                                    </Button>
+                                    {u.bannedUntil && new Date(u.bannedUntil) > new Date() ? (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs gap-1 text-emerald-400 hover:text-emerald-300 hover:bg-slate-800"
+                                        onClick={() => handleUnbanUser(u.id)}
+                                      >
+                                        <ShieldOff className="w-3 h-3" /> Unban
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs gap-1 text-orange-400 hover:text-orange-300 hover:bg-slate-800"
+                                        onClick={() => { setBanUserId(u.id); setBanDays(7); setBanReason(''); }}
+                                      >
+                                        <Ban className="w-3 h-3" /> Ban
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 text-xs gap-1 text-red-500 hover:text-red-400 hover:bg-slate-800"
+                                      onClick={() => handleDeleteUser(u.id, u.email)}
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Delete
                                     </Button>
                                   </div>
                                 )}

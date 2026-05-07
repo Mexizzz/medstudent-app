@@ -24,6 +24,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
+    if (user.bannedUntil && user.bannedUntil > new Date()) {
+      return NextResponse.json({
+        error: user.banReason
+          ? `This account is banned until ${user.bannedUntil.toLocaleDateString()}: ${user.banReason}`
+          : `This account is banned until ${user.bannedUntil.toLocaleDateString()}`,
+        bannedUntil: user.bannedUntil.toISOString(),
+      }, { status: 403 });
+    }
+
     const token = await createToken(user.id, user.email);
     const res = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } });
     res.cookies.set(authCookieOptions(token));

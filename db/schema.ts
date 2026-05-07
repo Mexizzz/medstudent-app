@@ -19,6 +19,10 @@ export const users = sqliteTable('users', {
   subscriptionEndsAt:  integer('subscription_ends_at', { mode: 'timestamp' }),
   // IP address captured at signup, used for trial throttling.
   signupIp:     text('signup_ip'),
+  // Ban: while bannedUntil is in the future, login + every authed request is rejected.
+  // Set to a far-future date for permanent bans (e.g., year 9999).
+  bannedUntil:  integer('banned_until', { mode: 'timestamp' }),
+  banReason:    text('ban_reason'),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 

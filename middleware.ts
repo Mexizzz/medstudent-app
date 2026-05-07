@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken } from '@/lib/jwt';
 
 const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/admin', '/api/auth/login', '/api/auth/signup', '/api/auth/send-code', '/api/auth/reset-password', '/api/admin'];
 

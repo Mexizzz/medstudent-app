@@ -97,6 +97,8 @@ export async function POST(req: NextRequest) {
         stripeCustomerId: users.stripeCustomerId,
         stripeSubscriptionId: users.stripeSubscriptionId,
         subscriptionEndsAt: users.subscriptionEndsAt,
+        bannedUntil: users.bannedUntil,
+        banReason: users.banReason,
         createdAt: users.createdAt,
         sessionCount: sql<number>`(SELECT count(*) FROM study_sessions WHERE user_id = ${users.id})`,
         responseCount: sql<number>`(SELECT count(*) FROM session_responses WHERE user_id = ${users.id})`,
@@ -327,6 +329,56 @@ export async function PATCH(req: NextRequest) {
         },
         membership,
       });
+    }
+
+    // Hard delete a user. FK cascades clean up sources, sessions, responses,
+    // tickets, etc. — see schema.ts. Irreversible.
+    if (body.action === 'deleteUser') {
+      const { userId } = body;
+      if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
+      // Safety: don't let admin delete themselves via the API even if they pass their own id.
+      const user = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: { email: true },
+      });
+      if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      await db.delete(users).where(eq(users.id, userId));
+      return NextResponse.json({ success: true, deleted: user.email });
+    }
+
+    // Temporary or permanent ban. Set days = -1 (or null) for "permanent"
+    // (we use year 9999 as the sentinel). Reason is optional but recommended.
+    if (body.action === 'banUser') {
+      const { userId, days, reason } = body;
+      if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
+
+      let bannedUntil: Date;
+      if (days == null || days < 0 || days > 36500) {
+        // Permanent ban — far future date.
+        bannedUntil = new Date('9999-12-31T00:00:00Z');
+      } else {
+        const numDays = Math.max(1, Math.min(36500, Number(days)));
+        bannedUntil = new Date(Date.now() + numDays * 24 * 60 * 60 * 1000);
+      }
+
+      await db.update(users)
+        .set({ bannedUntil, banReason: reason?.trim() || null })
+        .where(eq(users.id, userId));
+      return NextResponse.json({
+        success: true,
+        bannedUntil: bannedUntil.toISOString(),
+        permanent: bannedUntil.getUTCFullYear() === 9999,
+      });
+    }
+
+    // Unban — clear bannedUntil + reason.
+    if (body.action === 'unbanUser') {
+      const { userId } = body;
+      if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 });
+      await db.update(users)
+        .set({ bannedUntil: null, banReason: null })
+        .where(eq(users.id, userId));
+      return NextResponse.json({ success: true });
     }
 
     // Complimentary tier upgrade — bumps a user to a higher tier for N days,

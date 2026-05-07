@@ -1,27 +1,11 @@
-import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { db } from '@/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { createToken, verifyToken, COOKIE_NAME } from './jwt';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'dev-secret-change-in-production'
-);
-const COOKIE_NAME = 'medstudy-token';
-
-export async function createToken(userId: string, email: string): Promise<string> {
-  return new SignJWT({ userId, email })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('7d')
-    .sign(JWT_SECRET);
-}
-
-export async function verifyToken(token: string) {
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload as { userId: string; email: string };
-  } catch {
-    return null;
-  }
-}
+export { createToken, verifyToken };
 
 export async function getAuthUser() {
   const cookieStore = await cookies();
@@ -36,10 +20,39 @@ export class AuthError extends Error {
   }
 }
 
-/** Call at the top of any API route to get userId or throw 401 */
+export class BannedError extends Error {
+  bannedUntil: Date;
+  reason: string | null;
+  constructor(bannedUntil: Date, reason: string | null) {
+    super('Banned');
+    this.bannedUntil = bannedUntil;
+    this.reason = reason;
+  }
+}
+
+/**
+ * Returns user record's ban state if currently banned. Used by login + requireAuth.
+ * Cheap: indexed PK lookup, ~0.5ms.
+ */
+async function checkBan(userId: string): Promise<{ bannedUntil: Date; reason: string | null } | null> {
+  const u = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { bannedUntil: true, banReason: true },
+  });
+  if (u?.bannedUntil && u.bannedUntil > new Date()) {
+    return { bannedUntil: u.bannedUntil, reason: u.banReason ?? null };
+  }
+  return null;
+}
+
+export { checkBan };
+
+/** Call at the top of any API route to get userId or throw 401/403 */
 export async function requireAuth(): Promise<{ userId: string; email: string }> {
   const user = await getAuthUser();
   if (!user) throw new AuthError();
+  const ban = await checkBan(user.userId);
+  if (ban) throw new BannedError(ban.bannedUntil, ban.reason);
   return user;
 }
 
@@ -67,8 +80,15 @@ export function clearAuthCookie() {
   };
 }
 
-/** Wrap an API handler with auth check — catches AuthError and returns 401 */
+/** Wrap an API handler with auth check — catches AuthError/BannedError and returns 401/403 */
 export function handleAuthError(error: unknown) {
+  if (error instanceof BannedError) {
+    return NextResponse.json({
+      error: 'Account banned',
+      reason: error.reason,
+      bannedUntil: error.bannedUntil.toISOString(),
+    }, { status: 403 });
+  }
   if (error instanceof AuthError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
