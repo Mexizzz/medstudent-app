@@ -53,10 +53,7 @@ async function callGroqJSON<T>(
   userPrompt: string,
   maxTokens = 4096,
 ): Promise<T> {
-  // Stay on the 70B primary. The 8B fallback's per-request TPM ceiling (6000)
-  // is too tight for our prompts (system + content + max_tokens easily exceeds
-  // 6000), so falling back guarantees a 413. Instead, retry 70B with backoff —
-  // its TPM is much higher and resets every 60s.
+  // Retry 70B with backoff on rate-limit; TPM resets every 60s.
   const RETRY_DELAYS_MS = [6000, 15000];
   let content = '';
   let lastErr: unknown = null;
@@ -115,6 +112,96 @@ async function callGroqJSON<T>(
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error('Groq retries exhausted');
+}
+
+// ─── Gemini fallback ─────────────────────────────────────────────────────────
+// Used when Groq is rate-limited or rejects a request as too large. Gemini's
+// free tier has ~1M TPM (vs Groq's 30K), so it covers traffic spikes for free.
+
+const GEMINI_MODEL = 'gemini-2.0-flash';
+
+async function callGeminiJSON<T>(
+  system: string,
+  userPrompt: string,
+  maxTokens = 4096,
+): Promise<T> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('gemini_unavailable: GEMINI_API_KEY not configured');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const body = {
+    systemInstruction: { parts: [{ text: system }] },
+    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: maxTokens,
+      responseMimeType: 'application/json',
+    },
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (res.status === 429) throw new Error(`rate_limit_exhausted (gemini 429): ${text.slice(0, 200)}`);
+    throw new Error(`Gemini error ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const content: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+  const finish = data?.candidates?.[0]?.finishReason;
+  if (finish === 'MAX_TOKENS') {
+    console.warn(`Gemini response truncated at ${maxTokens} tokens. Tail: ${content.slice(-200)}`);
+  }
+
+  try {
+    return JSON.parse(content) as T;
+  } catch (e) {
+    console.error(`Gemini JSON parse failed (length=${content.length}). Tail: ${content.slice(-200)}`);
+    throw e;
+  }
+}
+
+/**
+ * Tries Groq first (fast + cheap). On rate-limit / request-too-large / unrecoverable
+ * Groq errors, falls back to Gemini if GEMINI_API_KEY is set. If Gemini also fails
+ * (or isn't configured), surfaces the original Groq error so the route layer can
+ * map it to a clean user-facing message.
+ */
+async function callLLMJSON<T>(
+  system: string,
+  userPrompt: string,
+  maxTokens = 4096,
+): Promise<T> {
+  try {
+    return await callGroqJSON<T>(system, userPrompt, maxTokens);
+  } catch (groqErr) {
+    const msg = groqErr instanceof Error ? groqErr.message : String(groqErr);
+    const shouldFallback =
+      msg.includes('rate_limit_exhausted')
+      || msg.includes('request_too_large')
+      || msg.includes('500')
+      || msg.includes('502')
+      || msg.includes('503')
+      || msg.includes('504');
+
+    if (!shouldFallback || !process.env.GEMINI_API_KEY) {
+      throw groqErr;
+    }
+
+    console.warn(`Groq failed (${msg.slice(0, 120)}) — falling back to Gemini`);
+    try {
+      return await callGeminiJSON<T>(system, userPrompt, maxTokens);
+    } catch (geminiErr) {
+      const gMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
+      console.error(`Gemini fallback also failed: ${gMsg.slice(0, 200)}`);
+      throw groqErr; // Surface the original Groq error so the user-facing message is meaningful.
+    }
+  }
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -253,7 +340,7 @@ export async function generateMCQs(
   focusTopic?: string
 ): Promise<GeneratedMCQ[]> {
   return generateAcrossChunks(rawText, count, subject, topic, difficulty, async (chunk, n, subj, top, diff) => {
-    const result = await callGroqJSON<{ questions: GeneratedMCQ[] }>(
+    const result = await callLLMJSON<{ questions: GeneratedMCQ[] }>(
       MCQ_SYSTEM,
       mcqUserPrompt(chunk, n, subj, top, diff, focusTopic)
     );
@@ -269,7 +356,7 @@ export async function generateFlashcards(
   focusTopic?: string
 ): Promise<GeneratedFlashcard[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
-    const result = await callGroqJSON<{ cards: GeneratedFlashcard[] }>(
+    const result = await callLLMJSON<{ cards: GeneratedFlashcard[] }>(
       FLASHCARD_SYSTEM,
       flashcardUserPrompt(chunk, n, subj, top, focusTopic)
     );
@@ -285,7 +372,7 @@ export async function generateFillBlanks(
   focusTopic?: string
 ): Promise<GeneratedFillBlank[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
-    const result = await callGroqJSON<{ questions: GeneratedFillBlank[] }>(
+    const result = await callLLMJSON<{ questions: GeneratedFillBlank[] }>(
       FILL_BLANK_SYSTEM,
       fillBlankUserPrompt(chunk, n, subj, top, focusTopic)
     );
@@ -302,7 +389,7 @@ export async function generateShortAnswers(
   focusTopic?: string
 ): Promise<GeneratedShortAnswer[]> {
   return generateAcrossChunks(rawText, count, subject, topic, difficulty, async (chunk, n, subj, top, diff) => {
-    const result = await callGroqJSON<{ questions: GeneratedShortAnswer[] }>(
+    const result = await callLLMJSON<{ questions: GeneratedShortAnswer[] }>(
       SHORT_ANSWER_SYSTEM,
       shortAnswerUserPrompt(chunk, n, subj, top, diff, focusTopic)
     );
@@ -318,7 +405,7 @@ export async function generateClinicalCases(
   focusTopic?: string
 ): Promise<GeneratedClinicalCase[]> {
   return generateAcrossChunks(rawText, count, subject, topic, 'medium', async (chunk, n, subj, top) => {
-    const result = await callGroqJSON<{ cases: GeneratedClinicalCase[] }>(
+    const result = await callLLMJSON<{ cases: GeneratedClinicalCase[] }>(
       CLINICAL_CASE_SYSTEM,
       clinicalCaseUserPrompt(chunk, n, subj, top, focusTopic)
     );
@@ -332,7 +419,7 @@ export async function evaluateShortAnswer(
   keyPoints: string[],
   userAnswer: string
 ): Promise<EvaluationResult> {
-  const result = await callGroqJSON<EvaluationResult>(
+  const result = await callLLMJSON<EvaluationResult>(
     EVAL_SYSTEM,
     evalUserPrompt(question, modelAnswer, keyPoints, userAnswer)
   );
@@ -367,7 +454,7 @@ export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
   const results = await Promise.all(
     chunks.map(async (chunk, i) => {
       try {
-        const result = await callGroqJSON<{ questions: GeneratedMCQ[] }>(
+        const result = await callLLMJSON<{ questions: GeneratedMCQ[] }>(
           PARSE_MCQ_SYSTEM,
           parseMcqUserPrompt(chunk),
           8192
