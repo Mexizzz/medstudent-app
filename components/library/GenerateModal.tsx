@@ -143,6 +143,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
       const endpoint = type.id === 'fill_blank' ? 'fill-blank'
         : type.id === 'short_answer' ? 'short-answer'
         : type.id === 'clinical_case' ? 'clinical-case'
+        : type.id === 'flashcard' ? 'flashcards'
         : type.id;
 
       try {
