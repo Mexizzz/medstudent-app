@@ -6,7 +6,7 @@ import {
   Brain, BookOpen, Users, BarChart2,
   Mic, Zap, ArrowRight, CheckCircle2, MessageCircle, Target,
   FlaskConical, XCircle, Lightbulb, CalendarDays, UserPlus, Heart, Sparkles,
-  Crown, Check, X, ChevronDown, Star, Globe
+  Crown, Check, X, ChevronDown, Star, Globe, Instagram
 } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -385,6 +385,16 @@ export default function LandingPage() {
               <Link href="/signup" className="hover:text-blue-600 transition-colors">Sign up free</Link>
               <Link href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</Link>
               <Link href="#faq" className="hover:text-blue-600 transition-colors">FAQ</Link>
+              <a
+                href="https://instagram.com/medstudy.space"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Follow MedStudy on Instagram"
+                className="flex items-center gap-1.5 hover:text-pink-600 transition-colors"
+              >
+                <Instagram className="w-4 h-4" />
+                <span className="hidden sm:inline">@medstudy.space</span>
+              </a>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">

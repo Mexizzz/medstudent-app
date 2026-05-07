@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Plus, ArrowLeft, MessageCircle, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Send, Plus, ArrowLeft, MessageCircle, Clock, CheckCircle2, XCircle, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Ticket {
@@ -225,6 +225,24 @@ export default function SupportPage() {
             <Plus className="w-4 h-4" /> New Ticket
           </Button>
         </div>
+
+        <a
+          href="https://instagram.com/medstudy.space"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block mb-6 rounded-2xl border border-border bg-gradient-to-br from-pink-500/8 via-purple-500/8 to-orange-500/8 hover:border-pink-500/40 transition-colors p-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-pink-500 via-purple-500 to-orange-400 text-white shrink-0">
+              <Instagram className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Prefer to DM us?</p>
+              <p className="text-xs text-muted-foreground">Follow <span className="font-medium">@medstudy.space</span> on Instagram for updates and quick replies.</p>
+            </div>
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors hidden sm:inline">Open →</span>
+          </div>
+        </a>
 
         {tickets.length === 0 ? (
           <div className="bg-card border border-border rounded-2xl p-12 text-center">
