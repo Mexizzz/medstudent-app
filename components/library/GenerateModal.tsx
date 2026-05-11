@@ -12,6 +12,7 @@ import { Loader2, Sparkles, ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ACTIVITY_LABELS } from '@/lib/utils';
 import { UpgradeModal } from '@/components/ui/UpgradeModal';
+import { fetchJsonSafe } from '@/lib/fetch-json';
 
 interface GenerateModalProps {
   sourceId: string;
@@ -91,7 +92,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           reader.readAsDataURL(imageFile);
         });
 
-        const res = await fetch('/api/generate/mcq', {
+        const result = await fetchJsonSafe<{ generated: number }>('/api/generate/mcq', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -103,16 +104,20 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
             ...(focusTopic.trim() && { focusTopic: focusTopic.trim() }),
           }),
         });
-        const contentType = res.headers.get('content-type') ?? '';
-        if (!contentType.includes('application/json')) throw new Error(`Server error (${res.status})`);
-        const data = await res.json();
-        if (!res.ok) {
-          if (data.upgradeRequired) {
-            setUpgradeModal({ open: true, feature: 'Image MCQ', requiredTier: data.requiredTier || 'pro', limitReached: res.status === 429, used: data.used, limit: data.limit });
+        if (!result.ok) {
+          if (result.data?.upgradeRequired) {
+            setUpgradeModal({
+              open: true,
+              feature: 'Image MCQ',
+              requiredTier: (result.data.requiredTier as 'pro' | 'max') || 'pro',
+              limitReached: result.status === 429,
+              used: result.data.used as number | undefined,
+              limit: result.data.limit as number | undefined,
+            });
           }
-          throw new Error(data.error);
+          throw new Error(result.error);
         }
-        toast.success(`Generated ${data.generated} image-based MCQs!`);
+        toast.success(`Generated ${result.data.generated} image-based MCQs!`);
         setOpen(false);
         onSuccess();
       } catch (e) {
@@ -147,7 +152,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
         : type.id;
 
       try {
-        const res = await fetch(`/api/generate/${endpoint}`, {
+        const result = await fetchJsonSafe<{ generated: number }>(`/api/generate/${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -158,25 +163,20 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
             ...(usePageRange && isPdf && { pageFrom, pageTo }),
           }),
         });
-        const contentType = res.headers.get('content-type') ?? '';
-        if (!contentType.includes('application/json')) {
-          throw new Error(`Server error (${res.status}). Try again.`);
-        }
-        const data = await res.json();
-        if (!res.ok) {
-          if (data.upgradeRequired) {
+        if (!result.ok) {
+          if (result.data?.upgradeRequired) {
             setUpgradeModal({
               open: true,
               feature: type.label,
-              requiredTier: data.requiredTier || 'pro',
-              limitReached: res.status === 429,
-              used: data.used,
-              limit: data.limit,
+              requiredTier: (result.data.requiredTier as 'pro' | 'max') || 'pro',
+              limitReached: result.status === 429,
+              used: result.data.used as number | undefined,
+              limit: result.data.limit as number | undefined,
             });
           }
-          throw new Error(data.error);
+          throw new Error(result.error);
         }
-        results.push({ status: 'fulfilled', value: { label: type.label, generated: data.generated ?? 0 } });
+        results.push({ status: 'fulfilled', value: { label: type.label, generated: result.data.generated ?? 0 } });
       } catch (e) {
         results.push({ status: 'rejected', reason: e instanceof Error ? e.message : String(e) });
       }

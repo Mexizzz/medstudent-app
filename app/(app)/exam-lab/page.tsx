@@ -15,6 +15,7 @@ import {
 import type { ExamProfile } from '@/db/schema';
 import type { ExamStyleAnalysis, GeneratedLabQuestion, QuestionMode } from '@/lib/exam-lab';
 import { UpgradeModal } from '@/components/ui/UpgradeModal';
+import { fetchJsonSafe } from '@/lib/fetch-json';
 
 const QUESTION_COUNTS = [10, 20, 30, 40, 50, 60, 70, 80] as const;
 
@@ -373,26 +374,30 @@ export default function ExamLabPage() {
       if (useMaterialText) fd.append('text', materialText.trim());
       else if (materialFile) fd.append('file', materialFile);
 
-      const res = await fetch('/api/exam-lab/generate', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.upgradeRequired) {
+      const result = await fetchJsonSafe<{ questions?: GeneratedLabQuestion[] }>('/api/exam-lab/generate', { method: 'POST', body: fd });
+      if (!result.ok) {
+        if (result.data?.upgradeRequired) {
           setUpgradeModal({
             open: true,
             feature: 'Exam Lab',
-            requiredTier: data.requiredTier ?? 'max',
-            limitReached: res.status === 429,
-            used: data.used,
-            limit: data.limit,
+            requiredTier: (result.data.requiredTier as 'pro' | 'max') ?? 'max',
+            limitReached: result.status === 429,
+            used: result.data.used as number | undefined,
+            limit: result.data.limit as number | undefined,
           });
           return;
         }
-        throw new Error(data.error ?? 'Generation failed');
+        throw new Error(result.error);
       }
 
-      setGeneratedQuestions(data.questions ?? []);
+      const questions = result.data.questions ?? [];
+      setGeneratedQuestions(questions);
       setSaveTitle(`${selectedProfile.name} — ${subject || 'Study Material'}`);
-      toast.success(`${data.questions?.length ?? 0} questions generated!`);
+      if (questions.length === 0) {
+        toast.error('No questions could be generated. Try a longer or clearer source.');
+      } else {
+        toast.success(`${questions.length} questions generated!`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Generation failed');
     } finally {
