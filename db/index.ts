@@ -13,29 +13,35 @@ if (!fs.existsSync(dataDir)) {
 }
 
 const dbPath = path.join(dataDir, 'medstudent.db');
+const IS_BUILD = process.env.NEXT_PHASE === 'phase-production-build';
 
+// Connect — opening the file in shared/WAL mode is safe across the build's
+// 31 parallel workers; only WRITE operations (pragmas, migrations, ALTERs)
+// race for the exclusive lock. Those are gated below.
 const sqlite = new Database(dbPath);
-
-// Allow up to 10s of retries before throwing SQLITE_BUSY
-// (Railway build spawns 47 parallel workers that all open the same db file)
-sqlite.pragma('busy_timeout = 10000');
-// Enable WAL mode for better concurrent read performance
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
 
 export const db = drizzle(sqlite, { schema });
 export { sqlite };
 
-// Run migrations only at runtime, not during `next build`
-// (build spawns 47 parallel workers that would all lock the same SQLite file)
-if (process.env.NEXT_PHASE !== 'phase-production-build') {
+// Everything below performs writes. Skip during `next build` —
+// the 31 parallel "Collecting page data" workers all racing pragma + migrate
+// is what produced the SQLITE_BUSY build crashes.
+if (!IS_BUILD) {
+  // Allow up to 10s of retries before throwing SQLITE_BUSY at runtime
+  sqlite.pragma('busy_timeout = 10000');
+  // WAL = better concurrent read perf
+  sqlite.pragma('journal_mode = WAL');
+  sqlite.pragma('foreign_keys = ON');
+
   try {
     migrate(db, { migrationsFolder: path.join(process.cwd(), 'db/migrations') });
   } catch (e) {
     console.error('Drizzle migrate error:', e);
   }
+
   // Safety net: add image_url column if migration was previously missed
   try { sqlite.exec('ALTER TABLE questions ADD COLUMN image_url TEXT'); } catch { /* already exists */ }
+
   // Create focus_sessions table for Study Space feature
   try {
     sqlite.exec(`CREATE TABLE IF NOT EXISTS focus_sessions (
