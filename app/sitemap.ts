@@ -25,12 +25,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-    {
-      url: `${SITE_URL}/pricing`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
+    // /pricing is a logged-in route — middleware redirects unauth users to /login,
+    // so Google would index the redirect. The marketing pricing lives in the
+    // homepage #pricing section, which Google indexes as part of "/".
     {
       url: `${SITE_URL}/forgot-password`,
       lastModified: now,

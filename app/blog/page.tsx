@@ -10,11 +10,39 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.medstudy.space/blog' },
 };
 
+const SITE_URL = 'https://www.medstudy.space';
+
 export default function BlogPage() {
   const posts = getAllPosts();
 
+  const blogSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'MedStudy Blog',
+    description: 'Study tips, app comparisons, and guides for medical students preparing for USMLE, PLAB, UKMLA, AMC, and MCCQE.',
+    url: `${SITE_URL}/blog`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'MedStudy',
+      url: SITE_URL,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-512.png` },
+    },
+    blogPost: posts.map(p => ({
+      '@type': 'BlogPosting',
+      headline: p.title,
+      description: p.description,
+      datePublished: p.date,
+      url: `${SITE_URL}/blog/${p.slug}`,
+      author: { '@type': 'Organization', name: p.author },
+    })),
+  };
+
   return (
     <div className="min-h-screen" style={{ background: '#ffffff', color: '#0f172a' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
+      />
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderColor: '#e2e8f0' }}>
         <nav className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
