@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ContentCard } from '@/components/library/ContentCard';
 import { UploadModal } from '@/components/library/UploadModal';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, Download } from 'lucide-react';
+import { BookOpen, Download, FileText, Youtube, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Source {
@@ -75,15 +75,49 @@ export default function LibraryPage() {
           ))}
         </div>
       ) : sources.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-          <div className="p-5 bg-muted rounded-full">
-            <BookOpen className="w-10 h-10 text-muted-foreground" />
+        <div className="py-10 sm:py-12">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="inline-flex p-4 bg-gradient-to-br from-violet-500/15 to-indigo-500/15 rounded-2xl mb-4">
+                <Sparkles className="w-10 h-10 text-violet-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-1">Add your first study source</h2>
+              <p className="text-muted-foreground text-sm">
+                Once you've added something, the AI can generate MCQs, flashcards, clinical cases, and more from it.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="p-4 rounded-xl border border-border bg-card text-center">
+                <div className="inline-flex p-2 bg-violet-500/10 rounded-lg mb-2">
+                  <FileText className="w-5 h-5 text-violet-500" />
+                </div>
+                <p className="font-semibold text-sm text-foreground">PDF lectures</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Drop in any slides or notes</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card text-center">
+                <div className="inline-flex p-2 bg-indigo-500/10 rounded-lg mb-2">
+                  <BookOpen className="w-5 h-5 text-indigo-500" />
+                </div>
+                <p className="font-semibold text-sm text-foreground">Plain text</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Paste your written notes</p>
+              </div>
+              <div className="p-4 rounded-xl border border-border bg-card text-center">
+                <div className="inline-flex p-2 bg-red-500/10 rounded-lg mb-2">
+                  <Youtube className="w-5 h-5 text-red-500" />
+                </div>
+                <p className="font-semibold text-sm text-foreground">YouTube videos</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Just paste the URL</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <UploadModal onSuccess={fetchSources} />
+              <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+                <ArrowRight className="w-3 h-3" /> Takes ~30 seconds
+              </span>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-semibold text-muted-foreground">No content yet</p>
-            <p className="text-muted-foreground text-sm">Upload a PDF or add a YouTube video to get started</p>
-          </div>
-          <UploadModal onSuccess={fetchSources} />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

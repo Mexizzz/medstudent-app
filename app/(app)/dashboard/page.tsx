@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { studyPlanItems, srCards, studyGoals, userXp, users } from '@/db/schema';
+import { studyPlanItems, srCards, studyGoals, userXp, users, contentSources, studySessions } from '@/db/schema';
 import { getStreakInfo } from '@/lib/streak';
 import { getAuthUser } from '@/lib/auth';
 import { StreakWidget } from '@/components/dashboard/StreakWidget';
@@ -7,7 +7,8 @@ import { TodayPlanCard } from '@/components/dashboard/TodayPlanCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target, ArrowRight, Zap, Trophy } from 'lucide-react';
+import { Brain, BookOpen, BarChart2, CalendarDays, Layers, Target, ArrowRight, Zap, Trophy, Upload, Sparkles, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { sql } from 'drizzle-orm';
 import Link from 'next/link';
 import { todayString } from '@/lib/utils';
 import { todayStr } from '@/lib/sr';
@@ -38,7 +39,7 @@ export default async function DashboardPage() {
   const userName = userRow?.name || '';
   const userTier = userRow?.tier || 'free';
 
-  const [streakInfo, todayPlans, allSrCards, goals, xpRows] = await Promise.all([
+  const [streakInfo, todayPlans, allSrCards, goals, xpRows, srcCountRows, sessionCountRows] = await Promise.all([
     getStreakInfo(userId).catch(() => ({
       currentStreak: 0, longestStreak: 0, totalStudyDays: 0,
       todayComplete: false, last7Days: [],
@@ -49,7 +50,14 @@ export default async function DashboardPage() {
     db.select().from(srCards).where(eq(srCards.userId, userId)),
     db.select().from(studyGoals).where(eq(studyGoals.userId, userId)).limit(1),
     db.select().from(userXp).where(eq(userXp.userId, userId)),
+    db.select({ count: sql<number>`count(*)` }).from(contentSources).where(eq(contentSources.userId, userId)),
+    db.select({ count: sql<number>`count(*)` }).from(studySessions).where(eq(studySessions.userId, userId)),
   ]);
+
+  // New-user detection: no uploaded content AND no study sessions yet.
+  const sourceCount = Number(srcCountRows[0]?.count ?? 0);
+  const sessionCount = Number(sessionCountRows[0]?.count ?? 0);
+  const isNewUser = sourceCount === 0 && sessionCount === 0;
 
   const xpProgress = getXpProgress(xpRows[0]?.totalXp ?? 0);
   const dueCount = allSrCards.filter(c => c.nextReviewDate <= today).length;
@@ -103,6 +111,75 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Onboarding — only for users who haven't uploaded anything or studied yet */}
+      {isNewUser && (
+        <Card className="border-primary/30 bg-gradient-to-br from-violet-50 via-indigo-50/50 to-blue-50 dark:from-violet-500/10 dark:via-indigo-500/10 dark:to-blue-500/10 overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Get started in 3 steps</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">You're 60 seconds away from your first AI-generated quiz.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Link
+                href="/library"
+                className="group flex items-center gap-4 p-3 rounded-xl bg-background/70 hover:bg-background border border-border/50 hover:border-primary/40 transition-all"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/15 text-primary font-bold text-sm shrink-0">1</div>
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <Upload className="w-4 h-4 text-violet-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground">Upload your first study material</p>
+                    <p className="text-xs text-muted-foreground truncate">A lecture PDF, your notes, or even a YouTube link</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary transition-all shrink-0" />
+              </Link>
+
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-background/40 border border-border/30">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground font-bold text-sm shrink-0">2</div>
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <Sparkles className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground">Generate AI questions from it</p>
+                    <p className="text-xs text-muted-foreground truncate">MCQs, flashcards, fill-in-blank, clinical cases — your pick</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-background/40 border border-border/30">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground font-bold text-sm shrink-0">3</div>
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <GraduationCap className="w-4 h-4 text-blue-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-foreground">Start studying — your AI tutor is ready</p>
+                    <p className="text-xs text-muted-foreground truncate">Stuck on a question? Ask the tutor for an explanation</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/library">
+                <Button className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white">
+                  <Upload className="w-4 h-4" /> Upload your first source
+                </Button>
+              </Link>
+              <Link href="/tutor">
+                <Button variant="outline" className="gap-2">
+                  <Sparkles className="w-4 h-4" /> Or chat with the AI tutor
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* SR Alert Banner */}
       {dueCount > 0 && (
