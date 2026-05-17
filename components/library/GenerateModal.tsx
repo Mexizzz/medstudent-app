@@ -49,6 +49,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
     Object.fromEntries(ACTIVITY_TYPES.map(t => [t.id, { enabled: t.id === 'mcq', count: t.defaultCount }]))
   );
   const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; feature?: string; requiredTier?: 'pro' | 'max'; limitReached?: boolean; used?: number; limit?: number }>({ open: false });
+  const [progress, setProgress] = useState<{ done: number; total: number; current: string } | null>(null);
 
   const isMcqPdf = sourceType === 'mcq_pdf';
 
@@ -139,12 +140,18 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
     }
 
     setLoading(true);
+    setProgress({ done: 0, total: selected.length, current: selected[0].label });
 
-    // Sequence the generations instead of parallel: the Groq free-tier TPM
-    // is shared across all in-flight requests, so firing 5 types at once
-    // guarantees rate-limit hits and silent zero-result responses.
-    const results: PromiseSettledResult<{ label: string; generated: number }>[] = [];
-    for (const type of selected) {
+    // Generate types with limited concurrency. Two in-flight at a time is the
+    // sweet spot: ~11k tokens (~5.5k per request) stays well under Groq's
+    // 30k TPM ceiling, while halving total wait time vs strict sequencing.
+    // Larger concurrency risks bursting past the rate limit.
+    const CONCURRENCY = 2;
+    let completed = 0;
+    const results: PromiseSettledResult<{ label: string; generated: number }>[] = new Array(selected.length);
+
+    const runOne = async (idx: number) => {
+      const type = selected[idx];
       const endpoint = type.id === 'fill_blank' ? 'fill-blank'
         : type.id === 'short_answer' ? 'short-answer'
         : type.id === 'clinical_case' ? 'clinical-case'
@@ -176,11 +183,27 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
           }
           throw new Error(result.error);
         }
-        results.push({ status: 'fulfilled', value: { label: type.label, generated: result.data.generated ?? 0 } });
+        results[idx] = { status: 'fulfilled', value: { label: type.label, generated: result.data.generated ?? 0 } };
       } catch (e) {
-        results.push({ status: 'rejected', reason: e instanceof Error ? e.message : String(e) });
+        results[idx] = { status: 'rejected', reason: e instanceof Error ? e.message : String(e) };
+      } finally {
+        completed++;
+        // Show whichever still-pending type was clicked last (approximate, but useful).
+        const nextLabel = selected[Math.min(completed, selected.length - 1)].label;
+        setProgress({ done: completed, total: selected.length, current: nextLabel });
       }
-    }
+    };
+
+    // Worker pool: keep CONCURRENCY tasks in flight at all times.
+    let nextIdx = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, selected.length) }, async () => {
+      while (true) {
+        const idx = nextIdx++;
+        if (idx >= selected.length) return;
+        await runOne(idx);
+      }
+    });
+    await Promise.all(workers);
 
     let totalGenerated = 0;
     let anyFailed = false;
@@ -202,6 +225,7 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
       toast.error("Couldn't generate questions from this content. Try a longer or clearer source, or remove the focus topic.");
     }
     setLoading(false);
+    setProgress(null);
   }
 
   return (
@@ -398,12 +422,22 @@ export function GenerateModal({ sourceId, sourceTitle, sourceType, pageCount, on
 
           <Button onClick={handleGenerate} disabled={loading} className="w-full">
             {loading
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>
+              ? <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {progress && progress.total > 1
+                    ? <span>Generating <span className="font-semibold">{progress.current}</span> ({progress.done + 1} of {progress.total})…</span>
+                    : <span>Generating…</span>}
+                </>
               : imageFile
                 ? <><ImagePlus className="w-4 h-4 mr-2" />Generate Image MCQs</>
                 : <><Sparkles className="w-4 h-4 mr-2" />Generate Questions</>
             }
           </Button>
+          {loading && progress && progress.total > 1 && (
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              Each type takes 10–30s. Total time depends on AI load.
+            </p>
+          )}
         </div>
       </DialogContent>
 
