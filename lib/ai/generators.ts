@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { groq, getGroq, MODEL } from './client';
 import { chunkText } from '../utils';
 import {
@@ -9,6 +10,63 @@ import {
   EVAL_SYSTEM, evalUserPrompt,
   PARSE_MCQ_SYSTEM, parseMcqUserPrompt,
 } from './prompts';
+import { db } from '@/db';
+import { generationCache } from '@/db/schema';
+import { eq, sql as drizzleSql } from 'drizzle-orm';
+
+// ─── Generation cache ────────────────────────────────────────────────────
+// Wraps the LLM call: identical (system + user prompt + maxTokens) returns
+// the previously-stored JSON instead of calling the AI again. Two users
+// uploading the same source and asking for the same generation only pay
+// for the first one.
+
+const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function cacheKeyFor(system: string, userPrompt: string, maxTokens: number): string {
+  return crypto
+    .createHash('sha256')
+    .update(`v1|${maxTokens}|${system}\n---\n${userPrompt}`)
+    .digest('hex');
+}
+
+async function readCache<T>(key: string): Promise<T | null> {
+  try {
+    const row = await db.query.generationCache.findFirst({
+      where: eq(generationCache.cacheKey, key),
+      columns: { result: true, createdAt: true },
+    });
+    if (!row) return null;
+    if (Date.now() - row.createdAt.getTime() > CACHE_TTL_MS) return null;
+    return JSON.parse(row.result) as T;
+  } catch (e) {
+    console.error('generation cache read error:', e);
+    return null;
+  }
+}
+
+async function writeCache(key: string, value: unknown): Promise<void> {
+  try {
+    const serialized = JSON.stringify(value);
+    // Don't cache obvious failures.
+    if (!serialized || serialized.length < 2) return;
+    await db.insert(generationCache).values({
+      cacheKey: key,
+      result: serialized,
+      createdAt: new Date(),
+    }).onConflictDoUpdate({
+      target: generationCache.cacheKey,
+      set: { result: serialized, createdAt: new Date() },
+    });
+    // Lazy cleanup: 1% chance per write, evict entries older than the TTL.
+    if (Math.random() < 0.01) {
+      const cutoff = new Date(Date.now() - CACHE_TTL_MS);
+      await db.delete(generationCache).where(drizzleSql`${generationCache.createdAt} < ${cutoff}`);
+    }
+  } catch (e) {
+    // Cache failure should never block generation.
+    console.error('generation cache write error:', e);
+  }
+}
 
 // Core helper: calls Groq with JSON mode, falls back to smaller model on rate limit
 /**
@@ -200,8 +258,17 @@ export async function callLLMJSON<T>(
   userPrompt: string,
   maxTokens = 4096,
 ): Promise<T> {
+  const cacheKey = cacheKeyFor(system, userPrompt, maxTokens);
+  const cached = await readCache<T>(cacheKey);
+  if (cached !== null) {
+    return cached;
+  }
+
   try {
-    return await callGroqJSON<T>(system, userPrompt, maxTokens);
+    const result = await callGroqJSON<T>(system, userPrompt, maxTokens);
+    // Fire-and-forget cache write — don't block the response.
+    void writeCache(cacheKey, result);
+    return result;
   } catch (groqErr) {
     const msg = groqErr instanceof Error ? groqErr.message : String(groqErr);
     const shouldFallback =
@@ -218,7 +285,9 @@ export async function callLLMJSON<T>(
 
     console.warn(`Groq failed (${msg.slice(0, 120)}) — falling back to Gemini`);
     try {
-      return await callGeminiJSON<T>(system, userPrompt, maxTokens);
+      const result = await callGeminiJSON<T>(system, userPrompt, maxTokens);
+      void writeCache(cacheKey, result);
+      return result;
     } catch (geminiErr) {
       const gMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
       console.error(`Gemini fallback also failed: ${gMsg.slice(0, 200)}`);

@@ -148,6 +148,13 @@
       "when": 1774200000000,
       "tag": "0020_user_ban",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1774300000000,
+      "tag": "0021_generation_cache",
+      "breakpoints": true
     }
   ]
 }

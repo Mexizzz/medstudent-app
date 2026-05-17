@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, uniqueIndex, index } from 'drizzle-orm/sqlite-core';
 
 // ── Users ──────────────────────────────────────────────
 export const users = sqliteTable('users', {
@@ -392,6 +392,19 @@ export const featureVotes = sqliteTable('feature_votes', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 }, (table) => ({
   uniqueVote: uniqueIndex('vote_request_user_unique').on(table.requestId, table.userId),
+}));
+
+// AI generation cache. Key = sha256(system + userPrompt + maxTokens).
+// Two users uploading the same PDF and asking for the same generation
+// produce the same hash -> served from cache, zero AI tokens spent.
+// TTL is enforced via createdAt: entries older than 30 days are evicted
+// opportunistically on write.
+export const generationCache = sqliteTable('generation_cache', {
+  cacheKey:  text('cache_key').primaryKey(),
+  result:    text('result').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  createdAtIdx: index('generation_cache_created_idx').on(table.createdAt),
 }));
 
 // ── Type exports ───────────────────────────────────────
