@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded squircle background -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#accent)" opacity="0.15"/>
+
+  <!-- Medical cross / plus icon — geometric, centered -->
+  <g transform="translate(256 256)">
+    <!-- Outer ring (subtle) -->
+    <circle cx="0" cy="0" r="150" fill="none" stroke="white" stroke-width="3" opacity="0.18"/>
+
+    <!-- Cross — thick, rounded, white -->
+    <rect x="-32" y="-110" width="64" height="220" rx="16" fill="white"/>
+    <rect x="-110" y="-32" width="220" height="64" rx="16" fill="white"/>
+
+    <!-- AI sparkle accent at top right -->
+    <g transform="translate(96 -96)" filter="url(#glow)">
+      <path d="M0 -22 L6 -6 L22 0 L6 6 L0 22 L-6 6 L-22 0 L-6 -6 Z" fill="#38bdf8"/>
+    </g>
+  </g>
+</svg>
