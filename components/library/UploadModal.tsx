@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Upload, Youtube, Loader2, FileText, Info } from 'lucide-react';
+import { Plus, Upload, Youtube, Loader2, FileText, Info, NotebookPen } from 'lucide-react';
 import { toast } from 'sonner';
 import { UpgradeModal } from '@/components/ui/UpgradeModal';
 
@@ -44,9 +44,61 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
   const [ytManualText, setYtManualText] = useState('');
   const [showPasteArea, setShowPasteArea] = useState(false);
 
+  // Plain-text / notes fields
+  const [noteText, setNoteText] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteSubject, setNoteSubject] = useState('');
+  const [noteTopic, setNoteTopic] = useState('');
+
   function resetYt() {
     setYtUrl(''); setYtTitle(''); setYtSubject(''); setYtTopic('');
     setYtManualText(''); setShowPasteArea(false);
+  }
+
+  function resetNotes() {
+    setNoteText(''); setNoteTitle(''); setNoteSubject(''); setNoteTopic('');
+  }
+
+  async function handleNotesAdd() {
+    if (!noteTitle.trim() || !noteText.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/content/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: noteTitle.trim(),
+          text: noteText,
+          subject: noteSubject,
+          topic: noteTopic,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (data?.upgradeRequired) {
+          setOpen(false);
+          setUpgradeModal({
+            open: true,
+            feature: 'Notes Upload',
+            requiredTier: data.requiredTier ?? 'pro',
+            limitReached: res.status === 429,
+            used: data.used,
+            limit: data.limit,
+          });
+          return;
+        }
+        throw new Error(data?.error ?? `Server error (${res.status})`);
+      }
+
+      toast.success(`Added "${noteTitle.trim()}" — ${data.wordCount?.toLocaleString()} words`);
+      resetNotes();
+      setOpen(false);
+      onSuccess();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handlePdfUpload() {
@@ -142,7 +194,7 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetYt(); }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { resetYt(); resetNotes(); } }}>
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="w-4 h-4" />
@@ -158,6 +210,9 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
           <TabsList className="w-full">
             <TabsTrigger value="pdf" className="flex-1 gap-2">
               <FileText className="w-4 h-4" />PDF
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="flex-1 gap-2">
+              <NotebookPen className="w-4 h-4" />Notes
             </TabsTrigger>
             <TabsTrigger value="youtube" className="flex-1 gap-2">
               <Youtube className="w-4 h-4" />YouTube
@@ -231,6 +286,67 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
 
             <Button onClick={handlePdfUpload} disabled={!file || !pdfTitle || loading} className="w-full">
               {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</> : 'Upload PDF'}
+            </Button>
+          </TabsContent>
+
+          {/* ── Notes Tab ── */}
+          <TabsContent value="notes" className="space-y-4 pt-2">
+            <div>
+              <Label>Title *</Label>
+              <Input
+                value={noteTitle}
+                onChange={e => setNoteTitle(e.target.value)}
+                className="mt-1"
+                placeholder="e.g. Cardiology — Heart Failure"
+              />
+            </div>
+
+            <div>
+              <Label>Paste your notes *</Label>
+              <p className="text-xs text-muted-foreground flex items-start gap-1 mt-1 mb-1">
+                <Info className="w-3 h-3 mt-0.5 shrink-0" />
+                Paste lecture notes, revision text, anything you wrote. The AI generates questions from this exact text.
+              </p>
+              <Textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Paste your written notes here..."
+                className="min-h-[180px] text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1 text-right">
+                {noteText.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words
+                {noteText.trim().split(/\s+/).filter(Boolean).length < 50 && noteText.trim().length > 0 && (
+                  <span className="text-amber-500"> · need 50+ for good generation</span>
+                )}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Subject</Label>
+                <Select value={noteSubject} onValueChange={setNoteSubject}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Topic</Label>
+                <Input value={noteTopic} onChange={e => setNoteTopic(e.target.value)} className="mt-1" placeholder="e.g. CHF" />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleNotesAdd}
+              disabled={!noteTitle.trim() || !noteText.trim() || loading}
+              className="w-full"
+            >
+              {loading
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Adding...</>
+                : <><NotebookPen className="w-4 h-4 mr-2" />Add Notes</>}
             </Button>
           </TabsContent>
 

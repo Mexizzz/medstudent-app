@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Youtube, Trash2, Eye, FileQuestion, Loader2 } from 'lucide-react';
+import { FileText, Youtube, Trash2, Eye, FileQuestion, Loader2, NotebookPen } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn, subjectColor, ACTIVITY_LABELS } from '@/lib/utils';
@@ -27,24 +27,28 @@ interface ContentCardProps {
 function SourceIcon({ type }: { type: string }) {
   if (type === 'youtube') return <Youtube className="w-5 h-5 text-red-500" />;
   if (type === 'mcq_pdf') return <FileQuestion className="w-5 h-5 text-amber-500" />;
+  if (type === 'text') return <NotebookPen className="w-5 h-5 text-emerald-500" />;
   return <FileText className="w-5 h-5 text-blue-500" />;
 }
 
 function sourceTypeBg(type: string) {
   if (type === 'youtube') return 'bg-red-50 dark:bg-red-500/10';
   if (type === 'mcq_pdf') return 'bg-amber-50 dark:bg-amber-500/10';
+  if (type === 'text') return 'bg-emerald-50 dark:bg-emerald-500/10';
   return 'bg-blue-50 dark:bg-blue-500/10';
 }
 
 function sourceTypeLabel(type: string) {
   if (type === 'mcq_pdf') return 'MCQ PDF';
   if (type === 'youtube') return 'YouTube';
+  if (type === 'text') return 'Notes';
   return 'PDF';
 }
 
 function sourceTypeBadgeColor(type: string) {
   if (type === 'youtube') return 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400';
   if (type === 'mcq_pdf') return 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400';
+  if (type === 'text') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
   return 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400';
 }
 
