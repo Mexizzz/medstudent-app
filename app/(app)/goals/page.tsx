@@ -8,8 +8,14 @@ import { Loader2, Target, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const EXAM_TYPES = [
+  // UK
+  'UKMLA', 'PLAB 1', 'PLAB 2', 'MRCP',
+  // US
   'USMLE Step 1', 'USMLE Step 2 CK', 'USMLE Step 3',
-  'PLAB 1', 'PLAB 2', 'IFOM', 'MRCP', 'National Board',
+  // Australia / Canada
+  'AMC', 'MCCQE',
+  // International / other
+  'IFOM', 'National Board',
 ];
 
 const ALL_SUBJECTS = [
