@@ -23,8 +23,9 @@ function useScrollReveal(delay = 0) {
   return { ref, visible };
 }
 
-// Animated price that counts up
-function AnimatedPrice({ value, prefix = '£', delay = 0 }: { value: number; prefix?: string; delay?: number }) {
+// Animated price that counts up. Optional `was` shows a struck-through
+// "original" price alongside, for launch-discount framing.
+function AnimatedPrice({ value, was, prefix = '£', delay = 0 }: { value: number; was?: number; prefix?: string; delay?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [display, setDisplay] = useState(0);
   const [started, setStarted] = useState(false);
@@ -56,8 +57,15 @@ function AnimatedPrice({ value, prefix = '£', delay = 0 }: { value: number; pre
   }, [started, value, delay]);
 
   return (
-    <span ref={ref} className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
-      {prefix}{value === 0 ? '0' : display.toFixed(value % 1 === 0 ? 0 : 2)}
+    <span ref={ref} className="inline-flex items-baseline gap-2">
+      {was && was > value && (
+        <span className="text-xl font-semibold text-slate-400 dark:text-slate-500 line-through tabular-nums">
+          {prefix}{was.toFixed(was % 1 === 0 ? 0 : 2)}
+        </span>
+      )}
+      <span className="text-4xl font-extrabold text-slate-900 dark:text-white tabular-nums">
+        {prefix}{value === 0 ? '0' : display.toFixed(value % 1 === 0 ? 0 : 2)}
+      </span>
     </span>
   );
 }
@@ -162,11 +170,17 @@ export function AnimatedPricingCards() {
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
           <Zap className="w-3 h-3" /> Most Popular
         </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pro</h3>
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm">
+            50% OFF
+          </span>
+        </div>
         <div className="mt-3 mb-1">
-          <AnimatedPrice value={7.99} delay={320} />
+          <AnimatedPrice value={7.99} was={15.99} delay={320} />
           <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
         </div>
+        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch offer · save £96/year</p>
         <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £4.99/mo billed annually</p>
         <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">For serious students who want the full toolkit.</p>
         <ul className="space-y-3 text-sm flex-1">
@@ -198,11 +212,17 @@ export function AnimatedPricingCards() {
         }}
       >
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">Unlimited</div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Max</h3>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Max</h3>
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm">
+            50% OFF
+          </span>
+        </div>
         <div className="mt-3 mb-1">
-          <AnimatedPrice value={14.99} delay={440} />
+          <AnimatedPrice value={14.99} was={29.99} delay={440} />
           <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
         </div>
+        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch offer · save £180/year</p>
         <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £9.99/mo billed annually</p>
         <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">No limits. Every feature. Total peace of mind.</p>
         <ul className="space-y-3 text-sm flex-1">

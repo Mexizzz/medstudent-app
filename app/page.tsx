@@ -264,13 +264,13 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 bg-white dark:bg-slate-900" id="pricing">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold mb-4 border border-blue-200 dark:border-blue-800">
-              <Crown className="w-3.5 h-3.5" />
-              Simple Pricing
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full text-sm font-bold mb-4 shadow-md">
+              <Sparkles className="w-3.5 h-3.5" />
+              Launch Offer · 50% OFF for early students
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Choose Your Plan</h2>
             <p className="mt-3 text-lg max-w-xl mx-auto text-slate-500 dark:text-slate-400">
-              Start free and upgrade as you need more power. Every plan includes core AI study features.
+              Half price while we&apos;re in launch — lock it in now and your rate stays the same as long as your subscription is active.
             </p>
           </div>
 
