@@ -122,8 +122,8 @@ const jsonLd = [
     inLanguage: "en",
     offers: [
       { "@type": "Offer", price: "0", priceCurrency: "GBP", name: "Free" },
-      { "@type": "Offer", price: "7.99", priceCurrency: "GBP", name: "Pro", billingIncrement: "P1M" },
-      { "@type": "Offer", price: "14.99", priceCurrency: "GBP", name: "Max", billingIncrement: "P1M" },
+      { "@type": "Offer", price: "3.99", priceCurrency: "GBP", name: "Pro", billingIncrement: "P1M" },
+      { "@type": "Offer", price: "7.49", priceCurrency: "GBP", name: "Max", billingIncrement: "P1M" },
     ],
     featureList: [
       "AI-generated MCQs and flashcards",
@@ -180,7 +180,7 @@ const jsonLd = [
         name: "Is MedStudy free to use?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes! MedStudy offers a generous free tier with question generation, AI tutor access, study sessions, and analytics. Pro (£7.99/mo) and Max (£14.99/mo) plans unlock additional features like timed exam mode, custom themes, and more.",
+          text: "Yes! MedStudy offers a generous free tier with question generation, AI tutor access, study sessions, and analytics. Pro (£3.99/mo) and Max (£7.49/mo) plans unlock additional features like timed exam mode, custom themes, and more — these are launch prices, 50% off the regular rate, available until 17 August 2026.",
         },
       },
       {

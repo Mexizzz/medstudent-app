@@ -50,8 +50,10 @@ const plans = [
     id: 'pro' as Tier,
     name: 'Pro',
     icon: Sparkles,
-    monthly: 7.99,
-    annual: 4.99,
+    monthly: 3.99,
+    annual: 2.49,
+    monthlyWas: 7.99,
+    annualWas: 4.99,
     description: 'Unlock all AI tools & study smarter',
     popular: true,
     features: [
@@ -81,8 +83,10 @@ const plans = [
     id: 'max' as Tier,
     name: 'Max',
     icon: Crown,
-    monthly: 14.99,
-    annual: 9.99,
+    monthly: 7.49,
+    annual: 4.99,
+    monthlyWas: 14.99,
+    annualWas: 9.99,
     description: 'Everything unlimited, no limits',
     features: [
       { name: 'MCQ & Flashcard Generation', value: 'Unlimited', included: true },
@@ -247,6 +251,9 @@ export default function PricingPage() {
           {plans.map(plan => {
             const isCurrent = plan.id === currentTier;
             const price = interval === 'monthly' ? plan.monthly : plan.annual;
+            const wasPrice = interval === 'monthly'
+              ? ('monthlyWas' in plan ? plan.monthlyWas : undefined)
+              : ('annualWas' in plan ? plan.annualWas : undefined);
             const Icon = plan.icon;
 
             return (
@@ -271,8 +278,18 @@ export default function PricingPage() {
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
 
                 <div className="mb-5">
-                  <span className="text-4xl font-bold text-foreground">£{price.toFixed(2)}</span>
-                  {price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
+                  {wasPrice && wasPrice > price && (
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-sm mb-1.5">
+                      50% OFF · Launch
+                    </span>
+                  )}
+                  <div className="flex items-baseline gap-2">
+                    {wasPrice && wasPrice > price && (
+                      <span className="text-lg font-semibold text-muted-foreground line-through tabular-nums">£{wasPrice.toFixed(2)}</span>
+                    )}
+                    <span className="text-4xl font-bold text-foreground">£{price.toFixed(2)}</span>
+                    {price > 0 && <span className="text-muted-foreground text-sm">/mo</span>}
+                  </div>
                   {interval === 'annual' && price > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">Billed £{(price * 12).toFixed(2)}/year</p>
                   )}

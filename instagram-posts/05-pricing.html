@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MedStudy — Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:#050510;font-family:'Geist',sans-serif;color:#fafaf5;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .post{
+    width:1080px;height:1080px;position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(139,92,246,.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 110%, rgba(99,102,241,.13) 0%, transparent 50%),
+      linear-gradient(180deg,#0a0a14 0%,#15152e 100%);
+  }
+  .post::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.06;mix-blend-mode:overlay;
+  }
+
+  .top{position:absolute;top:60px;left:60px;right:60px;display:flex;align-items:center;justify-content:space-between;z-index:2}
+  .lockup{display:flex;align-items:center;gap:12px}
+  .logo{width:34px;height:34px}
+  .lockup-text{font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,234,213,.8)}
+  .meta{font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(167,139,250,.7)}
+
+  .header{
+    position:absolute;top:140px;left:60px;right:60px;text-align:center;
+  }
+  .eyebrow{font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:rgba(167,139,250,.65);margin-bottom:18px}
+  .h-title{
+    font-family:'Instrument Serif',serif;font-style:italic;font-size:78px;line-height:1;letter-spacing:-.025em;color:#fafaf5;
+  }
+  .h-sub{
+    margin-top:18px;font-family:'Geist',sans-serif;font-weight:300;font-size:18px;color:rgba(244,234,213,.55);
+  }
+
+  .cards{
+    position:absolute;top:380px;left:60px;right:60px;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;
+  }
+  .card{
+    background:rgba(20,20,42,.5);
+    border:1px solid rgba(167,139,250,.14);
+    border-radius:22px;
+    padding:36px 28px 32px;
+    position:relative;
+    backdrop-filter:blur(10px);
+    min-height:520px;
+    display:flex;flex-direction:column;
+  }
+  .card.featured{
+    background:linear-gradient(180deg,rgba(139,92,246,.18),rgba(99,102,241,.10));
+    border:1px solid rgba(167,139,250,.42);
+    box-shadow:0 0 40px rgba(139,92,246,.18);
+  }
+  .badge{
+    position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg,#a78bfa,#6366f1);
+    color:#fff;
+    font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    padding:6px 14px;border-radius:999px;
+  }
+  .tier-name{
+    font-family:'Instrument Serif',serif;font-style:italic;font-size:46px;line-height:1;letter-spacing:-.02em;
+    color:#fafaf5;margin-bottom:8px;
+  }
+  .tier-tagline{
+    font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:rgba(167,139,250,.7);margin-bottom:24px;
+  }
+  .price-line{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+  .currency{font-family:'Geist',sans-serif;font-weight:400;font-size:18px;color:rgba(244,234,213,.6)}
+  .price{
+    font-family:'Instrument Serif',serif;font-style:italic;font-size:64px;line-height:.9;letter-spacing:-.03em;
+    color:#fafaf5;
+  }
+  .card.featured .price{
+    background:linear-gradient(135deg,#fafaf5,#c4b5fd);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .price-period{
+    font-family:'Geist',sans-serif;font-weight:300;font-size:13px;
+    color:rgba(244,234,213,.5);margin-bottom:24px;
+  }
+  .divider-line{height:1px;background:rgba(167,139,250,.12);margin-bottom:18px}
+  .feats{display:flex;flex-direction:column;gap:11px}
+  .feat{display:flex;align-items:flex-start;gap:11px;font-family:'Geist',sans-serif;font-weight:300;font-size:14px;line-height:1.4;color:rgba(244,234,213,.85)}
+  .feat .check{
+    flex-shrink:0;width:18px;height:18px;border-radius:50%;
+    background:rgba(167,139,250,.15);
+    border:1px solid rgba(167,139,250,.3);
+    display:flex;align-items:center;justify-content:center;
+    margin-top:2px;
+  }
+  .card.featured .feat .check{background:rgba(167,139,250,.3);border-color:rgba(167,139,250,.55)}
+  .feat .check svg{width:9px;height:9px}
+
+  .footer-note{
+    position:absolute;bottom:120px;left:60px;right:60px;text-align:center;
+    font-family:'Instrument Serif',serif;font-style:italic;font-size:22px;
+    color:rgba(244,234,213,.7);
+  }
+
+  .watermark{position:absolute;bottom:32px;left:0;right:0;text-align:center;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(167,139,250,.42)}
+
+  .download{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);padding:10px 22px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-family:'Geist',sans-serif;font-size:13px;font-weight:500;cursor:pointer;z-index:100}
+</style>
+</head>
+<body>
+<div class="post" id="capture">
+  <div class="top">
+    <div class="lockup">
+      <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6366f1"/></linearGradient></defs>
+        <rect width="64" height="64" rx="16" fill="url(#g5)"/>
+        <path d="M32 18v28M18 32h28" stroke="white" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="lockup-text">MedStudy</div>
+    </div>
+    <div class="meta">Plans / 2026</div>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">— Pick one, switch anytime —</div>
+    <div class="h-title">Three plans, no tricks.</div>
+    <div class="h-sub">No "contact sales." No surprise charges. Cancel in two clicks.</div>
+  </div>
+
+  <div class="cards">
+    <!-- FREE -->
+    <div class="card">
+      <div class="tier-name">Free</div>
+      <div class="tier-tagline">Trying it out</div>
+      <div class="price-line"><span class="currency">$</span><span class="price">0</span></div>
+      <div class="price-period">forever / no card</div>
+      <div class="divider-line"></div>
+      <div class="feats">
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>50 questions per day</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Built-in AI tutor</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>5 content sources</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>MCQs from your PDFs</div>
+      </div>
+    </div>
+
+    <!-- PRO (featured) -->
+    <div class="card featured">
+      <div class="badge">50% OFF · Launch</div>
+      <div class="tier-name">Pro</div>
+      <div class="tier-tagline">Daily studier</div>
+      <div class="price-line"><span class="currency">£</span><span class="price">3.99</span></div>
+      <div class="price-period">per month · was £7.99</div>
+      <div class="divider-line"></div>
+      <div class="feats">
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>250 questions per day</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Flashcards, fill-in-blanks, short answer</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>AI lessons + summaries</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#c4b5fd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Anki export, study rooms, YouTube import</div>
+      </div>
+    </div>
+
+    <!-- MAX -->
+    <div class="card">
+      <div class="tier-name">Max</div>
+      <div class="tier-tagline">Exam mode</div>
+      <div class="price-line"><span class="currency">£</span><span class="price">7.49</span></div>
+      <div class="price-period">per month · was £14.99</div>
+      <div class="divider-line"></div>
+      <div class="feats">
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Unlimited everything</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Clinical Cases + Exam Lab</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Voice tutor + image MCQs</div>
+        <div class="feat"><span class="check"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6.5l2.5 2.5L10 3.5" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Full analytics + PDF export</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Start free. Upgrade only if you love it.</div>
+
+  <div class="watermark">@ medstudy.space</div>
+</div>
+
+<button class="download" onclick="dl()">Download as PNG (1080×1080)</button>
+<script>
+  function dl(){
+    htmlToImage.toPng(document.getElementById('capture'),{width:1080,height:1080,pixelRatio:1,cacheBust:true})
+      .then(u=>{const a=document.createElement('a');a.download='05-pricing.png';a.href=u;a.click()})
+      .catch(()=>alert('PNG export failed — use Chrome DevTools → device toolbar 1080×1080 → Capture screenshot.'));
+  }
+</script>
+</body>
+</html>

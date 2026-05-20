@@ -30,7 +30,7 @@ const FAQS = [
   },
   {
     q: 'Is MedStudy free to use?',
-    a: 'Yes — every new account gets 7 days of Max access completely free, no credit card required. After the trial you stay on a generous free plan, or upgrade to Pro (£7.99/mo) or Max (£14.99/mo) to keep unlimited access.',
+    a: 'Yes — every new account gets 7 days of Max access completely free, no credit card required. After the trial you stay on a generous free plan, or upgrade to Pro (£3.99/mo) or Max (£7.49/mo) during our launch — 50% off the regular price until 17 August 2026.',
   },
   {
     q: 'What types of questions can MedStudy generate?',
@@ -266,11 +266,11 @@ export default function LandingPage() {
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full text-sm font-bold mb-4 shadow-md">
               <Sparkles className="w-3.5 h-3.5" />
-              Launch Offer · 50% OFF for early students
+              Launch Offer · 50% OFF for the next 3 months
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">Choose Your Plan</h2>
             <p className="mt-3 text-lg max-w-xl mx-auto text-slate-500 dark:text-slate-400">
-              Half price while we&apos;re in launch — lock it in now and your rate stays the same as long as your subscription is active.
+              Half price for our first 3 months — subscribe now and lock your rate. After 17 August 2026, plans return to £7.99 (Pro) and £14.99 (Max).
             </p>
           </div>
 

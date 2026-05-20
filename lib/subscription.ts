@@ -117,9 +117,17 @@ export const STATIC_LIMITS: Record<SubscriptionTier, {
 };
 
 // ── Pricing ───────────────────────────────────────────
+// Launch pricing — 50% off the regular rate (£7.99 Pro / £14.99 Max),
+// valid through the launch window (~3 months from May 2026). Whop plans
+// must be set to these same amounts; this constant is only display.
 export const PRICING = {
-  pro: { monthly: 7.99, annual: 4.99, annualTotal: 59.88 },
-  max: { monthly: 14.99, annual: 9.99, annualTotal: 119.88 },
+  pro: { monthly: 3.99, annual: 2.49, annualTotal: 29.88 },
+  max: { monthly: 7.49, annual: 4.99, annualTotal: 59.88 },
+};
+// Pre-launch "regular" prices, struck through on the pricing cards.
+export const PRICING_REGULAR = {
+  pro: { monthly: 7.99, annual: 4.99 },
+  max: { monthly: 14.99, annual: 9.99 },
 };
 
 // ── Helpers ───────────────────────────────────────────

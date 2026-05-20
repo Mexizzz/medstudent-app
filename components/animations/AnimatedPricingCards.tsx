@@ -177,11 +177,11 @@ export function AnimatedPricingCards() {
           </span>
         </div>
         <div className="mt-3 mb-1">
-          <AnimatedPrice value={7.99} was={15.99} delay={320} />
+          <AnimatedPrice value={3.99} was={7.99} delay={320} />
           <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
         </div>
-        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch offer · save £96/year</p>
-        <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £4.99/mo billed annually</p>
+        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch price · save £48/year</p>
+        <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £2.49/mo billed annually</p>
         <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">For serious students who want the full toolkit.</p>
         <ul className="space-y-3 text-sm flex-1">
           {[
@@ -219,11 +219,11 @@ export function AnimatedPricingCards() {
           </span>
         </div>
         <div className="mt-3 mb-1">
-          <AnimatedPrice value={14.99} was={29.99} delay={440} />
+          <AnimatedPrice value={7.49} was={14.99} delay={440} />
           <span className="ml-1 text-slate-500 dark:text-slate-400">/month</span>
         </div>
-        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch offer · save £180/year</p>
-        <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £9.99/mo billed annually</p>
+        <p className="text-xs mb-1 text-rose-600 dark:text-rose-400 font-semibold">Launch price · save £90/year</p>
+        <p className="text-xs mb-1 text-slate-500 dark:text-slate-400">or £4.99/mo billed annually</p>
         <p className="text-sm mb-6 text-slate-500 dark:text-slate-400">No limits. Every feature. Total peace of mind.</p>
         <ul className="space-y-3 text-sm flex-1">
           {['Unlimited questions/day', 'Unlimited tutor messages', 'Unlimited sources', 'All question types', 'AI lessons & summaries', 'Clinical case generation', 'Full exam simulation lab', 'Priority support'].map((text, i) => (
