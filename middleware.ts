@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwt';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/admin', '/api/auth/login', '/api/auth/signup', '/api/auth/send-code', '/api/auth/reset-password', '/api/admin'];
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/admin', '/api/auth/login', '/api/auth/signup', '/api/auth/send-code', '/api/auth/reset-password', '/api/admin',
+  // Payment-provider callbacks: hit by Whop/Stripe with no auth cookie, so they
+  // must bypass the login gate. /api/whop/return is the post-payment redirect.
+  '/api/whop/webhook', '/api/whop/return', '/api/stripe/webhook'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
