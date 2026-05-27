@@ -36,6 +36,32 @@ export async function POST(req: NextRequest) {
   const eventType: string = event.type;
   const data = event.data ?? {};
 
+  // Shoof relay: events for the Shoof storefront carry `orderId` / `productId`
+  // in metadata (MedStudy events use `user_id`). Forward the raw body and
+  // signature so Shoof's HMAC check still passes, then return — these events
+  // have no MedStudy user to resolve.
+  {
+    const checkout = (data?.checkout ?? {}) as Record<string, unknown>;
+    const membership = (data?.membership ?? {}) as Record<string, unknown>;
+    const metadata = (data?.metadata ?? checkout?.metadata ?? membership?.metadata ?? {}) as Record<string, unknown>;
+    if (metadata?.orderId || metadata?.productId) {
+      try {
+        const relay = await fetch("https://www.shoof.store/api/webhook", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "webhook-signature": signature,
+          },
+          body: rawBody,
+        });
+        console.log(`Whop webhook: relayed to Shoof, status=${relay.status}, event=${eventType}`);
+      } catch (err) {
+        console.error("Whop webhook: Shoof relay failed", err);
+      }
+      return NextResponse.json({ received: true, relayed: "shoof" });
+    }
+  }
+
   const { userId: metaUserId, email, membershipId, planId } = extractIdentifiers(data);
 
   // Resolve our user: prefer metadata.user_id, fall back to email lookup.
