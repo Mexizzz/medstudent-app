@@ -21,49 +21,11 @@ function extractIdentifiers(data: Record<string, unknown>): { userId: string | n
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get('x-signature') || req.headers.get('webhook-signature') || '';
-
-  // TEMP DIAGNOSTIC — find the correct secret + signing method, then remove.
-  try {
-    const crypto = await import('crypto');
-    const webhookId = req.headers.get('webhook-id') || '';
-    const webhookTs = req.headers.get('webhook-timestamp') || '';
-    const recv = (signature.includes(',') ? signature.split(',')[1] : signature).trim();
-    const candidates: Record<string, string> = {
-      ebae: 'ws_ebae788e5fbbf4cd7de96776be353b05569ebed761513cb98925397a460ed4c0',
-      e87f: 'ws_e87f156b71ad5d855134d0b6b29d55bd1b6195c3a83beee6dc952683468da72e',
-    };
-    const methods: Record<string, string> = {
-      bodyOnly: rawBody,
-      stdWebhooks: `${webhookId}.${webhookTs}.${rawBody}`,
-    };
-    const hits: string[] = [];
-    for (const [sk, secret] of Object.entries(candidates)) {
-      // Standard Webhooks signs with the base64-decoded secret (after whsec_/ws_ prefix)
-      const rawSecret = secret.replace(/^ws_/, '').replace(/^whsec_/, '');
-      const keyVariants: Record<string, Buffer> = {
-        utf8: Buffer.from(secret),
-        utf8NoPrefix: Buffer.from(rawSecret),
-        b64NoPrefix: (() => { try { return Buffer.from(rawSecret, 'base64'); } catch { return Buffer.from(''); } })(),
-      };
-      for (const [kk, keyBuf] of Object.entries(keyVariants)) {
-        for (const [mk, msg] of Object.entries(methods)) {
-          const h = crypto.createHmac('sha256', keyBuf).update(msg).digest('base64');
-          if (h === recv) hits.push(`${sk}/${kk}/${mk}`);
-        }
-      }
-    }
-    console.log('WH_DIAG', JSON.stringify({
-      hasId: !!webhookId, hasTs: !!webhookTs,
-      sigHeaderSample: signature.slice(0, 24),
-      recvSample: recv.slice(0, 16),
-      hits,
-    }));
-  } catch (e) {
-    console.log('WH_DIAG error', (e as Error).message);
-  }
+  const webhookId = req.headers.get('webhook-id') || '';
+  const webhookTimestamp = req.headers.get('webhook-timestamp') || '';
 
   try {
-    if (!verifyWebhookSignature(rawBody, signature)) {
+    if (!verifyWebhookSignature(rawBody, signature, webhookId, webhookTimestamp)) {
       console.error('Whop webhook signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
@@ -90,7 +52,11 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: {
             "content-type": "application/json",
+            // Forward all three Standard-Webhooks headers so Shoof can
+            // reconstruct `${id}.${timestamp}.${body}` and verify the signature.
             "webhook-signature": signature,
+            "webhook-id": webhookId,
+            "webhook-timestamp": webhookTimestamp,
           },
           body: rawBody,
         });

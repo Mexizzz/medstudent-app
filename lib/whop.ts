@@ -146,23 +146,23 @@ export async function cancelSubscription(membershipId: string, immediate = false
   }
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string): boolean {
+export function verifyWebhookSignature(rawBody: string, signature: string, webhookId = '', timestamp = ''): boolean {
   const secret = process.env.WHOP_WEBHOOK_SECRET;
   if (!secret) throw new Error('WHOP_WEBHOOK_SECRET is not set');
 
-  // Whop uses Standard Webhooks spec: "v1,BASE64_SIGNATURE"
-  const parts = signature.split(',');
-  const sigBase64 = parts.length > 1 ? parts[1] : parts[0];
+  // Whop uses the Standard Webhooks spec: the signed content is
+  // `${webhook-id}.${webhook-timestamp}.${body}`, HMAC-SHA256 with the full
+  // secret string as the UTF-8 key, base64-encoded. The header may carry
+  // multiple space-separated "v1,<sig>" entries — any match is valid.
+  const signedContent = `${webhookId}.${timestamp}.${rawBody}`;
+  const expectedSig = crypto.createHmac('sha256', secret).update(signedContent).digest('base64');
+  const provided = signature.split(/\s+/).map((s) => (s.includes(',') ? s.split(',')[1] : s));
 
-  const hmac = crypto.createHmac('sha256', secret);
-  const expectedSig = hmac.update(rawBody).digest('base64');
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(sigBase64, 'base64'),
-      Buffer.from(expectedSig, 'base64'),
-    );
-  } catch {
-    return false;
-  }
+  return provided.some((p) => {
+    try {
+      return crypto.timingSafeEqual(Buffer.from(p, 'base64'), Buffer.from(expectedSig, 'base64'));
+    } catch {
+      return false;
+    }
+  });
 }
