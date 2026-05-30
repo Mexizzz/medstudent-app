@@ -128,6 +128,93 @@ export async function findMembershipsByEmail(email: string): Promise<WhopMembers
   return [];
 }
 
+export interface WhopPayment {
+  id: string;
+  planId: string;
+  membershipId: string | null;
+  status: string;
+  amount: number | null;          // in major units (e.g. SAR, not halalas)
+  currency: string | null;
+  email: string | null;
+  metadataUserId: string | null;
+  createdAt: number | null;       // unix seconds
+}
+
+function mapPayment(data: Record<string, unknown>): WhopPayment {
+  const user = data.user as Record<string, unknown> | undefined;
+  const metadata = data.metadata as Record<string, unknown> | undefined;
+  return {
+    id: (data.id as string) ?? '',
+    planId: (data.plan_id as string) ?? '',
+    membershipId: (data.membership_id as string) ?? (data.membership as string) ?? null,
+    status: (data.status as string) ?? 'unknown',
+    amount: typeof data.amount === 'number'
+      ? data.amount
+      : typeof data.final_amount === 'number'
+        ? data.final_amount
+        : null,
+    currency: (data.currency as string) ?? null,
+    email: (data.email as string) ?? (user?.email as string) ?? null,
+    metadataUserId: (metadata?.user_id as string) ?? null,
+    createdAt: (data.created_at as number) ?? null,
+  };
+}
+
+/**
+ * Lists all successful Whop payments, paginating until exhausted.
+ * Used by the admin importer to backfill credit deliveries for users
+ * who paid before the credits feature shipped.
+ */
+export async function listPayments(opts?: { onlySuccessful?: boolean }): Promise<WhopPayment[]> {
+  const onlySuccessful = opts?.onlySuccessful ?? true;
+  const bases = [
+    'https://api.whop.com/api/v2',
+    'https://api.whop.com/api/v5',
+    'https://api.whop.com/api/v1',
+  ];
+
+  // Pick the first base that responds OK on page 1; then keep paginating on it.
+  let workingBase: string | null = null;
+  let firstPage: Record<string, unknown> | null = null;
+  for (const base of bases) {
+    const res = await fetch(`${base}/payments?per=100&page=1${onlySuccessful ? '&status=success' : ''}`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (res.ok) {
+      workingBase = base;
+      firstPage = await res.json();
+      break;
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Whop auth failed listing payments (${res.status}). Check WHOP_API_KEY.`);
+    }
+  }
+  if (!workingBase || !firstPage) throw new Error('Whop payments endpoint unreachable on all API versions tried.');
+
+  const all: WhopPayment[] = [];
+  const extract = (page: Record<string, unknown>) => {
+    const list = (page.data ?? page.payments ?? []) as Record<string, unknown>[];
+    for (const p of list) all.push(mapPayment(p));
+    // Whop pagination shapes vary; check both styles.
+    const pagination = page.pagination as Record<string, unknown> | undefined;
+    const totalPages = (pagination?.total_pages as number) ?? (page.total_pages as number) ?? 1;
+    return totalPages;
+  };
+
+  const totalPages = extract(firstPage);
+  // Safety cap so a runaway pagination doesn't loop forever.
+  const PAGE_CAP = 50;
+  for (let p = 2; p <= Math.min(totalPages, PAGE_CAP); p++) {
+    const res = await fetch(`${workingBase}/payments?per=100&page=${p}${onlySuccessful ? '&status=success' : ''}`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (!res.ok) break;
+    const page = await res.json();
+    extract(page);
+  }
+  return all;
+}
+
 export async function cancelSubscription(membershipId: string, immediate = false): Promise<void> {
   const res = await fetch(`${WHOP_API}/memberships/${membershipId}/cancel`, {
     method: 'POST',

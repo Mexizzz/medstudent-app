@@ -117,7 +117,8 @@ interface CreditPack {
   id: string;
   label: string;
   credits: number;
-  priceGbp: number;
+  price: number;
+  currency: string;
   pricePerCredit: string;
   tag?: string;
   whopPlanId: string | null;
@@ -396,7 +397,7 @@ export default function PricingPage() {
                     )}
                     <h3 className="font-bold text-foreground">{pack.label}</h3>
                     <p className="text-2xl font-extrabold mt-2 tabular-nums">{pack.credits.toLocaleString()}<span className="text-sm font-medium text-muted-foreground ml-1">credits</span></p>
-                    <p className="text-lg font-bold mt-1 text-foreground">£{pack.priceGbp.toFixed(2)}</p>
+                    <p className="text-lg font-bold mt-1 text-foreground tabular-nums">{pack.currency === 'SAR' ? `${pack.price.toFixed(2)} SAR` : `£${pack.price.toFixed(2)}`}</p>
                     <p className="text-xs text-muted-foreground mb-3">{pack.pricePerCredit}</p>
                     <button
                       disabled={!pack.whopPlanId || loading === pack.id}

@@ -4,49 +4,78 @@ import { eq, desc, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 // ─── Credit pack catalog ─────────────────────────────────────────────────
-// Whop plan IDs are sourced from env so a 4th pack can be added later
-// without code changes. Marketing copy lives here.
-export type CreditPackId = 'starter' | 'standard' | 'bulk';
+// Catalog is driven entirely by env var WHOP_PACK_PLANS, so new packs can
+// be added (or prices updated) without a deploy. Format:
+//
+//   WHOP_PACK_PLANS=<plan_id>:<price>:<credits>[:<tag>],<plan_id>:...
+//
+// Example:
+//   WHOP_PACK_PLANS=plan_aaa:9:180,plan_bbb:24:520:MOST_POPULAR,plan_ccc:35:800,plan_ddd:55:1400:BEST_VALUE
+//
+// Currency is set by WHOP_PACK_CURRENCY (default SAR).
 
 export interface CreditPack {
-  id: CreditPackId;
-  label: string;
+  id: string;             // we use the Whop plan_id as the stable id
+  label: string;          // derived: e.g. "1,400 credits"
   credits: number;
-  priceGbp: number;
+  price: number;
+  currency: string;       // ISO code, e.g. "SAR" / "GBP" / "USD"
   pricePerCredit: string; // display only
-  tag?: string;           // e.g. "MOST POPULAR" / "BEST VALUE"
-  whopPlanId: string | null;
+  tag?: string;           // optional badge text
+  whopPlanId: string;
+}
+
+const TAG_LABELS: Record<string, string> = {
+  MOST_POPULAR: 'MOST POPULAR',
+  BEST_VALUE: 'BEST VALUE',
+};
+
+function currencySymbol(code: string): string {
+  switch (code) {
+    case 'GBP': return '£';
+    case 'USD': return '$';
+    case 'EUR': return '€';
+    case 'SAR': return 'SAR ';
+    default: return `${code} `;
+  }
 }
 
 export function getCreditPacks(): CreditPack[] {
-  return [
-    {
-      id: 'starter',
-      label: 'Starter',
-      credits: 200,
-      priceGbp: 2.99,
-      pricePerCredit: '£0.015 / credit',
-      whopPlanId: process.env.WHOP_CREDITS_200_PLAN_ID || null,
-    },
-    {
-      id: 'standard',
-      label: 'Standard',
-      credits: 1000,
-      priceGbp: 9.99,
-      pricePerCredit: '£0.010 / credit',
-      tag: 'MOST POPULAR',
-      whopPlanId: process.env.WHOP_CREDITS_1000_PLAN_ID || null,
-    },
-    {
-      id: 'bulk',
-      label: 'Bulk',
-      credits: 5000,
-      priceGbp: 39.99,
-      pricePerCredit: '£0.008 / credit',
-      tag: 'BEST VALUE',
-      whopPlanId: process.env.WHOP_CREDITS_5000_PLAN_ID || null,
-    },
-  ];
+  const raw = process.env.WHOP_PACK_PLANS;
+  const currency = process.env.WHOP_PACK_CURRENCY || 'SAR';
+  if (!raw) return [];
+
+  const sym = currencySymbol(currency);
+  const packs: CreditPack[] = [];
+  for (const entry of raw.split(',').map(s => s.trim()).filter(Boolean)) {
+    const parts = entry.split(':').map(s => s.trim());
+    if (parts.length < 3) continue;
+    const [planId, priceStr, creditsStr, tagKey] = parts;
+    const price = Number(priceStr);
+    const credits = Number(creditsStr);
+    if (!planId || !isFinite(price) || !isFinite(credits) || credits <= 0) continue;
+
+    const perCredit = price / credits;
+    packs.push({
+      id: planId,
+      whopPlanId: planId,
+      label: `${credits.toLocaleString()} credits`,
+      credits,
+      price,
+      currency,
+      pricePerCredit: `${sym}${perCredit.toFixed(3)} / credit`,
+      tag: tagKey ? (TAG_LABELS[tagKey] ?? tagKey) : undefined,
+    });
+  }
+
+  // Sort by credits ascending so the page reads small → big.
+  return packs.sort((a, b) => a.credits - b.credits);
+}
+
+/** Look up the credit grant for a Whop plan ID. Returns null if unknown. */
+export function getCreditsForPlanId(planId: string): number | null {
+  const pack = getCreditPacks().find(p => p.whopPlanId === planId);
+  return pack ? pack.credits : null;
 }
 
 // ─── Balance ─────────────────────────────────────────────────────────────

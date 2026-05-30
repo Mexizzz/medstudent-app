@@ -114,7 +114,7 @@ export default function PlansPage() {
                     <h3 className="text-lg font-bold">{pack.label}</h3>
                   </div>
                   <p className="text-3xl font-extrabold mt-2 tabular-nums">{pack.credits.toLocaleString()} <span className="text-base font-medium text-slate-500">credits</span></p>
-                  <p className="text-2xl font-bold mt-1 text-slate-900">£{pack.priceGbp.toFixed(2)}</p>
+                  <p className="text-2xl font-bold mt-1 text-slate-900 tabular-nums">{pack.currency === 'SAR' ? `${pack.price.toFixed(2)} SAR` : `£${pack.price.toFixed(2)}`}</p>
                   <p className="text-xs text-slate-500 mb-4">{pack.pricePerCredit}</p>
                   <ul className="space-y-2 text-sm flex-1">
                     <li className="flex items-start gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" /><span>One-time purchase, no recurring charge</span></li>

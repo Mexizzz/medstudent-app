@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages, featureRequests } from '@/db/schema';
-import { sql, desc, eq } from 'drizzle-orm';
+import { users, contentSources, questions, studySessions, sessionResponses, studyRooms, usageTracking, friendships, lessons, summaries, questionFolders, doctorPdfs, supportTickets, supportMessages, featureRequests, creditTransactions, passwordResetCodes } from '@/db/schema';
+import { sql, desc, eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId } from '@/lib/whop';
+import { nanoid } from 'nanoid';
+import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId, listPayments } from '@/lib/whop';
 import { expireOldTrials, expireComps } from '@/lib/subscription';
+import { getCreditsForPlanId, grantCredits } from '@/lib/credits';
+import { sendPurchaseDelivery, normalizeEmail } from '@/lib/email';
 export const dynamic = 'force-dynamic';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Mexiz1924';
@@ -328,6 +331,201 @@ export async function PATCH(req: NextRequest) {
           subscriptionEndsAt,
         },
         membership,
+      });
+    }
+
+    // Import historical Whop payments. For each successful payment:
+    //   - Find matching user (metadata.user_id > stripeSubscriptionId > email)
+    //   - If found and plan is a credit pack: grant credits (idempotent via refId)
+    //   - If found and plan is a subscription: update tier + status + endsAt
+    //   - If not found: create stub user with random password, generate a 30-day
+    //     claim code, send delivery email, then grant the credits/sub to the stub
+    //   - Skip silently if a transaction with refId=<payment_id> already exists
+    if (body.action === 'importWhopPayments') {
+      const dryRun = body.dryRun === true;
+      let payments;
+      try {
+        payments = await listPayments({ onlySuccessful: true });
+      } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+      }
+
+      type DeliveryItem = {
+        paymentId: string;
+        email: string | null;
+        planId: string;
+        action: 'credits_granted' | 'sub_updated' | 'stub_created_and_delivered' | 'skipped_no_email' | 'skipped_unknown_plan' | 'skipped_already_delivered' | 'error';
+        credits?: number;
+        userId?: string;
+        error?: string;
+      };
+      const results: DeliveryItem[] = [];
+
+      for (const p of payments) {
+        try {
+          // Already delivered? Skip.
+          const existingTx = await db.query.creditTransactions.findFirst({
+            where: eq(creditTransactions.refId, p.id),
+            columns: { id: true },
+          });
+          if (existingTx) {
+            results.push({ paymentId: p.id, email: p.email, planId: p.planId, action: 'skipped_already_delivered' });
+            continue;
+          }
+
+          // What does this plan grant?
+          const credits = getCreditsForPlanId(p.planId);
+          const subPlan = getPlanFromWhopPlanId(p.planId);
+
+          if (!credits && !subPlan) {
+            results.push({ paymentId: p.id, email: p.email, planId: p.planId, action: 'skipped_unknown_plan' });
+            continue;
+          }
+
+          // Find matching user
+          let user = null as { id: string; email: string } | null;
+          if (p.metadataUserId) {
+            const u = await db.query.users.findFirst({
+              where: eq(users.id, p.metadataUserId),
+              columns: { id: true, email: true },
+            });
+            if (u) user = u;
+          }
+          if (!user && p.membershipId) {
+            const u = await db.query.users.findFirst({
+              where: eq(users.stripeSubscriptionId, `whop_${p.membershipId}`),
+              columns: { id: true, email: true },
+            });
+            if (u) user = u;
+          }
+          if (!user && p.email) {
+            const normalized = normalizeEmail(p.email);
+            const u = await db.query.users.findFirst({
+              where: eq(users.normalizedEmail, normalized),
+              columns: { id: true, email: true },
+            });
+            if (u) user = u;
+          }
+
+          if (dryRun) {
+            results.push({
+              paymentId: p.id, email: p.email, planId: p.planId,
+              action: user ? (credits ? 'credits_granted' : 'sub_updated') : 'stub_created_and_delivered',
+              credits: credits ?? undefined,
+              userId: user?.id,
+            });
+            continue;
+          }
+
+          // No user → create stub + send delivery email
+          if (!user) {
+            if (!p.email) {
+              results.push({ paymentId: p.id, email: null, planId: p.planId, action: 'skipped_no_email' });
+              continue;
+            }
+            const stubEmail = p.email.trim().toLowerCase();
+            const normalized = normalizeEmail(stubEmail);
+            // Sanity check — race-safe re-check by normalized email
+            const dup = await db.query.users.findFirst({
+              where: eq(users.normalizedEmail, normalized),
+              columns: { id: true, email: true },
+            });
+            if (dup) {
+              user = dup;
+            } else {
+              const newId = nanoid();
+              // Random unguessable password so login is impossible without claim flow.
+              const randomPw = nanoid(40);
+              const passwordHash = await bcrypt.hash(randomPw, 10);
+              await db.insert(users).values({
+                id: newId,
+                email: stubEmail,
+                normalizedEmail: normalized,
+                passwordHash,
+                subscriptionTier: 'free',
+                subscriptionStatus: 'active',
+                createdAt: new Date(),
+              });
+              user = { id: newId, email: stubEmail };
+
+              // Generate a 30-day claim code reusing the password-reset table
+              const claimCode = String(Math.floor(100000 + Math.random() * 900000));
+              const codeExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+              await db.insert(passwordResetCodes).values({
+                id: nanoid(),
+                email: normalized,
+                code: claimCode,
+                expiresAt: codeExpiry,
+                used: false,
+                createdAt: new Date(),
+              });
+
+              const description = credits
+                ? `${credits.toLocaleString()} AI Credits ready in your account.`
+                : `${subPlan?.tier?.toUpperCase()} subscription (${subPlan?.interval}) ready in your account.`;
+              try {
+                await sendPurchaseDelivery(stubEmail, claimCode, description);
+              } catch (e) {
+                console.error(`Delivery email failed for ${stubEmail}:`, e);
+                // Continue anyway — grant the entitlement; admin can resend email manually.
+              }
+            }
+          }
+
+          // Grant credits or update subscription
+          if (credits) {
+            await grantCredits(user.id, credits, `purchase:credits`, p.id);
+            results.push({
+              paymentId: p.id, email: user.email, planId: p.planId,
+              action: user.id === user.id && !p.metadataUserId && !p.email ? 'stub_created_and_delivered' : 'credits_granted',
+              credits, userId: user.id,
+            });
+          } else if (subPlan) {
+            const endsAt = p.createdAt
+              ? new Date((p.createdAt + (subPlan.interval === 'annual' ? 365 : 30) * 86400) * 1000)
+              : null;
+            await db.update(users).set({
+              subscriptionTier: subPlan.tier,
+              subscriptionStatus: 'active',
+              stripeSubscriptionId: p.membershipId ? `whop_${p.membershipId}` : undefined,
+              subscriptionEndsAt: endsAt,
+            }).where(eq(users.id, user.id));
+            // Log the delivery in the credit ledger even though no credits granted,
+            // so the importer treats it as delivered next run.
+            await db.insert(creditTransactions).values({
+              id: nanoid(),
+              userId: user.id,
+              amount: 0,
+              reason: `purchase:sub_${subPlan.tier}_${subPlan.interval}`,
+              refId: p.id,
+              balanceAfter: 0,
+              createdAt: new Date(),
+            });
+            results.push({
+              paymentId: p.id, email: user.email, planId: p.planId,
+              action: 'sub_updated', userId: user.id,
+            });
+          }
+        } catch (e) {
+          results.push({
+            paymentId: p.id, email: p.email, planId: p.planId,
+            action: 'error', error: e instanceof Error ? e.message : String(e),
+          });
+        }
+      }
+
+      // Aggregate counts
+      const counts = results.reduce((acc, r) => {
+        acc[r.action] = (acc[r.action] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      return NextResponse.json({
+        success: true,
+        dryRun,
+        totalPayments: payments.length,
+        counts,
+        results: results.slice(0, 200), // cap response size
       });
     }
 

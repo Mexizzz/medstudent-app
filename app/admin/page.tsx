@@ -219,6 +219,46 @@ export default function AdminPage() {
     }
   }
 
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<null | { totalPayments: number; counts: Record<string, number>; results: Array<{ paymentId: string; email: string | null; planId: string; action: string; credits?: number; error?: string }>; dryRun: boolean }>(null);
+
+  async function handleImportWhopPayments(dryRun: boolean) {
+    if (!dryRun) {
+      if (!confirm('Import all successful Whop payments? This will grant credits / update subs / send delivery emails. Safe to re-run (idempotent), but emails will be sent to anyone whose account had to be auto-created.')) return;
+    }
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: password,
+          action: 'importWhopPayments',
+          dryRun,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Import failed'); return; }
+      setImportResult(json);
+      const c = json.counts ?? {};
+      const summary = [
+        c.credits_granted ? `${c.credits_granted} credit deliveries` : null,
+        c.sub_updated ? `${c.sub_updated} subs updated` : null,
+        c.stub_created_and_delivered ? `${c.stub_created_and_delivered} stub accounts emailed` : null,
+        c.skipped_already_delivered ? `${c.skipped_already_delivered} already done` : null,
+        c.skipped_unknown_plan ? `${c.skipped_unknown_plan} unknown plan` : null,
+        c.skipped_no_email ? `${c.skipped_no_email} no email` : null,
+        c.error ? `${c.error} errors` : null,
+      ].filter(Boolean).join(' · ');
+      toast.success(dryRun ? `Dry run · ${summary || 'nothing to import'}` : summary || 'Nothing to import');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function handleBanUser(userId: string) {
     setBanning(true);
     try {
@@ -601,6 +641,74 @@ export default function AdminPage() {
         {/* ── OVERVIEW TAB ── */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* Whop Payment Importer */}
+            <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl p-5 border border-amber-500/30">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-300 flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    Import Whop payments
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Pulls every successful Whop payment. Grants credits / updates subs for known users. For payments where the email isn&apos;t in our DB yet, auto-creates a stub account and emails them a claim code. Idempotent — re-running is safe.
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={importing}
+                    onClick={() => handleImportWhopPayments(true)}
+                    className="text-xs h-8 text-slate-300 border-slate-600 hover:bg-slate-800"
+                  >
+                    {importing ? 'Working…' : 'Dry run'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={importing}
+                    onClick={() => handleImportWhopPayments(false)}
+                    className="text-xs h-8 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                  >
+                    {importing ? 'Importing…' : 'Run import'}
+                  </Button>
+                </div>
+              </div>
+
+              {importResult && (
+                <div className="mt-4 rounded-xl bg-slate-950/50 border border-slate-800 p-3">
+                  <p className="text-xs text-slate-400 mb-2">
+                    {importResult.dryRun ? 'Dry-run results' : 'Import results'} — {importResult.totalPayments} payments processed
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {Object.entries(importResult.counts).map(([action, count]) => (
+                      <span key={action} className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-slate-800 text-slate-300">
+                        {action.replace(/_/g, ' ')}: {count}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-1 text-[11px] font-mono">
+                    {importResult.results.slice(0, 30).map((r, i) => (
+                      <div key={i} className="flex gap-2 text-slate-400">
+                        <span className="text-slate-600">{r.paymentId.slice(-8)}</span>
+                        <span className="truncate flex-1 max-w-[200px]">{r.email ?? '—'}</span>
+                        <span className={
+                          r.action === 'error' ? 'text-red-400'
+                          : r.action.includes('skipped') ? 'text-slate-500'
+                          : 'text-emerald-400'
+                        }>
+                          {r.action.replace(/_/g, ' ')}
+                          {r.credits ? ` (+${r.credits})` : ''}
+                        </span>
+                      </div>
+                    ))}
+                    {importResult.results.length > 30 && (
+                      <p className="text-slate-500 text-center pt-2">+{importResult.results.length - 30} more</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Revenue & Tier Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-800/10 rounded-2xl p-5 border border-indigo-500/20">
