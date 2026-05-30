@@ -401,6 +401,27 @@ export default function PricingPage() {
                     <p className="text-xs text-muted-foreground mb-3">{pack.pricePerCredit}</p>
                     <button
                       disabled={!pack.whopPlanId || loading === pack.id}
+                      onClick={async () => {
+                        if (!pack.whopPlanId) return;
+                        setLoading(pack.id);
+                        try {
+                          const res = await fetch('/api/whop/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ planId: pack.whopPlanId }),
+                          });
+                          const data = await res.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          } else {
+                            toast.error(data.error || 'Failed to start checkout');
+                          }
+                        } catch {
+                          toast.error('Something went wrong');
+                        } finally {
+                          setLoading(null);
+                        }
+                      }}
                       className={`w-full py-2 rounded-lg text-sm font-semibold transition-colors ${
                         isFeatured
                           ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
@@ -408,7 +429,7 @@ export default function PricingPage() {
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                       title={!pack.whopPlanId ? 'Coming soon — checkout will be enabled once the Whop product is configured.' : ''}
                     >
-                      {!pack.whopPlanId ? 'Coming soon' : 'Buy'}
+                      {loading === pack.id ? 'Loading…' : (!pack.whopPlanId ? 'Coming soon' : 'Buy')}
                     </button>
                   </div>
                 );

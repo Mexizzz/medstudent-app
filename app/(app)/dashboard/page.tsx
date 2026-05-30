@@ -35,9 +35,10 @@ export default async function DashboardPage() {
   const userId = auth?.userId ?? '';
   const today = todayStr();
 
-  const userRow = db.select({ name: users.name, tier: users.subscriptionTier }).from(users).where(eq(users.id, userId)).get();
+  const userRow = db.select({ name: users.name, tier: users.subscriptionTier, credits: users.aiCredits }).from(users).where(eq(users.id, userId)).get();
   const userName = userRow?.name || '';
   const userTier = userRow?.tier || 'free';
+  const creditBalance = userRow?.credits ?? 0;
 
   const [streakInfo, todayPlans, allSrCards, goals, xpRows, srcCountRows, sessionCountRows] = await Promise.all([
     getStreakInfo(userId).catch(() => ({
@@ -102,6 +103,15 @@ export default async function DashboardPage() {
               <p className="text-2xl font-bold">{xpProgress.totalXp.toLocaleString()}</p>
               <p className="text-white/60 text-xs">total XP</p>
             </div>
+            {creditBalance > 0 && (
+              <>
+                <div className="hidden sm:block w-px h-10 bg-white/20" />
+                <Link href="/pricing" className="hidden sm:block text-center group">
+                  <p className="text-2xl font-bold tabular-nums group-hover:text-amber-200 transition-colors">{creditBalance.toLocaleString()}</p>
+                  <p className="text-white/60 text-xs">AI credits</p>
+                </Link>
+              </>
+            )}
             <div className="hidden sm:block w-px h-10 bg-white/20" />
             <SkellyWidget
               streak={streakInfo.currentStreak}

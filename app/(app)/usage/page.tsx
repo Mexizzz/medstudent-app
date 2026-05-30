@@ -13,6 +13,10 @@ interface UsageData {
   resources: Record<string, { used: number; limit: number }>;
 }
 
+interface CreditsData {
+  balance: number;
+}
+
 const ACTION_LABELS: Record<string, string> = {
   question_generate: 'Question Generation',
   tutor_message: 'AI Tutor Messages',
@@ -54,9 +58,11 @@ const RESOURCE_LABELS: Record<string, string> = {
 
 export default function UsagePage() {
   const [data, setData] = useState<UsageData | null>(null);
+  const [credits, setCredits] = useState<CreditsData | null>(null);
 
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setData);
+    fetch('/api/credits').then(r => r.json()).then(setCredits).catch(() => {});
   }, []);
 
   if (!data) {
@@ -77,6 +83,29 @@ export default function UsagePage() {
           <p className="text-sm text-muted-foreground mt-1">Track your daily usage and plan limits</p>
         </div>
         <TierBadge tier={tier} size="lg" />
+      </div>
+
+      {/* AI Credits balance */}
+      <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">AI Credits</p>
+              <p className="text-xs text-muted-foreground">Kicks in automatically when daily limits are reached.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-3xl font-bold tabular-nums text-foreground">{(credits?.balance ?? 0).toLocaleString()}</p>
+            <Link href="/pricing">
+              <Button size="sm" className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                Buy more
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Daily Usage */}

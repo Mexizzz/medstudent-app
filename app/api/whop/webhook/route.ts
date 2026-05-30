@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { users, creditTransactions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyWebhookSignature, getPlanFromWhopPlanId, getMembership } from '@/lib/whop';
+import { getCreditsForPlanId, grantCredits } from '@/lib/credits';
 export const dynamic = 'force-dynamic';
 
 // Pull user_id and email from any of the paths Whop has used historically.
@@ -103,6 +104,32 @@ export async function POST(req: NextRequest) {
           status = (m.status || status).toLowerCase();
         } catch (e) {
           console.error('Whop webhook: failed to fetch membership detail', e);
+        }
+      }
+
+      // Credit-pack purchase: deliver the credits, log with the Whop payment/
+      // receipt ID for idempotency, then return. Skipping the subscription
+      // path that follows because credit packs don't upgrade tier.
+      if (effectivePlanId) {
+        const packCredits = getCreditsForPlanId(effectivePlanId);
+        if (packCredits) {
+          const receiptId = (data?.id as string) ?? membershipId ?? `whop_${effectivePlanId}_${Date.now()}`;
+          // Idempotency check: did we already deliver this payment?
+          const already = await db.query.creditTransactions.findFirst({
+            where: eq(creditTransactions.refId, receiptId),
+            columns: { id: true },
+          });
+          if (already) {
+            console.log(`Whop webhook: credits already delivered for receipt ${receiptId}`);
+            return NextResponse.json({ received: true, duplicate: true });
+          }
+          const result = await grantCredits(resolvedUserId, packCredits, 'purchase:credits', receiptId);
+          if ('error' in result) {
+            console.error('Whop webhook: grantCredits failed', result.error);
+            return NextResponse.json({ received: true, warning: 'grant_failed' });
+          }
+          console.log(`Whop webhook: ${eventType} -> user ${resolvedUserId} +${packCredits} credits (receipt ${receiptId})`);
+          break; // exit the switch — don't fall through to sub logic.
         }
       }
 
