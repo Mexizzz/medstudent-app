@@ -164,53 +164,62 @@ function mapPayment(data: Record<string, unknown>): WhopPayment {
  * Lists all successful Whop payments, paginating until exhausted.
  * Used by the admin importer to backfill credit deliveries for users
  * who paid before the credits feature shipped.
+ *
+ * Tries multiple endpoint paths because Whop accounts differ:
+ *   /receipts (most current), /payments (legacy), across v2 / v5 / v1.
  */
 export async function listPayments(opts?: { onlySuccessful?: boolean }): Promise<WhopPayment[]> {
   const onlySuccessful = opts?.onlySuccessful ?? true;
-  const bases = [
-    'https://api.whop.com/api/v2',
-    'https://api.whop.com/api/v5',
-    'https://api.whop.com/api/v1',
-  ];
+  // Try every combination of (version, resource) until one responds OK.
+  const attempts: { base: string; resource: string }[] = [];
+  for (const base of ['https://api.whop.com/api/v2', 'https://api.whop.com/api/v5', 'https://api.whop.com/api/v1']) {
+    for (const resource of ['receipts', 'payments']) {
+      attempts.push({ base, resource });
+    }
+  }
 
-  // Pick the first base that responds OK on page 1; then keep paginating on it.
   let workingBase: string | null = null;
+  let workingResource: string | null = null;
   let firstPage: Record<string, unknown> | null = null;
-  for (const base of bases) {
-    const res = await fetch(`${base}/payments?per=100&page=1${onlySuccessful ? '&status=success' : ''}`, {
-      headers: { 'Authorization': `Bearer ${getApiKey()}` },
-    });
+  const errors: string[] = [];
+
+  for (const { base, resource } of attempts) {
+    const url = `${base}/${resource}?per=100&page=1${onlySuccessful ? '&status=success' : ''}`;
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getApiKey()}` } });
     if (res.ok) {
       workingBase = base;
+      workingResource = resource;
       firstPage = await res.json();
       break;
     }
     if (res.status === 401 || res.status === 403) {
-      throw new Error(`Whop auth failed listing payments (${res.status}). Check WHOP_API_KEY.`);
+      const text = await res.text().catch(() => '');
+      throw new Error(`Whop auth failed (${res.status}) at ${base.split('/').pop()}/${resource}: ${text.slice(0, 120)}. Check WHOP_API_KEY.`);
     }
+    const text = await res.text().catch(() => '');
+    errors.push(`${base.split('/').pop()}/${resource}: ${res.status} ${text.slice(0, 60)}`);
   }
-  if (!workingBase || !firstPage) throw new Error('Whop payments endpoint unreachable on all API versions tried.');
+  if (!workingBase || !workingResource || !firstPage) {
+    throw new Error(`Whop payments lookup failed. Tried: ${errors.join(' | ')}`);
+  }
 
   const all: WhopPayment[] = [];
   const extract = (page: Record<string, unknown>) => {
-    const list = (page.data ?? page.payments ?? []) as Record<string, unknown>[];
+    const list = (page.data ?? page.payments ?? page.receipts ?? []) as Record<string, unknown>[];
     for (const p of list) all.push(mapPayment(p));
-    // Whop pagination shapes vary; check both styles.
     const pagination = page.pagination as Record<string, unknown> | undefined;
-    const totalPages = (pagination?.total_pages as number) ?? (page.total_pages as number) ?? 1;
-    return totalPages;
+    return (pagination?.total_pages as number) ?? (page.total_pages as number) ?? 1;
   };
 
   const totalPages = extract(firstPage);
-  // Safety cap so a runaway pagination doesn't loop forever.
   const PAGE_CAP = 50;
   for (let p = 2; p <= Math.min(totalPages, PAGE_CAP); p++) {
-    const res = await fetch(`${workingBase}/payments?per=100&page=${p}${onlySuccessful ? '&status=success' : ''}`, {
-      headers: { 'Authorization': `Bearer ${getApiKey()}` },
-    });
+    const res = await fetch(
+      `${workingBase}/${workingResource}?per=100&page=${p}${onlySuccessful ? '&status=success' : ''}`,
+      { headers: { 'Authorization': `Bearer ${getApiKey()}` } },
+    );
     if (!res.ok) break;
-    const page = await res.json();
-    extract(page);
+    extract(await res.json());
   }
   return all;
 }
@@ -227,21 +236,57 @@ export interface WhopPlan {
   active: boolean | null;
 }
 
+function firstNumber(...vals: unknown[]): number | null {
+  for (const v of vals) {
+    if (typeof v === 'number' && isFinite(v) && v >= 0) return v;
+    if (typeof v === 'string' && v && !isNaN(Number(v))) return Number(v);
+  }
+  return null;
+}
+
 function mapPlan(data: Record<string, unknown>): WhopPlan {
   const product = data.product as Record<string, unknown> | undefined;
-  const isOneTime = data.initial_price !== undefined && (data.renewal_price_amount === 0 || data.renewal_price_amount == null);
-  const amount = (data.initial_price as number)
-    ?? (data.renewal_price_amount as number)
-    ?? (data.price as number)
+  const planType = (data.plan_type as string) ?? '';
+  // Whop's plan shapes vary across API versions. Try every known price field;
+  // some accounts use renewal_price/initial_price (objects with amount), some
+  // use *_amount, some store prices on the product instead.
+  const renewalObj = data.renewal_price as Record<string, unknown> | undefined;
+  const initialObj = data.initial_price as Record<string, unknown> | undefined;
+  const amount = firstNumber(
+    typeof data.initial_price === 'number' ? data.initial_price : undefined,
+    typeof data.renewal_price_amount === 'number' ? data.renewal_price_amount : undefined,
+    typeof data.renewal_price === 'number' ? data.renewal_price : undefined,
+    typeof data.price === 'number' ? data.price : undefined,
+    typeof data.amount === 'number' ? data.amount : undefined,
+    initialObj?.amount,
+    renewalObj?.amount,
+    product?.initial_price,
+    product?.price,
+  );
+
+  const currency = (data.base_currency as string)
+    ?? (data.currency as string)
+    ?? (renewalObj?.currency as string)
+    ?? (initialObj?.currency as string)
+    ?? (product?.base_currency as string)
     ?? null;
+
+  const isOneTimeByType = planType.includes('one_time') || planType.includes('onetime');
+  const isOneTimeByPrice = (data.renewal_price_amount === 0 || data.renewal_price_amount == null)
+    && (renewalObj?.amount === 0 || renewalObj?.amount == null)
+    && data.initial_price !== undefined;
+  const billingPeriod = isOneTimeByType || isOneTimeByPrice
+    ? 'one-time'
+    : (data.billing_period as string) ?? planType ?? null;
+
   return {
     id: (data.id as string) ?? '',
     productId: (data.product_id as string) ?? (product?.id as string) ?? null,
     productName: (product?.name as string) ?? (data.product_name as string) ?? null,
-    name: (data.name as string) ?? (data.plan_type as string) ?? null,
-    amount: typeof amount === 'number' ? amount : null,
-    currency: (data.base_currency as string) ?? (data.currency as string) ?? null,
-    billingPeriod: isOneTime ? 'one-time' : ((data.billing_period as string) ?? null),
+    name: (data.name as string) ?? planType ?? null,
+    amount,
+    currency,
+    billingPeriod,
     visibility: (data.visibility as string) ?? null,
     active: (data.active as boolean) ?? null,
   };

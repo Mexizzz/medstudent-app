@@ -223,7 +223,7 @@ export default function AdminPage() {
   const [importResult, setImportResult] = useState<null | { totalPayments: number; counts: Record<string, number>; results: Array<{ paymentId: string; email: string | null; planId: string; action: string; credits?: number; error?: string }>; dryRun: boolean }>(null);
   const [whopPlans, setWhopPlans] = useState<null | Array<{ id: string; productName: string | null; name: string | null; amount: number | null; currency: string | null; billingPeriod: string | null }>>(null);
   const [whopPlansLoading, setWhopPlansLoading] = useState(false);
-  const [creditMap, setCreditMap] = useState<Record<string, { credits: string; tag: string }>>({});
+  const [creditMap, setCreditMap] = useState<Record<string, { credits: string; tag: string; priceOverride: string }>>({});
 
   async function handleListWhopPlans() {
     setWhopPlansLoading(true);
@@ -251,7 +251,12 @@ export default function AdminPage() {
       const credits = Number(cfg?.credits);
       if (!credits || credits <= 0) continue;
       const tag = cfg?.tag?.trim();
-      const price = p.amount ?? 0;
+      // Manual override > API value > 0. Override exists because Whop's API
+      // returns price=0 for some plan shapes — admin types the real price here.
+      const overrideNum = Number(cfg?.priceOverride);
+      const price = (cfg?.priceOverride && isFinite(overrideNum) && overrideNum > 0)
+        ? overrideNum
+        : (p.amount ?? 0);
       entries.push(tag ? `${p.id}:${price}:${credits}:${tag}` : `${p.id}:${price}:${credits}`);
     }
     return entries.join(',');
@@ -706,10 +711,10 @@ export default function AdminPage() {
                         <tr>
                           <th className="text-left px-3 py-2">Plan</th>
                           <th className="text-left px-3 py-2">ID</th>
-                          <th className="text-right px-3 py-2">Price</th>
-                          <th className="text-left px-3 py-2">Billing</th>
-                          <th className="text-left px-3 py-2 w-28">Credits</th>
-                          <th className="text-left px-3 py-2 w-36">Tag</th>
+                          <th className="text-right px-3 py-2">API price</th>
+                          <th className="text-left px-3 py-2 w-24">Override</th>
+                          <th className="text-left px-3 py-2 w-24">Credits</th>
+                          <th className="text-left px-3 py-2 w-32">Tag</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800">
@@ -717,25 +722,35 @@ export default function AdminPage() {
                           <tr key={p.id} className="hover:bg-slate-900/40">
                             <td className="px-3 py-2 text-slate-300">{p.productName || p.name || '—'}</td>
                             <td className="px-3 py-2 font-mono text-slate-400">{p.id}</td>
-                            <td className="px-3 py-2 text-right text-slate-300 tabular-nums">
-                              {p.amount != null ? `${p.amount} ${p.currency ?? ''}` : '—'}
+                            <td className={`px-3 py-2 text-right tabular-nums ${(!p.amount || p.amount === 0) ? 'text-amber-400' : 'text-slate-300'}`}>
+                              {p.amount != null ? `${p.amount}${p.currency ? ' ' + p.currency : ''}` : '—'}
                             </td>
-                            <td className="px-3 py-2 text-slate-400">{p.billingPeriod ?? '—'}</td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                placeholder={p.amount ? String(p.amount) : 'price'}
+                                value={creditMap[p.id]?.priceOverride ?? ''}
+                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: prev[p.id]?.tag ?? '', priceOverride: e.target.value } }))}
+                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-20"
+                              />
+                            </td>
                             <td className="px-3 py-2">
                               <Input
                                 type="number"
                                 min={0}
                                 placeholder="e.g. 200"
                                 value={creditMap[p.id]?.credits ?? ''}
-                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: e.target.value, tag: prev[p.id]?.tag ?? '' } }))}
-                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-24"
+                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: e.target.value, tag: prev[p.id]?.tag ?? '', priceOverride: prev[p.id]?.priceOverride ?? '' } }))}
+                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-20"
                               />
                             </td>
                             <td className="px-3 py-2">
                               <select
                                 value={creditMap[p.id]?.tag ?? ''}
-                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: e.target.value } }))}
-                                className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-1 text-white w-32"
+                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: e.target.value, priceOverride: prev[p.id]?.priceOverride ?? '' } }))}
+                                className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-1 text-white w-28"
                               >
                                 <option value="">No tag</option>
                                 <option value="MOST_POPULAR">Most popular</option>
