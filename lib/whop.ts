@@ -215,6 +215,81 @@ export async function listPayments(opts?: { onlySuccessful?: boolean }): Promise
   return all;
 }
 
+export interface WhopPlan {
+  id: string;
+  productId: string | null;
+  productName: string | null;
+  name: string | null;
+  amount: number | null;            // major units (e.g. SAR, not halalas)
+  currency: string | null;
+  billingPeriod: string | null;     // 'monthly' / 'annual' / 'one-time' / null
+  visibility: string | null;
+  active: boolean | null;
+}
+
+function mapPlan(data: Record<string, unknown>): WhopPlan {
+  const product = data.product as Record<string, unknown> | undefined;
+  const isOneTime = data.initial_price !== undefined && (data.renewal_price_amount === 0 || data.renewal_price_amount == null);
+  const amount = (data.initial_price as number)
+    ?? (data.renewal_price_amount as number)
+    ?? (data.price as number)
+    ?? null;
+  return {
+    id: (data.id as string) ?? '',
+    productId: (data.product_id as string) ?? (product?.id as string) ?? null,
+    productName: (product?.name as string) ?? (data.product_name as string) ?? null,
+    name: (data.name as string) ?? (data.plan_type as string) ?? null,
+    amount: typeof amount === 'number' ? amount : null,
+    currency: (data.base_currency as string) ?? (data.currency as string) ?? null,
+    billingPeriod: isOneTime ? 'one-time' : ((data.billing_period as string) ?? null),
+    visibility: (data.visibility as string) ?? null,
+    active: (data.active as boolean) ?? null,
+  };
+}
+
+/**
+ * List every Whop plan on this account. Used by the admin panel so plan
+ * IDs can be discovered without leaving the app.
+ */
+export async function listPlans(): Promise<WhopPlan[]> {
+  const bases = [
+    'https://api.whop.com/api/v2',
+    'https://api.whop.com/api/v5',
+    'https://api.whop.com/api/v1',
+  ];
+
+  let workingBase: string | null = null;
+  let firstPage: Record<string, unknown> | null = null;
+  for (const base of bases) {
+    const res = await fetch(`${base}/plans?per=100&page=1`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (res.ok) { workingBase = base; firstPage = await res.json(); break; }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`Whop auth failed listing plans (${res.status}). Check WHOP_API_KEY.`);
+    }
+  }
+  if (!workingBase || !firstPage) throw new Error('Whop plans endpoint unreachable on all API versions tried.');
+
+  const out: WhopPlan[] = [];
+  const extract = (page: Record<string, unknown>) => {
+    const list = (page.data ?? page.plans ?? []) as Record<string, unknown>[];
+    for (const p of list) out.push(mapPlan(p));
+    const pagination = page.pagination as Record<string, unknown> | undefined;
+    return (pagination?.total_pages as number) ?? (page.total_pages as number) ?? 1;
+  };
+
+  const totalPages = extract(firstPage);
+  for (let p = 2; p <= Math.min(totalPages, 20); p++) {
+    const res = await fetch(`${workingBase}/plans?per=100&page=${p}`, {
+      headers: { 'Authorization': `Bearer ${getApiKey()}` },
+    });
+    if (!res.ok) break;
+    extract(await res.json());
+  }
+  return out;
+}
+
 export async function cancelSubscription(membershipId: string, immediate = false): Promise<void> {
   const res = await fetch(`${WHOP_API}/memberships/${membershipId}/cancel`, {
     method: 'POST',

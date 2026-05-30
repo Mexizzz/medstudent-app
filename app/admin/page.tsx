@@ -221,6 +221,41 @@ export default function AdminPage() {
 
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<null | { totalPayments: number; counts: Record<string, number>; results: Array<{ paymentId: string; email: string | null; planId: string; action: string; credits?: number; error?: string }>; dryRun: boolean }>(null);
+  const [whopPlans, setWhopPlans] = useState<null | Array<{ id: string; productName: string | null; name: string | null; amount: number | null; currency: string | null; billingPeriod: string | null }>>(null);
+  const [whopPlansLoading, setWhopPlansLoading] = useState(false);
+  const [creditMap, setCreditMap] = useState<Record<string, { credits: string; tag: string }>>({});
+
+  async function handleListWhopPlans() {
+    setWhopPlansLoading(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminPassword: password, action: 'listWhopPlans' }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Failed to list plans'); return; }
+      setWhopPlans(json.plans ?? []);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to list plans');
+    } finally {
+      setWhopPlansLoading(false);
+    }
+  }
+
+  function buildPackEnvVar(): string {
+    if (!whopPlans) return '';
+    const entries: string[] = [];
+    for (const p of whopPlans) {
+      const cfg = creditMap[p.id];
+      const credits = Number(cfg?.credits);
+      if (!credits || credits <= 0) continue;
+      const tag = cfg?.tag?.trim();
+      const price = p.amount ?? 0;
+      entries.push(tag ? `${p.id}:${price}:${credits}:${tag}` : `${p.id}:${price}:${credits}`);
+    }
+    return entries.join(',');
+  }
 
   async function handleImportWhopPayments(dryRun: boolean) {
     if (!dryRun) {
@@ -641,6 +676,106 @@ export default function AdminPage() {
         {/* ── OVERVIEW TAB ── */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            {/* Whop Plans Browser + env-var builder */}
+            <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 rounded-2xl p-5 border border-violet-500/30">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-violet-300 flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    Whop plans
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Lists every plan on your Whop account with its plan ID and price. Use this to populate the <code className="text-violet-300 bg-slate-900/50 px-1 rounded">WHOP_PACK_PLANS</code> env var without leaving the app.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={whopPlansLoading}
+                  onClick={handleListWhopPlans}
+                  className="text-xs h-8 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+                >
+                  {whopPlansLoading ? 'Fetching…' : (whopPlans ? 'Refresh' : 'Fetch plans')}
+                </Button>
+              </div>
+
+              {whopPlans && (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-xl bg-slate-950/50 border border-slate-800 overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="text-slate-500 uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="text-left px-3 py-2">Plan</th>
+                          <th className="text-left px-3 py-2">ID</th>
+                          <th className="text-right px-3 py-2">Price</th>
+                          <th className="text-left px-3 py-2">Billing</th>
+                          <th className="text-left px-3 py-2 w-28">Credits</th>
+                          <th className="text-left px-3 py-2 w-36">Tag</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {whopPlans.map(p => (
+                          <tr key={p.id} className="hover:bg-slate-900/40">
+                            <td className="px-3 py-2 text-slate-300">{p.productName || p.name || '—'}</td>
+                            <td className="px-3 py-2 font-mono text-slate-400">{p.id}</td>
+                            <td className="px-3 py-2 text-right text-slate-300 tabular-nums">
+                              {p.amount != null ? `${p.amount} ${p.currency ?? ''}` : '—'}
+                            </td>
+                            <td className="px-3 py-2 text-slate-400">{p.billingPeriod ?? '—'}</td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                min={0}
+                                placeholder="e.g. 200"
+                                value={creditMap[p.id]?.credits ?? ''}
+                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: e.target.value, tag: prev[p.id]?.tag ?? '' } }))}
+                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-24"
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <select
+                                value={creditMap[p.id]?.tag ?? ''}
+                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: e.target.value } }))}
+                                className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-1 text-white w-32"
+                              >
+                                <option value="">No tag</option>
+                                <option value="MOST_POPULAR">Most popular</option>
+                                <option value="BEST_VALUE">Best value</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                        {whopPlans.length === 0 && (
+                          <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No plans returned by Whop.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {whopPlans.length > 0 && (
+                    <div className="rounded-xl bg-slate-950/70 border border-violet-500/30 p-3">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="text-[10px] uppercase tracking-wider text-violet-300 font-bold">WHOP_PACK_PLANS env var</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!buildPackEnvVar()}
+                          onClick={() => {
+                            navigator.clipboard.writeText(buildPackEnvVar()).then(() => toast.success('Copied. Paste into Railway → Variables.'));
+                          }}
+                          className="text-xs h-7 text-violet-300 border-violet-500/40 hover:bg-violet-500/10"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                      <code className="text-xs text-slate-300 break-all block leading-relaxed">
+                        {buildPackEnvVar() || <span className="text-slate-600">Fill in credit amounts above to build the env var…</span>}
+                      </code>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Whop Payment Importer */}
             <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl p-5 border border-amber-500/30">
               <div className="flex items-start justify-between gap-4 flex-wrap">

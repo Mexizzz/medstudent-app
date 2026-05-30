@@ -4,7 +4,7 @@ import { users, contentSources, questions, studySessions, sessionResponses, stud
 import { sql, desc, eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
-import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId, listPayments } from '@/lib/whop';
+import { getMembership, findMembershipsByEmail, getPlanFromWhopPlanId, listPayments, listPlans } from '@/lib/whop';
 import { expireOldTrials, expireComps } from '@/lib/subscription';
 import { getCreditsForPlanId, grantCredits } from '@/lib/credits';
 import { sendPurchaseDelivery, normalizeEmail } from '@/lib/email';
@@ -332,6 +332,18 @@ export async function PATCH(req: NextRequest) {
         },
         membership,
       });
+    }
+
+    // List every Whop plan on the account. Used by the admin panel to
+    // discover plan IDs + prices so the operator can populate WHOP_PACK_PLANS
+    // without leaving the dashboard.
+    if (body.action === 'listWhopPlans') {
+      try {
+        const plans = await listPlans();
+        return NextResponse.json({ plans });
+      } catch (e) {
+        return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+      }
     }
 
     // Import historical Whop payments. For each successful payment:
