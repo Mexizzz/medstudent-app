@@ -141,6 +141,9 @@ export default function AdminPage() {
   const [banDays, setBanDays] = useState<number | 'permanent'>(7);
   const [banReason, setBanReason] = useState('');
   const [banning, setBanning] = useState(false);
+  const [creditsUserId, setCreditsUserId] = useState<string | null>(null);
+  const [creditsAmount, setCreditsAmount] = useState(500);
+  const [creditsGranting, setCreditsGranting] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
   const [adminReply, setAdminReply] = useState('');
@@ -296,6 +299,32 @@ export default function AdminPage() {
       toast.error(e instanceof Error ? e.message : 'Import failed');
     } finally {
       setImporting(false);
+    }
+  }
+
+  async function handleGrantCredits(userId: string) {
+    if (!creditsAmount || creditsAmount <= 0) { toast.error('Enter a positive amount'); return; }
+    setCreditsGranting(true);
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminPassword: password,
+          action: 'grantCredits',
+          userId,
+          amount: creditsAmount,
+          reason: 'comp:admin',
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { toast.error(json.error ?? 'Grant failed'); return; }
+      toast.success(`Granted ${creditsAmount.toLocaleString()} credits · new balance ${json.balance.toLocaleString()}`);
+      setCreditsUserId(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Grant failed');
+    } finally {
+      setCreditsGranting(false);
     }
   }
 
@@ -1297,6 +1326,38 @@ export default function AdminPage() {
                                     >
                                       <Crown className="w-3 h-3" /> Comp Upgrade
                                     </Button>
+                                    {creditsUserId === u.id ? (
+                                      <div className="flex items-center gap-1 bg-slate-800/60 rounded px-2 py-0.5">
+                                        <span className="text-xs text-amber-400">Credits:</span>
+                                        <Input
+                                          type="number"
+                                          min={1}
+                                          value={creditsAmount}
+                                          onChange={e => setCreditsAmount(Math.max(0, Number(e.target.value) || 0))}
+                                          className="h-6 w-20 text-xs bg-slate-900 border-slate-700 text-white"
+                                          autoFocus
+                                          onKeyDown={e => e.key === 'Enter' && handleGrantCredits(u.id)}
+                                        />
+                                        <Button
+                                          size="sm"
+                                          className="h-6 text-xs px-2 bg-amber-500 hover:bg-amber-600 text-white"
+                                          disabled={creditsGranting}
+                                          onClick={() => handleGrantCredits(u.id)}
+                                        >
+                                          {creditsGranting ? '…' : 'Grant'}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="h-6 text-xs px-1 text-slate-400" onClick={() => setCreditsUserId(null)}>✕</Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
+                                        onClick={() => { setCreditsUserId(u.id); setCreditsAmount(500); }}
+                                      >
+                                        <Crown className="w-3 h-3" /> + Credits
+                                      </Button>
+                                    )}
                                     {u.bannedUntil && new Date(u.bannedUntil) > new Date() ? (
                                       <Button
                                         size="sm"

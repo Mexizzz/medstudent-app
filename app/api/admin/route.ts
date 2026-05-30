@@ -334,6 +334,19 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
+    // Grant AI credits to a specific user (comp / testing / customer recovery).
+    if (body.action === 'grantCredits') {
+      const userId: string = body.userId;
+      const amount = Number(body.amount);
+      const reason: string = (body.reason ?? 'comp:admin').trim() || 'comp:admin';
+      if (!userId || !isFinite(amount) || amount <= 0) {
+        return NextResponse.json({ error: 'userId and positive amount required' }, { status: 400 });
+      }
+      const result = await grantCredits(userId, Math.floor(amount), reason);
+      if ('error' in result) return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ success: true, balance: result.balance });
+    }
+
     // List every Whop plan on the account. Used by the admin panel to
     // discover plan IDs + prices so the operator can populate WHOP_PACK_PLANS
     // without leaving the dashboard.
