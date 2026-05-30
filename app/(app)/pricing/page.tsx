@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, X, Sparkles, Crown, Zap, CalendarDays, Shield, CreditCard } from 'lucide-react';
+import { Check, X, Sparkles, Crown, Zap, CalendarDays, Shield, CreditCard, Coins } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Tier = 'free' | 'pro' | 'max';
@@ -113,14 +113,31 @@ const plans = [
   },
 ];
 
+interface CreditPack {
+  id: string;
+  label: string;
+  credits: number;
+  priceGbp: number;
+  pricePerCredit: string;
+  tag?: string;
+  whopPlanId: string | null;
+}
+
+interface CreditData {
+  balance: number;
+  packs: CreditPack[];
+}
+
 export default function PricingPage() {
   const [interval, setInterval] = useState<Interval>('monthly');
   const [subData, setSubData] = useState<SubData | null>(null);
+  const [creditData, setCreditData] = useState<CreditData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setSubData).catch(() => {});
+    fetch('/api/credits').then(r => r.json()).then(setCreditData).catch(() => {});
   }, []);
 
   const currentTier = subData?.tier ?? 'free';
@@ -348,6 +365,56 @@ export default function PricingPage() {
             );
           })}
         </div>
+
+        {/* AI Credits section */}
+        {creditData && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Coins className="w-5 h-5 text-amber-500" />
+              <h2 className="text-xl font-bold text-foreground">AI Credits</h2>
+              <span className="ml-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-sm font-semibold">
+                Balance: <span className="tabular-nums">{creditData.balance.toLocaleString()}</span>
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              One-time top-ups that kick in automatically when your daily AI limit is reached. 1 credit ≈ 1 AI request. Credits never expire.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {creditData.packs.map((pack, i) => {
+                const isFeatured = i === 1;
+                return (
+                  <div
+                    key={pack.id}
+                    className={`relative rounded-xl border p-5 bg-card ${isFeatured ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-border'}`}
+                  >
+                    {pack.tag && (
+                      <div className={`absolute -top-2.5 left-4 px-2 py-0.5 text-white text-[10px] font-bold rounded ${
+                        isFeatured ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-slate-700'
+                      }`}>
+                        {pack.tag}
+                      </div>
+                    )}
+                    <h3 className="font-bold text-foreground">{pack.label}</h3>
+                    <p className="text-2xl font-extrabold mt-2 tabular-nums">{pack.credits.toLocaleString()}<span className="text-sm font-medium text-muted-foreground ml-1">credits</span></p>
+                    <p className="text-lg font-bold mt-1 text-foreground">£{pack.priceGbp.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground mb-3">{pack.pricePerCredit}</p>
+                    <button
+                      disabled={!pack.whopPlanId || loading === pack.id}
+                      className={`w-full py-2 rounded-lg text-sm font-semibold transition-colors ${
+                        isFeatured
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
+                          : 'bg-muted text-foreground hover:bg-muted/80'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      title={!pack.whopPlanId ? 'Coming soon — checkout will be enabled once the Whop product is configured.' : ''}
+                    >
+                      {!pack.whopPlanId ? 'Coming soon' : 'Buy'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Cancel confirmation */}
         {currentTier !== 'free' && (

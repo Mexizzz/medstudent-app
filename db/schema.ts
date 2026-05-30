@@ -23,8 +23,30 @@ export const users = sqliteTable('users', {
   // Set to a far-future date for permanent bans (e.g., year 9999).
   bannedUntil:  integer('banned_until', { mode: 'timestamp' }),
   banReason:    text('ban_reason'),
+  // AI credits — one-time purchases that kick in when the daily subscription
+  // limit is hit. 1 credit ≈ 1 LLM call (one generation batch, one tutor
+  // message, etc.). Free + paid users alike can hold credits.
+  aiCredits:    integer('ai_credits').notNull().default(0),
   createdAt:    integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+// Ledger of credit-balance changes (purchases, consumption, refunds, comps).
+// Lets us answer "where did my balance go?" and run accounting at any point.
+export const creditTransactions = sqliteTable('credit_transactions', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Signed integer — positive = credit grant, negative = consumption.
+  amount:    integer('amount').notNull(),
+  // Free-form reason. Examples: 'purchase:credits_1000', 'use:question_generate',
+  // 'refund:gen_failed', 'comp:support_apology'.
+  reason:    text('reason').notNull(),
+  // Optional foreign reference — Whop receipt id, generation id, etc.
+  refId:     text('ref_id'),
+  balanceAfter: integer('balance_after').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+}, (table) => ({
+  userCreatedIdx: index('credit_tx_user_created').on(table.userId, table.createdAt),
+}));
 
 // ── Content (per-user) ───────────────────────────────────
 export const contentSources = sqliteTable('content_sources', {

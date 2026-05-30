@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { users, usageTracking } from '@/db/schema';
+import { users, usageTracking, creditTransactions } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { getMembership, getPlanFromWhopPlanId } from '@/lib/whop';
@@ -252,12 +252,11 @@ export async function checkUsageLimit(
   userId: string,
   action: UsageAction,
   tier?: SubscriptionTier,
-): Promise<{ allowed: boolean; used: number; limit: number; tier: SubscriptionTier }> {
+): Promise<{ allowed: boolean; used: number; limit: number; tier: SubscriptionTier; credits?: number; usingCredits?: boolean }> {
   const userTier = tier ?? await getUserTier(userId);
   const limit = DAILY_LIMITS[userTier][action];
 
   if (limit === Infinity) return { allowed: true, used: 0, limit, tier: userTier };
-  if (limit === 0) return { allowed: false, used: 0, limit: 0, tier: userTier };
 
   const today = getToday();
   const record = await db.query.usageTracking.findFirst({
@@ -267,9 +266,24 @@ export async function checkUsageLimit(
       eq(usageTracking.date, today),
     ),
   });
-
   const used = record?.count ?? 0;
-  return { allowed: used < limit, used, limit, tier: userTier };
+
+  // Under the daily cap: allow as usual.
+  if (limit > 0 && used < limit) {
+    return { allowed: used < limit, used, limit, tier: userTier };
+  }
+
+  // At cap (or feature-blocked at limit=0) — check AI credits as fallback.
+  const userRow = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { aiCredits: true },
+  });
+  const credits = userRow?.aiCredits ?? 0;
+  if (credits > 0) {
+    return { allowed: true, used, limit, tier: userTier, credits, usingCredits: true };
+  }
+
+  return { allowed: false, used, limit, tier: userTier, credits };
 }
 
 export async function incrementUsage(
@@ -278,6 +292,9 @@ export async function incrementUsage(
   amount: number = 1,
 ): Promise<void> {
   const today = getToday();
+  const userTier = await getUserTier(userId);
+  const limit = DAILY_LIMITS[userTier][action];
+
   const existing = await db.query.usageTracking.findFirst({
     where: and(
       eq(usageTracking.userId, userId),
@@ -285,17 +302,48 @@ export async function incrementUsage(
       eq(usageTracking.date, today),
     ),
   });
+  const used = existing?.count ?? 0;
+
+  // Split the increment: portion within the daily cap counts against
+  // subscription usage, anything over is paid out of AI credits.
+  let usageInc = amount;
+  let creditDeduct = 0;
+  if (limit !== Infinity) {
+    const remaining = Math.max(0, limit - used);
+    usageInc = Math.min(amount, remaining);
+    creditDeduct = amount - usageInc;
+  }
+
+  if (creditDeduct > 0) {
+    // Atomic decrement; if the user somehow ran out between checkUsageLimit
+    // and now (race), we still log the usage but skip the credit consumption.
+    const res = await db.update(users)
+      .set({ aiCredits: sql`max(0, ${users.aiCredits} - ${creditDeduct})` })
+      .where(eq(users.id, userId))
+      .returning({ balance: users.aiCredits });
+    if (res[0]) {
+      await db.insert(creditTransactions).values({
+        id: nanoid(),
+        userId,
+        amount: -creditDeduct,
+        reason: `use:${action}`,
+        refId: null,
+        balanceAfter: res[0].balance,
+        createdAt: new Date(),
+      });
+    }
+  }
 
   if (existing) {
     await db.update(usageTracking)
-      .set({ count: existing.count + amount })
+      .set({ count: existing.count + usageInc })
       .where(eq(usageTracking.id, existing.id));
-  } else {
+  } else if (usageInc > 0) {
     await db.insert(usageTracking).values({
       id: nanoid(),
       userId,
       action,
-      count: amount,
+      count: usageInc,
       date: today,
       createdAt: new Date(),
     });
