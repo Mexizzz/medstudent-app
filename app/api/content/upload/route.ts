@@ -33,20 +33,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const contentLength = Number(req.headers.get('content-length') ?? '0');
+    const userAgent = req.headers.get('user-agent') ?? '';
+    const isIOS = /iPad|iPhone|iPod/i.test(userAgent);
+
     let formData: FormData;
     try {
       formData = await req.formData();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      // Most common: the request body exceeded the server's body-size limit
-      // (Next config + reverse-proxy). Surface that explicitly.
-      if (msg.toLowerCase().includes('body') && (msg.includes('limit') || msg.includes('size'))) {
+      // Log the real reason so future failures can be diagnosed from Railway logs
+      // instead of a generic 400 that tells us nothing.
+      console.error('upload: formData() failed', {
+        msg,
+        contentLength,
+        isIOS,
+        userAgent: userAgent.slice(0, 120),
+      });
+
+      const lower = msg.toLowerCase();
+
+      // Body-size overrun (Next config or upstream proxy)
+      if (lower.includes('body') && (lower.includes('limit') || lower.includes('size'))) {
         return NextResponse.json(
           { error: `PDF is too large. Max upload size is ${Math.floor(MAX_FILE_BYTES / 1024 / 1024)}MB.` },
           { status: 413 },
         );
       }
-      return NextResponse.json({ error: 'Could not read upload. Please try again.' }, { status: 400 });
+      // Boundary / multipart problems (iOS Safari has known quirks with this)
+      if (lower.includes('boundary') || lower.includes('multipart') || lower.includes('malformed')) {
+        return NextResponse.json(
+          {
+            error: isIOS
+              ? "Your iPad's browser had trouble sending this PDF. Try: (1) saving the PDF to Files first (don't pick directly from iCloud), (2) using Chrome instead of Safari, or (3) uploading from a laptop."
+              : 'Could not read the upload — it may have been interrupted. Please try again.',
+          },
+          { status: 400 },
+        );
+      }
+      // Aborted / network drop
+      if (lower.includes('abort') || lower.includes('terminated') || lower.includes('econnreset')) {
+        return NextResponse.json(
+          { error: 'Upload was interrupted (network dropped). Please try again on a stable connection.' },
+          { status: 400 },
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error: isIOS
+            ? "Could not read the upload from your iPad. Try saving the PDF to Files first, or use a different browser / laptop."
+            : 'Could not read upload. Please try again.',
+        },
+        { status: 400 },
+      );
     }
 
     const file = formData.get('file') as File | null;
