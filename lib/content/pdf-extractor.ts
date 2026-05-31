@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import path from 'path';
 
 export interface PdfExtractResult {
   text: string;
@@ -65,7 +66,8 @@ export async function savePdfFile(
   const { nanoid } = await import('nanoid');
   await fs.mkdir(uploadsDir, { recursive: true });
   const fileName = `${nanoid()}.pdf`;
-  const filePath = `${uploadsDir}/${fileName}`;
+  // Use path.join so this works on Windows + Linux/Railway alike.
+  const filePath = path.join(uploadsDir, fileName);
   await fs.writeFile(filePath, Buffer.from(fileBuffer));
   return filePath;
 }

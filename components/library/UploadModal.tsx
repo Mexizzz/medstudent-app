@@ -103,6 +103,23 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
 
   async function handlePdfUpload() {
     if (!file || !pdfTitle) return;
+
+    // Client-side size guard — gives the user instant feedback instead of
+    // making them wait through a long upload that the server will reject.
+    const MAX_BYTES = 30 * 1024 * 1024;
+    if (file.size === 0) {
+      toast.error('The selected file is empty.');
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error(`PDF is ${(file.size / 1024 / 1024).toFixed(1)}MB. Max is 30MB — try compressing or splitting it.`);
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Only PDF files are accepted here. Use the Notes tab to paste plain text.');
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -113,28 +130,40 @@ export function UploadModal({ onSuccess }: UploadModalProps) {
       if (pdfTopic) formData.append('topic', pdfTopic);
 
       const res = await fetch('/api/content/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+      // Server may return an empty body or HTML error page on 5xx/413 — read
+      // as text first then try to parse, so we never throw "Unexpected end of JSON".
+      const bodyText = await res.text().catch(() => '');
+      let data: Record<string, unknown> | null = null;
+      try { data = bodyText ? JSON.parse(bodyText) : null; } catch { data = null; }
+
       if (!res.ok) {
-        if (data.upgradeRequired) {
+        if (data?.upgradeRequired) {
           setOpen(false);
           setUpgradeModal({
             open: true,
             feature: 'PDF Upload',
-            requiredTier: data.requiredTier ?? 'pro',
+            requiredTier: (data.requiredTier as 'pro' | 'max') ?? 'pro',
             limitReached: res.status === 429,
-            used: data.used,
-            limit: data.limit,
+            used: data.used as number | undefined,
+            limit: data.limit as number | undefined,
           });
           return;
         }
-        throw new Error(data.error);
+        // Status-specific fallbacks when the server didn't supply a body
+        const fallback =
+          res.status === 413 ? 'PDF is too large. Max upload size is 30MB.'
+          : res.status === 504 || res.status === 408 ? 'Upload timed out. Try a smaller PDF or check your connection.'
+          : res.status >= 500 ? 'Server error during upload. Please try again in a moment.'
+          : `Upload failed (${res.status}).`;
+        throw new Error((data?.error as string) || fallback);
       }
 
-      toast.success(`Uploaded "${pdfTitle}" — ${data.wordCount?.toLocaleString()} words`);
+      const wordCount = (data?.wordCount as number | undefined) ?? 0;
+      toast.success(`Uploaded "${pdfTitle}" — ${wordCount.toLocaleString()} words`);
       setOpen(false);
       onSuccess();
     } catch (err) {
-      toast.error(String(err));
+      toast.error(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
       setLoading(false);
     }
