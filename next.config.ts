@@ -12,7 +12,11 @@ const nextConfig: NextConfig = {
   // bumped to match for completeness.
   experimental: {
     serverActions: { bodySizeLimit: '30mb' },
-    ...({ middlewareClientMaxBodySize: '30mb' } as Record<string, string>),
+    // proxyClientMaxBodySize is the Next 16.2+ name. Earlier patches called
+    // this middlewareClientMaxBodySize; 16.2 renamed it but the runtime
+    // still warns about both. Cast because the public types haven't caught
+    // up yet.
+    ...({ proxyClientMaxBodySize: '30mb' } as Record<string, string>),
   },
   images: {
     remotePatterns: [
