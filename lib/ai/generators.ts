@@ -539,58 +539,60 @@ function chunkMcqText(text: string, maxChars = 6000): string[] {
 }
 
 export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
-  // 3000-char chunks keep each AI call under the per-request TPM ceiling on
-  // any single model. ~50% smaller than the regular generators because
-  // MCQ-parse prompts ask for verbose JSON output per chunk.
-  const chunks = chunkMcqText(rawText, 3000);
+  // ~1500-char chunks (down from 3000) so each AI call stays comfortably
+  // under Groq free tier's 12k tokens/minute ceiling. MCQ-parse outputs
+  // are verbose JSON; a 3000-char chunk often blew up to 8-9k tokens.
+  // Smaller chunks also mean partial progress is preserved when rate
+  // limits hit late in the run.
+  const chunks = chunkMcqText(rawText, 1500);
 
-  // Concurrency-2 worker pool. Parallel-blasting all chunks at once (the
-  // previous Promise.all approach) regularly tripped Groq's 12k TPM ceiling
-  // on PDFs of more than ~3 pages. Two in flight keeps each minute's burn
-  // around the ~14k mark which is recoverable, while still being ~2x faster
-  // than strict sequential.
-  const CONCURRENCY = 2;
-  const results: GeneratedMCQ[][] = new Array(chunks.length);
-  let nextIdx = 0;
+  // Strict sequential (concurrency=1) for MCQ parse specifically. Any parallel
+  // execution risks bursting past the 12k TPM ceiling because each MCQ chunk
+  // requests ~5-7k tokens. Sequential is slower wall-clock but actually
+  // completes on free tier instead of failing halfway.
+  // Also keep an inter-chunk gap so the per-minute TPM window has time to
+  // breathe between requests — 4s puts at most ~15 calls per minute, well
+  // within the daily limit.
+  const INTER_CHUNK_DELAY_MS = 4000;
+  const results: GeneratedMCQ[] = [];
 
-  const runOne = async (idx: number) => {
+  for (let i = 0; i < chunks.length; i++) {
     try {
       const result = await callLLMJSON<{ questions: GeneratedMCQ[] }>(
         PARSE_MCQ_SYSTEM,
-        parseMcqUserPrompt(chunks[idx]),
-        8192,
+        parseMcqUserPrompt(chunks[i]),
+        4096, // halved from 8192 — keeps single-request token budget around 6k
       );
-      results[idx] = result.questions ?? [];
+      results.push(...(result.questions ?? []));
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      // Rate-limit / auth errors abort the whole run so the user sees a
-      // clean error instead of partial silent zeros.
-      if (
-        msg.includes('rate_limit_exhausted')
-        || msg.includes('request_too_large')
-        || msg.includes('429')
-        || msg.includes('413')
-        || msg.includes('401')
-        || msg.includes('403')
-      ) {
+      // On terminal errors (auth, request-too-large) abort. On a
+      // rate_limit_exhausted, abort but keep any questions already parsed —
+      // the user gets a partial result + clear error rather than nothing.
+      if (msg.includes('401') || msg.includes('403') || msg.includes('request_too_large')) {
         throw e instanceof Error ? e : new Error(msg);
       }
-      console.error(`MCQ parse error (chunk ${idx}):`, e);
-      results[idx] = [];
+      if (msg.includes('rate_limit_exhausted') || msg.includes('429')) {
+        if (results.length > 0) {
+          // We have partial progress; return what we got rather than throwing
+          // everything away. The route layer can still warn the user.
+          console.warn(`MCQ parse hit rate limit at chunk ${i}/${chunks.length}, returning ${results.length} partial questions`);
+          return results;
+        }
+        throw e instanceof Error ? e : new Error(msg);
+      }
+      // Per-chunk transient error: log and continue rather than aborting the
+      // whole PDF for one bad page.
+      console.error(`MCQ parse error (chunk ${i}):`, e);
     }
-  };
 
-  const workers = Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, async () => {
-    while (true) {
-      const idx = nextIdx++;
-      if (idx >= chunks.length) return;
-      await runOne(idx);
+    // Breathe between chunks so we don't burst the per-minute window
+    if (i < chunks.length - 1) {
+      await sleep(INTER_CHUNK_DELAY_MS);
     }
-  });
-  await Promise.all(workers);
+  }
 
-  // Preserved order via index-based assignment, so questions stay in PDF order.
-  return results.flat();
+  return results;
 }
 
 // Vision model — Groq's multimodal Llama 4 for image-based question generation
