@@ -253,10 +253,19 @@ async function callGeminiJSON<T>(
 // which makes it the strongest 3rd-tier fallback when Groq + Gemini are both
 // rate-limited.
 
-// Cerebras has renamed model IDs over time. Try common variants until one
-// is accepted by their account. Earlier code used "llama-3.3-70b" which
-// Cerebras now rejects on some accounts; "llama3.3-70b" is the current ID.
-const CEREBRAS_MODEL_FALLBACKS = ['llama3.3-70b', 'llama-3.3-70b', 'llama3.1-70b'];
+// Cerebras free tier doesn't include 70B models on most accounts. We try
+// smaller/lighter models first (which are universally available) then fall
+// through to the 70B variants. The first one accepted by the account wins.
+// 8B has lower output quality than 70B but is dramatically better than
+// "request rejected, no fallback succeeded."
+const CEREBRAS_MODEL_FALLBACKS = [
+  'llama-4-scout-17b-16e-instruct', // Llama 4 Scout — usually free tier
+  'llama3.1-8b',
+  'llama-3.1-8b',
+  'llama3.3-70b',
+  'llama-3.3-70b',
+  'llama3.1-70b',
+];
 
 async function callCerebrasJSON<T>(
   system: string,
