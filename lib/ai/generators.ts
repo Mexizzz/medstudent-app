@@ -539,31 +539,57 @@ function chunkMcqText(text: string, maxChars = 6000): string[] {
 }
 
 export async function parseMcqPdf(rawText: string): Promise<GeneratedMCQ[]> {
-  // Smaller chunks (3000 chars) so each AI call handles fewer questions and doesn't hit token limits
+  // 3000-char chunks keep each AI call under the per-request TPM ceiling on
+  // any single model. ~50% smaller than the regular generators because
+  // MCQ-parse prompts ask for verbose JSON output per chunk.
   const chunks = chunkMcqText(rawText, 3000);
 
-  // Run all chunks in parallel — each chunk is an independent Groq call
-  const results = await Promise.all(
-    chunks.map(async (chunk, i) => {
-      try {
-        const result = await callLLMJSON<{ questions: GeneratedMCQ[] }>(
-          PARSE_MCQ_SYSTEM,
-          parseMcqUserPrompt(chunk),
-          8192
-        );
-        return result.questions ?? [];
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('429') || msg.includes('rate limit') || msg.includes('401') || msg.includes('403')) {
-          throw new Error(msg);
-        }
-        console.error(`MCQ parse error (chunk ${i}):`, e);
-        return [];
-      }
-    })
-  );
+  // Concurrency-2 worker pool. Parallel-blasting all chunks at once (the
+  // previous Promise.all approach) regularly tripped Groq's 12k TPM ceiling
+  // on PDFs of more than ~3 pages. Two in flight keeps each minute's burn
+  // around the ~14k mark which is recoverable, while still being ~2x faster
+  // than strict sequential.
+  const CONCURRENCY = 2;
+  const results: GeneratedMCQ[][] = new Array(chunks.length);
+  let nextIdx = 0;
 
-  // Flatten in order (Promise.all preserves order)
+  const runOne = async (idx: number) => {
+    try {
+      const result = await callLLMJSON<{ questions: GeneratedMCQ[] }>(
+        PARSE_MCQ_SYSTEM,
+        parseMcqUserPrompt(chunks[idx]),
+        8192,
+      );
+      results[idx] = result.questions ?? [];
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Rate-limit / auth errors abort the whole run so the user sees a
+      // clean error instead of partial silent zeros.
+      if (
+        msg.includes('rate_limit_exhausted')
+        || msg.includes('request_too_large')
+        || msg.includes('429')
+        || msg.includes('413')
+        || msg.includes('401')
+        || msg.includes('403')
+      ) {
+        throw e instanceof Error ? e : new Error(msg);
+      }
+      console.error(`MCQ parse error (chunk ${idx}):`, e);
+      results[idx] = [];
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, async () => {
+    while (true) {
+      const idx = nextIdx++;
+      if (idx >= chunks.length) return;
+      await runOne(idx);
+    }
+  });
+  await Promise.all(workers);
+
+  // Preserved order via index-based assignment, so questions stay in PDF order.
   return results.flat();
 }
 
