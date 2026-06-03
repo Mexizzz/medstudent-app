@@ -247,11 +247,67 @@ async function callGeminiJSON<T>(
   }
 }
 
+// ─── Cerebras fallback ──────────────────────────────────────────────────────
+// Cerebras hosts Llama 3.3 70B (same model as Groq) on dedicated inference
+// hardware. Free tier is generous (~30 req/min, ~14k req/day, no TPM cap)
+// which makes it the strongest 3rd-tier fallback when Groq + Gemini are both
+// rate-limited.
+
+const CEREBRAS_MODEL = 'llama-3.3-70b';
+
+async function callCerebrasJSON<T>(
+  system: string,
+  userPrompt: string,
+  maxTokens = 4096,
+): Promise<T> {
+  const apiKey = process.env.CEREBRAS_API_KEY;
+  if (!apiKey) throw new Error('cerebras_unavailable: CEREBRAS_API_KEY not configured');
+
+  // OpenAI-compatible API surface
+  const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: CEREBRAS_MODEL,
+      temperature: 0.2,
+      max_tokens: maxTokens,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: userPrompt },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    if (res.status === 429) throw new Error(`rate_limit_exhausted (cerebras 429): ${text.slice(0, 200)}`);
+    throw new Error(`Cerebras error ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  const content: string = data?.choices?.[0]?.message?.content ?? '{}';
+  const finish = data?.choices?.[0]?.finish_reason;
+  if (finish === 'length') {
+    console.warn(`Cerebras response truncated at ${maxTokens} tokens. Tail: ${content.slice(-200)}`);
+  }
+
+  try {
+    return JSON.parse(content) as T;
+  } catch (e) {
+    console.error(`Cerebras JSON parse failed (length=${content.length}). Tail: ${content.slice(-200)}`);
+    throw e;
+  }
+}
+
 /**
- * Tries Groq first (fast + cheap). On rate-limit / request-too-large / unrecoverable
- * Groq errors, falls back to Gemini if GEMINI_API_KEY is set. If Gemini also fails
- * (or isn't configured), surfaces the original Groq error so the route layer can
- * map it to a clean user-facing message.
+ * Tries providers in order: Groq → Gemini → Cerebras. On rate-limit /
+ * request-too-large / 5xx from one, falls through to the next. Surfaces
+ * the *Groq* error to the route layer when all providers fail, because
+ * mapGeneratorError() is tuned to map Groq error shapes to user messages.
  */
 export async function callLLMJSON<T>(
   system: string,
@@ -264,25 +320,30 @@ export async function callLLMJSON<T>(
     return cached;
   }
 
+  const isRecoverable = (err: unknown) => {
+    const m = err instanceof Error ? err.message : String(err);
+    return m.includes('rate_limit_exhausted')
+      || m.includes('request_too_large')
+      || m.includes('500')
+      || m.includes('502')
+      || m.includes('503')
+      || m.includes('504');
+  };
+
+  // 1. Groq (primary)
+  let primaryErr: unknown;
   try {
     const result = await callGroqJSON<T>(system, userPrompt, maxTokens);
-    // Fire-and-forget cache write — don't block the response.
     void writeCache(cacheKey, result);
     return result;
-  } catch (groqErr) {
-    const msg = groqErr instanceof Error ? groqErr.message : String(groqErr);
-    const shouldFallback =
-      msg.includes('rate_limit_exhausted')
-      || msg.includes('request_too_large')
-      || msg.includes('500')
-      || msg.includes('502')
-      || msg.includes('503')
-      || msg.includes('504');
+  } catch (e) {
+    primaryErr = e;
+    if (!isRecoverable(e)) throw e;
+  }
 
-    if (!shouldFallback || !process.env.GEMINI_API_KEY) {
-      throw groqErr;
-    }
-
+  // 2. Gemini (if configured)
+  if (process.env.GEMINI_API_KEY) {
+    const msg = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
     console.warn(`Groq failed (${msg.slice(0, 120)}) — falling back to Gemini`);
     try {
       const result = await callGeminiJSON<T>(system, userPrompt, maxTokens);
@@ -290,10 +351,28 @@ export async function callLLMJSON<T>(
       return result;
     } catch (geminiErr) {
       const gMsg = geminiErr instanceof Error ? geminiErr.message : String(geminiErr);
-      console.error(`Gemini fallback also failed: ${gMsg.slice(0, 200)}`);
-      throw groqErr; // Surface the original Groq error so the user-facing message is meaningful.
+      console.warn(`Gemini fallback failed: ${gMsg.slice(0, 200)}`);
+      // Fall through to Cerebras even if Gemini's error isn't strictly recoverable —
+      // we've still got one more provider to try.
     }
   }
+
+  // 3. Cerebras (if configured)
+  if (process.env.CEREBRAS_API_KEY) {
+    console.warn('Falling back to Cerebras');
+    try {
+      const result = await callCerebrasJSON<T>(system, userPrompt, maxTokens);
+      void writeCache(cacheKey, result);
+      return result;
+    } catch (cerebrasErr) {
+      const cMsg = cerebrasErr instanceof Error ? cerebrasErr.message : String(cerebrasErr);
+      console.error(`Cerebras fallback also failed: ${cMsg.slice(0, 200)}`);
+    }
+  }
+
+  // All providers exhausted — surface the original Groq error so
+  // mapGeneratorError can give a meaningful user-facing message.
+  throw primaryErr;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
