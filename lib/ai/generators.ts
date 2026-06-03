@@ -253,7 +253,10 @@ async function callGeminiJSON<T>(
 // which makes it the strongest 3rd-tier fallback when Groq + Gemini are both
 // rate-limited.
 
-const CEREBRAS_MODEL = 'llama-3.3-70b';
+// Cerebras has renamed model IDs over time. Try common variants until one
+// is accepted by their account. Earlier code used "llama-3.3-70b" which
+// Cerebras now rejects on some accounts; "llama3.3-70b" is the current ID.
+const CEREBRAS_MODEL_FALLBACKS = ['llama3.3-70b', 'llama-3.3-70b', 'llama3.1-70b'];
 
 async function callCerebrasJSON<T>(
   system: string,
@@ -263,44 +266,60 @@ async function callCerebrasJSON<T>(
   const apiKey = process.env.CEREBRAS_API_KEY;
   if (!apiKey) throw new Error('cerebras_unavailable: CEREBRAS_API_KEY not configured');
 
-  // OpenAI-compatible API surface
-  const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: CEREBRAS_MODEL,
-      temperature: 0.2,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: userPrompt },
-      ],
-    }),
-  });
+  // Cerebras has renamed model IDs over time (llama-3.3-70b vs llama3.3-70b vs
+  // llama3.1-70b). Try each variant until one is accepted, then remember the
+  // working one for the rest of this process.
+  const tryModels = CEREBRAS_MODEL_FALLBACKS;
+  const errors: string[] = [];
 
-  if (!res.ok) {
+  for (const model of tryModels) {
+    const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const content: string = data?.choices?.[0]?.message?.content ?? '{}';
+      const finish = data?.choices?.[0]?.finish_reason;
+      if (finish === 'length') {
+        console.warn(`Cerebras response truncated at ${maxTokens} tokens. Tail: ${content.slice(-200)}`);
+      }
+      console.log(`Cerebras: succeeded with model "${model}" (finish=${finish})`);
+
+      try {
+        return JSON.parse(content) as T;
+      } catch (e) {
+        console.error(`Cerebras JSON parse failed (length=${content.length}). Tail: ${content.slice(-200)}`);
+        throw e;
+      }
+    }
+
     const text = await res.text().catch(() => '');
-    if (res.status === 429) throw new Error(`rate_limit_exhausted (cerebras 429): ${text.slice(0, 200)}`);
-    throw new Error(`Cerebras error ${res.status}: ${text.slice(0, 200)}`);
+    if (res.status === 429) {
+      throw new Error(`rate_limit_exhausted (cerebras 429): ${text.slice(0, 200)}`);
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`cerebras_auth_failed (${res.status}): ${text.slice(0, 200)} — check CEREBRAS_API_KEY env var`);
+    }
+    // 400/404 on a specific model name = try next candidate
+    errors.push(`${model}: ${res.status} ${text.slice(0, 80)}`);
   }
 
-  const data = await res.json();
-  const content: string = data?.choices?.[0]?.message?.content ?? '{}';
-  const finish = data?.choices?.[0]?.finish_reason;
-  if (finish === 'length') {
-    console.warn(`Cerebras response truncated at ${maxTokens} tokens. Tail: ${content.slice(-200)}`);
-  }
-
-  try {
-    return JSON.parse(content) as T;
-  } catch (e) {
-    console.error(`Cerebras JSON parse failed (length=${content.length}). Tail: ${content.slice(-200)}`);
-    throw e;
-  }
+  throw new Error(`Cerebras: no model name accepted. Tried: ${errors.join(' | ')}`);
 }
 
 /**
