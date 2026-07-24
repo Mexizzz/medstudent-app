@@ -42,7 +42,7 @@ function getResend() {
 export async function sendResetCode(email: string, code: string) {
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from: 'MedStudy <onboarding@resend.dev>',
+    from: 'MedStudy <noreply@medstudy.space>',
     to: email,
     subject: 'Your MedStudy password reset code',
     html: `
@@ -76,7 +76,7 @@ export async function sendPurchaseDelivery(
 ) {
   const resend = getResend();
   const { error } = await resend.emails.send({
-    from: 'MedStudy <onboarding@resend.dev>',
+    from: 'MedStudy <noreply@medstudy.space>',
     to: email,
     subject: 'Your MedStudy purchase is ready to claim',
     html: `
