@@ -141,9 +141,6 @@ export default function AdminPage() {
   const [banDays, setBanDays] = useState<number | 'permanent'>(7);
   const [banReason, setBanReason] = useState('');
   const [banning, setBanning] = useState(false);
-  const [creditsUserId, setCreditsUserId] = useState<string | null>(null);
-  const [creditsAmount, setCreditsAmount] = useState(500);
-  const [creditsGranting, setCreditsGranting] = useState(false);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketMessages, setTicketMessages] = useState<{ id: string; senderId: string; isAdmin: boolean; message: string; createdAt: string }[]>([]);
   const [adminReply, setAdminReply] = useState('');
@@ -223,51 +220,11 @@ export default function AdminPage() {
   }
 
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<null | { totalPayments: number; counts: Record<string, number>; results: Array<{ paymentId: string; email: string | null; planId: string; action: string; credits?: number; error?: string }>; dryRun: boolean }>(null);
-  const [whopPlans, setWhopPlans] = useState<null | Array<{ id: string; productName: string | null; name: string | null; amount: number | null; currency: string | null; billingPeriod: string | null }>>(null);
-  const [whopPlansLoading, setWhopPlansLoading] = useState(false);
-  const [creditMap, setCreditMap] = useState<Record<string, { credits: string; tag: string; priceOverride: string }>>({});
-
-  async function handleListWhopPlans() {
-    setWhopPlansLoading(true);
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminPassword: password, action: 'listWhopPlans' }),
-      });
-      const json = await res.json();
-      if (!res.ok) { toast.error(json.error ?? 'Failed to list plans'); return; }
-      setWhopPlans(json.plans ?? []);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to list plans');
-    } finally {
-      setWhopPlansLoading(false);
-    }
-  }
-
-  function buildPackEnvVar(): string {
-    if (!whopPlans) return '';
-    const entries: string[] = [];
-    for (const p of whopPlans) {
-      const cfg = creditMap[p.id];
-      const credits = Number(cfg?.credits);
-      if (!credits || credits <= 0) continue;
-      const tag = cfg?.tag?.trim();
-      // Manual override > API value > 0. Override exists because Whop's API
-      // returns price=0 for some plan shapes — admin types the real price here.
-      const overrideNum = Number(cfg?.priceOverride);
-      const price = (cfg?.priceOverride && isFinite(overrideNum) && overrideNum > 0)
-        ? overrideNum
-        : (p.amount ?? 0);
-      entries.push(tag ? `${p.id}:${price}:${credits}:${tag}` : `${p.id}:${price}:${credits}`);
-    }
-    return entries.join(',');
-  }
+  const [importResult, setImportResult] = useState<null | { totalPayments: number; counts: Record<string, number>; results: Array<{ paymentId: string; email: string | null; planId: string; action: string; error?: string }>; dryRun: boolean }>(null);
 
   async function handleImportWhopPayments(dryRun: boolean) {
     if (!dryRun) {
-      if (!confirm('Import all successful Whop payments? This will grant credits / update subs / send delivery emails. Safe to re-run (idempotent), but emails will be sent to anyone whose account had to be auto-created.')) return;
+      if (!confirm('Import all successful Whop payments? This will update subs / send delivery emails. Safe to re-run (idempotent), but emails will be sent to anyone whose account had to be auto-created.')) return;
     }
     setImporting(true);
     setImportResult(null);
@@ -286,7 +243,6 @@ export default function AdminPage() {
       setImportResult(json);
       const c = json.counts ?? {};
       const summary = [
-        c.credits_granted ? `${c.credits_granted} credit deliveries` : null,
         c.sub_updated ? `${c.sub_updated} subs updated` : null,
         c.stub_created_and_delivered ? `${c.stub_created_and_delivered} stub accounts emailed` : null,
         c.skipped_already_delivered ? `${c.skipped_already_delivered} already done` : null,
@@ -299,32 +255,6 @@ export default function AdminPage() {
       toast.error(e instanceof Error ? e.message : 'Import failed');
     } finally {
       setImporting(false);
-    }
-  }
-
-  async function handleGrantCredits(userId: string) {
-    if (!creditsAmount || creditsAmount <= 0) { toast.error('Enter a positive amount'); return; }
-    setCreditsGranting(true);
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminPassword: password,
-          action: 'grantCredits',
-          userId,
-          amount: creditsAmount,
-          reason: 'comp:admin',
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) { toast.error(json.error ?? 'Grant failed'); return; }
-      toast.success(`Granted ${creditsAmount.toLocaleString()} credits · new balance ${json.balance.toLocaleString()}`);
-      setCreditsUserId(null);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Grant failed');
-    } finally {
-      setCreditsGranting(false);
     }
   }
 
@@ -710,116 +640,6 @@ export default function AdminPage() {
         {/* ── OVERVIEW TAB ── */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Whop Plans Browser + env-var builder */}
-            <div className="bg-gradient-to-br from-violet-500/10 to-indigo-500/10 rounded-2xl p-5 border border-violet-500/30">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-violet-300 flex items-center gap-2">
-                    <Crown className="w-4 h-4" />
-                    Whop plans
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Lists every plan on your Whop account with its plan ID and price. Use this to populate the <code className="text-violet-300 bg-slate-900/50 px-1 rounded">WHOP_PACK_PLANS</code> env var without leaving the app.
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  disabled={whopPlansLoading}
-                  onClick={handleListWhopPlans}
-                  className="text-xs h-8 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
-                >
-                  {whopPlansLoading ? 'Fetching…' : (whopPlans ? 'Refresh' : 'Fetch plans')}
-                </Button>
-              </div>
-
-              {whopPlans && (
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-xl bg-slate-950/50 border border-slate-800 overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead className="text-slate-500 uppercase tracking-wider text-[10px]">
-                        <tr>
-                          <th className="text-left px-3 py-2">Plan</th>
-                          <th className="text-left px-3 py-2">ID</th>
-                          <th className="text-right px-3 py-2">API price</th>
-                          <th className="text-left px-3 py-2 w-24">Override</th>
-                          <th className="text-left px-3 py-2 w-24">Credits</th>
-                          <th className="text-left px-3 py-2 w-32">Tag</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800">
-                        {whopPlans.map(p => (
-                          <tr key={p.id} className="hover:bg-slate-900/40">
-                            <td className="px-3 py-2 text-slate-300">{p.productName || p.name || '—'}</td>
-                            <td className="px-3 py-2 font-mono text-slate-400">{p.id}</td>
-                            <td className={`px-3 py-2 text-right tabular-nums ${(!p.amount || p.amount === 0) ? 'text-amber-400' : 'text-slate-300'}`}>
-                              {p.amount != null ? `${p.amount}${p.currency ? ' ' + p.currency : ''}` : '—'}
-                            </td>
-                            <td className="px-3 py-2">
-                              <Input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                placeholder={p.amount ? String(p.amount) : 'price'}
-                                value={creditMap[p.id]?.priceOverride ?? ''}
-                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: prev[p.id]?.tag ?? '', priceOverride: e.target.value } }))}
-                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-20"
-                              />
-                            </td>
-                            <td className="px-3 py-2">
-                              <Input
-                                type="number"
-                                min={0}
-                                placeholder="e.g. 200"
-                                value={creditMap[p.id]?.credits ?? ''}
-                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: e.target.value, tag: prev[p.id]?.tag ?? '', priceOverride: prev[p.id]?.priceOverride ?? '' } }))}
-                                className="h-7 text-xs bg-slate-800 border-slate-700 text-white w-20"
-                              />
-                            </td>
-                            <td className="px-3 py-2">
-                              <select
-                                value={creditMap[p.id]?.tag ?? ''}
-                                onChange={e => setCreditMap(prev => ({ ...prev, [p.id]: { credits: prev[p.id]?.credits ?? '', tag: e.target.value, priceOverride: prev[p.id]?.priceOverride ?? '' } }))}
-                                className="h-7 text-xs bg-slate-800 border border-slate-700 rounded px-1 text-white w-28"
-                              >
-                                <option value="">No tag</option>
-                                <option value="MOST_POPULAR">Most popular</option>
-                                <option value="BEST_VALUE">Best value</option>
-                              </select>
-                            </td>
-                          </tr>
-                        ))}
-                        {whopPlans.length === 0 && (
-                          <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-500">No plans returned by Whop.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {whopPlans.length > 0 && (
-                    <div className="rounded-xl bg-slate-950/70 border border-violet-500/30 p-3">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <p className="text-[10px] uppercase tracking-wider text-violet-300 font-bold">WHOP_PACK_PLANS env var</p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!buildPackEnvVar()}
-                          onClick={() => {
-                            navigator.clipboard.writeText(buildPackEnvVar()).then(() => toast.success('Copied. Paste into Railway → Variables.'));
-                          }}
-                          className="text-xs h-7 text-violet-300 border-violet-500/40 hover:bg-violet-500/10"
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                      <code className="text-xs text-slate-300 break-all block leading-relaxed">
-                        {buildPackEnvVar() || <span className="text-slate-600">Fill in credit amounts above to build the env var…</span>}
-                      </code>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Whop Payment Importer */}
             <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl p-5 border border-amber-500/30">
               <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -829,7 +649,7 @@ export default function AdminPage() {
                     Import Whop payments
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Pulls every successful Whop payment. Grants credits / updates subs for known users. For payments where the email isn&apos;t in our DB yet, auto-creates a stub account and emails them a claim code. Idempotent — re-running is safe.
+                    Pulls every successful Whop payment. Updates subs for known users. For payments where the email isn&apos;t in our DB yet, auto-creates a stub account and emails them a claim code. Idempotent — re-running is safe.
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -876,7 +696,6 @@ export default function AdminPage() {
                           : 'text-emerald-400'
                         }>
                           {r.action.replace(/_/g, ' ')}
-                          {r.credits ? ` (+${r.credits})` : ''}
                         </span>
                       </div>
                     ))}
@@ -1326,38 +1145,6 @@ export default function AdminPage() {
                                     >
                                       <Crown className="w-3 h-3" /> Comp Upgrade
                                     </Button>
-                                    {creditsUserId === u.id ? (
-                                      <div className="flex items-center gap-1 bg-slate-800/60 rounded px-2 py-0.5">
-                                        <span className="text-xs text-amber-400">Credits:</span>
-                                        <Input
-                                          type="number"
-                                          min={1}
-                                          value={creditsAmount}
-                                          onChange={e => setCreditsAmount(Math.max(0, Number(e.target.value) || 0))}
-                                          className="h-6 w-20 text-xs bg-slate-900 border-slate-700 text-white"
-                                          autoFocus
-                                          onKeyDown={e => e.key === 'Enter' && handleGrantCredits(u.id)}
-                                        />
-                                        <Button
-                                          size="sm"
-                                          className="h-6 text-xs px-2 bg-amber-500 hover:bg-amber-600 text-white"
-                                          disabled={creditsGranting}
-                                          onClick={() => handleGrantCredits(u.id)}
-                                        >
-                                          {creditsGranting ? '…' : 'Grant'}
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="h-6 text-xs px-1 text-slate-400" onClick={() => setCreditsUserId(null)}>✕</Button>
-                                      </div>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-7 text-xs gap-1 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
-                                        onClick={() => { setCreditsUserId(u.id); setCreditsAmount(500); }}
-                                      >
-                                        <Crown className="w-3 h-3" /> + Credits
-                                      </Button>
-                                    )}
                                     {u.bannedUntil && new Date(u.bannedUntil) > new Date() ? (
                                       <Button
                                         size="sm"

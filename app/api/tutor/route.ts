@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const messages = Array.isArray(body.messages) ? body.messages : [];
 
     // ── Gather student context from DB ────────────────────────────────────────
 

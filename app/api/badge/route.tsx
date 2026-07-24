@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -25,20 +25,6 @@ export async function GET(req: NextRequest) {
   const style = TIER_STYLES[tierKey] ?? TIER_STYLES['SOLID'];
   const scoreColor = style.accent;
 
-  let fontData: ArrayBuffer | null = null;
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const fontRes = await fetch(
-      'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiJ-Ek-_EeA.woff',
-      { signal: controller.signal, cache: 'force-cache' }
-    );
-    clearTimeout(timeout);
-    if (fontRes.ok) fontData = await fontRes.arrayBuffer();
-  } catch {
-    fontData = null;
-  }
-
   return new ImageResponse(
     (
       <div
@@ -51,7 +37,7 @@ export async function GET(req: NextRequest) {
           border: `1.5px solid ${style.accent}44`,
           borderRadius: 20,
           padding: '28px 36px',
-          fontFamily: 'Inter',
+          fontFamily: 'sans-serif',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -94,7 +80,7 @@ export async function GET(req: NextRequest) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
             <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, letterSpacing: 2 }}>SCORE</span>
             <span style={{ color: scoreColor, fontSize: 88, fontWeight: 900, lineHeight: 1, textShadow: `0 0 48px ${scoreColor}60` }}>
-              {score}%
+              {`${score}%`}
             </span>
             <span style={{ color: style.accent, fontSize: 15, fontWeight: 800, letterSpacing: 3 }}>
               {style.label}
@@ -108,18 +94,18 @@ export async function GET(req: NextRequest) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}>CORRECT</span>
-              <span style={{ color: 'white', fontSize: 26, fontWeight: 800 }}>{correct} / {total}</span>
+              <span style={{ color: 'white', fontSize: 26, fontWeight: 800 }}>{`${correct} / ${total}`}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}>ACCURACY</span>
-              <span style={{ color: scoreColor, fontSize: 26, fontWeight: 800 }}>{total > 0 ? Math.round((correct / total) * 100) : 0}%</span>
+              <span style={{ color: scoreColor, fontSize: 26, fontWeight: 800 }}>{`${total > 0 ? Math.round((correct / total) * 100) : 0}%`}</span>
             </div>
           </div>
         </div>
 
         {/* Progress bar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
             <div style={{
               height: '100%', width: `${score}%`,
               background: `linear-gradient(90deg, ${style.accent}aa, ${style.accent})`,
@@ -133,7 +119,6 @@ export async function GET(req: NextRequest) {
     {
       width: 600,
       height: 315,
-      fonts: fontData ? [{ name: 'Inter', data: fontData, weight: 900 }] : [],
     }
   );
 }

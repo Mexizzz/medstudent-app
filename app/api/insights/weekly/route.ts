@@ -56,12 +56,12 @@ export async function GET() {
     const thisWeekTime = await db
       .select({ totalMins: sql<number>`coalesce(sum(total_minutes), 0)`, studyDays: sql<number>`count(*)` })
       .from(streakRecords)
-      .where(and(eq(streakRecords.userId, userId), sql`date >= ${weekAgoDate}`));
+      .where(and(eq(streakRecords.userId, userId), sql`study_date >= ${weekAgoDate}`));
 
     const lastWeekTime = await db
       .select({ totalMins: sql<number>`coalesce(sum(total_minutes), 0)` })
       .from(streakRecords)
-      .where(and(eq(streakRecords.userId, userId), sql`date >= ${twoWeeksAgoDate}`, sql`date < ${weekAgoDate}`));
+      .where(and(eq(streakRecords.userId, userId), sql`study_date >= ${twoWeeksAgoDate}`, sql`study_date < ${weekAgoDate}`));
 
     // Topic performance — top improved and weakest
     const topics = await db

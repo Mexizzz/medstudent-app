@@ -199,7 +199,7 @@ async function callGroqJSON<T>(
 // Used when Groq is rate-limited or rejects a request as too large. Gemini's
 // free tier has ~1M TPM (vs Groq's 30K), so it covers traffic spikes for free.
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 async function callGeminiJSON<T>(
   system: string,
