@@ -64,6 +64,51 @@ export async function sendResetCode(email: string, code: string) {
 }
 
 /**
+ * "Your free trial ends soon" nudge — the highest-leverage conversion email.
+ * Sent once, a couple of days before the 7-day Max trial expires, to push
+ * the trial -> paid decision while the user still has full access.
+ */
+export async function sendTrialReminder(email: string, name: string | null, daysLeft: number) {
+  const resend = getResend();
+  const greeting = name ? `Hi ${name},` : 'Hi there,';
+  const when = daysLeft <= 1 ? 'tomorrow' : `in ${daysLeft} days`;
+  const { error } = await resend.emails.send({
+    from: 'MedStudy <noreply@medstudy.space>',
+    to: email,
+    subject: `Your MedStudy Max trial ends ${when}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #4f46e5; margin: 0 0 12px;">Your free trial ends ${when}</h2>
+        <p style="color: #1e293b; line-height: 1.6;">${greeting}</p>
+        <p style="color: #1e293b; line-height: 1.6;">
+          You're on the <strong>Max</strong> plan free trial — unlimited AI MCQs, flashcards,
+          clinical cases, the AI tutor, Exam Lab, and everything else. That access ends ${when}.
+        </p>
+        <p style="color: #1e293b; line-height: 1.6;">
+          Keep your streak, your generated question banks, and unlimited AI going by upgrading —
+          launch pricing is <strong>50% off</strong> right now (Pro £3.99/mo, Max £7.49/mo).
+        </p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="https://www.medstudy.space/pricing"
+             style="display: inline-block; background: #4f46e5; color: #fff; text-decoration: none;
+                    padding: 12px 28px; border-radius: 8px; font-weight: 600;">
+            Keep my access
+          </a>
+        </div>
+        <p style="color: #64748b; font-size: 13px; line-height: 1.6;">
+          No action needed if you'd rather stay on the free plan — you'll keep everything you've
+          created, just with daily limits. Questions? Just reply to this email.
+        </p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Trial reminder email error:', error);
+    throw new Error('Failed to send trial reminder');
+  }
+}
+
+/**
  * Sent to a buyer whose Whop payment couldn't be matched to an existing
  * MedStudy account. We auto-create a stub account and email them a claim
  * code so they can set a password and access the credits/subscription

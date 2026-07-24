@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { expireOldTrials, expireComps } from '@/lib/subscription';
+import { expireOldTrials, expireComps, sendTrialReminders } from '@/lib/subscription';
 export const dynamic = 'force-dynamic';
 
 // Hit this from Railway cron (or any uptime monitor) to downgrade expired trials
@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const reminders = await sendTrialReminders();
   const trials = await expireOldTrials();
   const comps = await expireComps();
-  return NextResponse.json({ ok: true, trials, comps });
+  return NextResponse.json({ ok: true, reminders, trials, comps });
 }

@@ -1,0 +1,21 @@
+name: Daily cron
+
+# Pings the trial-maintenance endpoint once a day: sends "trial ends soon"
+# reminder emails, downgrades expired trials, and reverts expired comps.
+# Requires the CRON_SECRET repo secret to match the CRON_SECRET env var on Railway.
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 09:00 UTC daily
+  workflow_dispatch:       # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit expire-trials cron
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://www.medstudy.space/api/cron/expire-trials?secret=${{ secrets.CRON_SECRET }}")
+          echo "Status: $code"
+          test "$code" = "200"

@@ -23,6 +23,9 @@ export const users = sqliteTable('users', {
   // Set to a far-future date for permanent bans (e.g., year 9999).
   bannedUntil:  integer('banned_until', { mode: 'timestamp' }),
   banReason:    text('ban_reason'),
+  // When the "your trial ends soon" reminder email was sent. Ensures the
+  // daily cron emails each trial user at most once.
+  trialReminderSentAt: integer('trial_reminder_sent_at', { mode: 'timestamp' }),
   // AI credits — one-time purchases that kick in when the daily subscription
   // limit is hit. 1 credit ≈ 1 LLM call (one generation batch, one tutor
   // message, etc.). Free + paid users alike can hold credits.

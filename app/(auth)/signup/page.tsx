@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
+import { trackSignup } from '@/lib/analytics';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -45,6 +46,9 @@ export default function SignupPage() {
         setError(data.error || 'Signup failed');
         return;
       }
+
+      // Fire the ad-conversion event before navigating away.
+      trackSignup();
 
       router.push('/dashboard');
     } catch {

@@ -1,8 +1,9 @@
 import { db } from '@/db';
 import { users, usageTracking } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull, gt, lt } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { getMembership, getPlanFromWhopPlanId } from '@/lib/whop';
+import { sendTrialReminder } from '@/lib/email';
 
 // ── Types ─────────────────────────────────────────────
 export type SubscriptionTier = 'free' | 'pro' | 'max';
@@ -148,6 +149,44 @@ export async function expireOldTrials(): Promise<{ downgraded: number }> {
       sql`${users.subscriptionEndsAt} IS NOT NULL AND ${users.subscriptionEndsAt} < unixepoch()`,
     ));
   return { downgraded: result.changes ?? 0 };
+}
+
+/**
+ * Emails trial users whose trial ends within the next ~2 days and who haven't
+ * already been reminded. Marks each as reminded so the daily cron sends at
+ * most one nudge per user. This is the trial -> paid conversion push.
+ */
+export async function sendTrialReminders(): Promise<{ sent: number; failed: number }> {
+  const now = new Date();
+  // Window: trial ends after now (still active) and within the next 2 days.
+  const soon = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+
+  const candidates = await db.query.users.findMany({
+    where: and(
+      eq(users.subscriptionStatus, 'trial'),
+      isNull(users.trialReminderSentAt),
+      gt(users.subscriptionEndsAt, now),
+      lt(users.subscriptionEndsAt, soon),
+    ),
+    columns: { id: true, email: true, name: true, subscriptionEndsAt: true },
+  });
+
+  let sent = 0;
+  let failed = 0;
+  for (const u of candidates) {
+    if (!u.subscriptionEndsAt) continue;
+    const daysLeft = Math.max(1, Math.ceil((u.subscriptionEndsAt.getTime() - now.getTime()) / 86400000));
+    try {
+      await sendTrialReminder(u.email, u.name, daysLeft);
+      // Stamp only after a successful send so a failure retries next run.
+      await db.update(users).set({ trialReminderSentAt: new Date() }).where(eq(users.id, u.id));
+      sent++;
+    } catch (e) {
+      console.error(`Trial reminder failed for ${u.email}:`, e);
+      failed++;
+    }
+  }
+  return { sent, failed };
 }
 
 /**
